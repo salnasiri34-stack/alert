@@ -1,38 +1,23 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام سلومي للإنذار</title>
+    <title>إنذار سلومي</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
 
     <script>(function(w,d, s, id) {if(typeof(w.webpushr)!=='undefined') return;w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};var js, fjs = d.getElementsByTagName(s)[0];js = d.createElement(s); js.id = id;js.async=1;js.src = "https://cdn.webpushr.com/app.min.js";
     fjs.parentNode.appendChild(js);}(window,document, 'script', 'webpushr-jssdk'));
     webpushr('setup',{'key':'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I' });</script>
-
-    <style>
-        body { background-color: black; color: white; text-align: center; font-family: sans-serif; padding-top: 100px; }
-        .alarm-btn { background-color: red; color: white; border: none; padding: 30px; font-size: 25px; border-radius: 50%; cursor: pointer; box-shadow: 0 0 20px red; }
-    </style>
 </head>
-<body>
+<body style="background:#000; color:#fff; text-align:center; padding-top:100px; font-family:sans-serif;">
 
-    <h1>🚨 نظام الطوارئ</h1>
-    <p>اضغط لتفعيل استقبال الإنذارات</p>
-
-    <button class="alarm-btn" onclick="activate()">تفعيل</button>
-
-    <script>
-        function activate() {
-            // هذي الوظيفة اللي تطلب السماح وتشبك الرقم بالموقع
-            webpushr('fetch_id', function(sid) {
-                if(sid) {
-                    alert("✅ كفو يا سلومي! اشتغل الربط وكودك هو: " + sid);
-                } else {
-                    alert("اضغط 'سماح' لما تظهر لك الرسالة");
-                }
-            });
-        }
-    </script>
+    <h1>🚨 نظام سلومي</h1>
+    <p>اضغط الزر لتفعيل الإشعارات</p>
+    
+    <button style="padding:20px; font-size:20px; background:red; color:#fff; border:none; border-radius:10px; font-weight:bold;" 
+            onclick="webpushr('fetch_id', function(sid){ if(sid) alert('كفو! تم الربط: ' + sid); else alert('تأكد من الضغط على سماح'); })">
+        تفعيل الآن
+    </button>
 
 </body>
 </html>
