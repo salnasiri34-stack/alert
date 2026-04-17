@@ -3,58 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚨 نظام إنذار سلومي الرسمي</title>
+    <title>🚨 إنذار سلومي الرسمي</title>
     
     <script>(function(w,d,s,id){if(typeof(w.webpushr)!=='undefined') return;w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};var js,fjs=d.getElementsByTagName(s)[0];js=d.createElement(s);js.id=id;js.async=1;js.src='https://cdn.webpushr.com/app.min.js';fjs.parentNode.insertBefore(js,fjs);}(window,document,'script','webpushr-jssdk'));webpushr('setup',{'key':'BF2Wrik9KIE_JRdYkmlh62-nOR_KqsQVqibivdl8_l2zhVp5uNsoFlRnyIn3hy8mi7REa2yz8IUMVgMAH40w3ZI'});</script>
 
     <style>
         body { font-family: sans-serif; background-color: #000; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        .emergency-header { background: #ff0000; color: white; padding: 15px; font-weight: bold; font-size: 26px; position: fixed; top: 0; width: 100%; box-shadow: 0 5px 15px rgba(255,0,0,0.5); z-index: 100; }
-        .container { padding: 30px; border: 4px solid #fff; border-radius: 10px; margin: 20px; background: rgba(0,0,0,0.9); position: relative; z-index: 10; }
-        h1 { color: white; font-size: 32px; font-weight: bold; margin: 20px 0; }
-        p { font-size: 20px; line-height: 1.6; margin-bottom: 30px; }
-        
-        /* حركة فلاش الإنذار الرسمي */
+        .emergency-header { background: #ff0000; color: white; padding: 15px; font-weight: bold; font-size: 26px; position: fixed; top: 0; width: 100%; z-index: 100; }
+        .container { padding: 30px; border: 4px solid #fff; border-radius: 10px; margin: 20px; background: #000; }
+        h1 { color: white; font-size: 32px; margin: 20px 0; }
+        .btn-active { background: white; color: black; border: none; padding: 20px 50px; font-size: 22px; font-weight: bold; border-radius: 5px; cursor: pointer; }
         .alarm-active { animation: flash-bg 0.4s infinite; }
-        @keyframes flash-bg {
-            0% { background-color: #ff0000; }
-            50% { background-color: #000; }
-            100% { background-color: #ff0000; }
-        }
-
-        .btn-active { background: white; color: black; border: none; padding: 20px 50px; font-size: 22px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0 0 20px rgba(255,255,255,0.3); transition: 0.2s; }
-        .btn-active:active { transform: scale(0.9); }
+        @keyframes flash-bg { 0% { background-color: #ff0000; } 50% { background-color: #000; } 100% { background-color: #ff0000; } }
     </style>
 </head>
 <body id="mainBody">
     <div class="emergency-header">تنبيه طوارئ عاجل</div>
-    
     <div class="container">
-        <img src="https://cdn-icons-png.flaticon.com/512/564/564619.png" width="120" alt="تحذير">
+        <img src="https://cdn-icons-png.flaticon.com/512/564/564619.png" width="120">
         <h1>تحذيرات سلومي</h1>
-        <p>يوجد تصرف بهدوء وعدم وضع جوالاتكم في وضع الصامت.</p>
-        <button class="btn-active" onclick="toggleAlarm()">تفعيل / إيقاف الإنذار (تجربة)</button>
+        <p>يجب تفعيل التنبيهات واضافة الموقع للشاشة الرئيسية</p>
+        <button class="btn-active" onclick="enableEverything()">تفعيل النظام الآن</button>
     </div>
 
-    <audio id="emergencySound" src="https://www.soundjay.com/buttons/sounds/beep-11.mp3" loop></audio>
+    <audio id="emergencySound" src="https://www.soundjay.com/buttons/sounds/beep-11.mp3" loop preload="auto"></audio>
 
     <script>
-        var isPlaying = false;
         var audio = document.getElementById('emergencySound');
         var body = document.getElementById('mainBody');
 
-        function toggleAlarm() {
-            if (!isPlaying) {
-                audio.play();
-                body.classList.add('alarm-active');
-                isPlaying = true;
-            } else {
+        function enableEverything() {
+            // تشغيل الصوت لثانية واحدة عشان الآيفون يسمح به مستقبلاً
+            audio.play().then(() => {
                 audio.pause();
                 audio.currentTime = 0;
-                body.classList.remove('alarm-active');
-                isPlaying = false;
+            });
+
+            // طلب إذن الإشعارات يدوياً
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        alert('✅ تم تفعيل الإشعارات بنجاح!');
+                    } else {
+                        alert('❌ لم يتم تفعيل الإشعارات، تأكد من الإعدادات');
+                    }
+                });
             }
+            
+            // ربط المستخدم بـ Webpushr
+            webpushr('fetch_id', function(sid) {
+                console.log('ID: ' + sid);
+            });
         }
+
+        // كود لتشغيل الصوت تلقائياً عند الدخول من إشعار
+        window.onload = function() {
+            if(window.location.search.includes('notification=true')) {
+                audio.play();
+                body.classList.add('alarm-active');
+            }
+        };
     </script>
 </body>
 </html>
