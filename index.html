@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تحذيرات سلومي</title>
+    <style>
+        body { font-family: sans-serif; background-color: #0b0b0b; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; }
+        .container { padding: 20px; border: 2px solid #ff0000; border-radius: 20px; margin: 20px; box-shadow: 0 0 20px #ff000055; }
+        h1 { color: #ff4444; font-size: 28px; }
+        p { font-size: 18px; color: #ccc; }
+        .btn-active { background: linear-gradient(45deg, #ff0000, #990000); color: white; border: none; padding: 20px 40px; font-size: 22px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(255,0,0,0.4); }
+        .status { margin-top: 25px; font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 نظام تحذيرات سلومي</h1>
+        <p>يرجى تفعيل نظام التنبيهات لتصلك رسائل الإنذار وقت المطر أو الطوارئ.</p>
+        <button class="btn-active" onclick="initNotifications()">تفعيل النظام الآن</button>
+        <div id="msg" class="status">حالة النظام: غير متصل</div>
+    </div>
+    <script>
+        async function initNotifications() {
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+                navigator.serviceWorker.register('sw.js');
+                document.getElementById('msg').innerText = "✅ تم التفعيل بنجاح";
+                document.getElementById('msg').style.color = "#00ff00";
+            } else {
+                alert("لازم تضغط 'سماح' عشان يوصلك الإنذار!");
+            }
+        }
+    </script>
+</body>
+</html>
