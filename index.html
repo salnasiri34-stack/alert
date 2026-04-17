@@ -4,105 +4,93 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>رادار سلومي 🚨</title>
-  <link rel="manifest" href="manifest.json?v=4" />
-  <link rel="apple-touch-icon" href="https://img.icons8.com/emoji/96/alert-light.png" />
-
   <style>
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a0a0a; color: #fff; text-align: center; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-    .card { width: 90%; max-width: 400px; padding: 30px; border-radius: 25px; background: #111; border: 1px solid #333; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5); }
-    h1 { color: #ffffff; font-size: 24px; margin-bottom: 5px; }
-    .subtitle { color: #ff3b30; font-size: 14px; font-weight: bold; margin-bottom: 25px; text-transform: uppercase; }
-    .status-box { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 14px; color: #aaa; border: 1px solid #222; }
-    .btn { width: 100%; padding: 18px; margin: 10px 0; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.3s; color: white; }
+    body { font-family: sans-serif; background: #0a0a0a; color: #fff; text-align: center; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    .card { width: 90%; max-width: 400px; padding: 30px; border-radius: 25px; background: #111; border: 1px solid #333; }
+    .btn { width: 100%; padding: 18px; margin: 10px 0; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; color: white; }
     #activateBtn { background: #007aff; }
     #alertBtn { background: #ff3b30; display: none; }
-    .alarm-active { animation: pulse-red 0.5s infinite; }
-    @keyframes pulse-red { 0% { background: #0a0a0a; } 50% { background: #3d0000; } 100% { background: #0a0a0a; } }
+    #status { font-size: 14px; color: #aaa; margin-bottom: 20px; min-height: 40px; }
   </style>
 </head>
-<body id="bg">
+<body>
 
 <div class="card">
   <h1>نظام التنبيه العاجل</h1>
-  <div class="subtitle">لوحة تحكم العراب</div>
-  <div class="status-box" id="status">جاري فحص الاتصال.. 📡</div>
-  <button class="btn" id="activateBtn" onclick="startSystem()">🔔 تفعيل استقبال التنبيهات</button>
+  <div id="status">جاري فحص حالة الربط.. 📡</div>
+  <button class="btn" id="activateBtn" onclick="smartActivate()">🔔 تفعيل استقبال التنبيهات</button>
   <button class="btn" id="alertBtn" onclick="triggerGlobalAlarm()">🚨 إرسال تنبيه للجميع</button>
-  <audio id="beep" src="https://www.soundjay.com/buttons/sounds/beep-11.mp3" loop></audio>
 </div>
 
 <script>
-  // مفاتيح سلومي المحدثة
   const KEYS = {
     API_KEY: '4f28dee84926f7456d26408a22d82862', 
     AUTH_TOKEN: '120657',
     VAPID: 'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I'
   };
 
-  const beep = document.getElementById('beep');
-  const status = document.getElementById('status');
+  let retryCount = 0;
 
-  window.onload = () => {
-    if (window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches) {
-        status.innerHTML = "متصل من الشاشة الرئيسية ✅";
-    } else {
-        status.innerHTML = "⚠️ افتح الموقع من الشاشة الرئيسية للتفعيل";
-    }
-  };
+  async function smartActivate() {
+    const status = document.getElementById('status');
+    status.innerHTML = "⏳ محاولة الربط (محاولة رقم " + (retryCount + 1) + ")...";
 
-  if (window.location.search.includes('alarm=true')) {
-    document.getElementById('bg').classList.add('alarm-active');
-    status.innerHTML = "🚨 تنبيه طارئ نشط! 🚨";
-    status.style.color = "#ff3b30";
-    window.onclick = () => { beep.play(); };
-  }
-
-  async function startSystem() {
-    status.innerHTML = "⏳ جاري الربط بحسابك...";
     try {
+      // طلب الإذن أولاً
       const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        const reg = await navigator.serviceWorker.register('sw.js?v=4');
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(KEYS.VAPID)
-        });
-        
-        await fetch('https://api.webpushr.com/v1/subscriber/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'webpushrKey': KEYS.API_KEY, 'webpushrAuthToken': KEYS.AUTH_TOKEN },
-          body: JSON.stringify(sub)
-        });
+      if (permission !== 'granted') {
+        status.innerHTML = "⚠️ لازم توافق على الإشعارات عشان يشتغل الرادار";
+        return;
+      }
 
-        status.innerHTML = "✅ النظام مفعل وجاهز";
+      // تسجيل الـ Service Worker مع إضافة رقم عشوائي لمنع الكاش
+      const reg = await navigator.serviceWorker.register('sw.js?v=' + Math.random());
+      
+      // محاولة الاشتراك
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(KEYS.VAPID)
+      });
+
+      // إرسال البيانات للسيرفر
+      const response = await fetch('https://api.webpushr.com/v1/subscriber/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'webpushrKey': KEYS.API_KEY, 'webpushrAuthToken': KEYS.AUTH_TOKEN },
+        body: JSON.stringify(sub)
+      });
+
+      if (response.ok) {
+        status.innerHTML = "✅ تم الربط بنجاح! العداد صار 1 الآن";
         document.getElementById('activateBtn').style.display = "none";
         document.getElementById('alertBtn').style.display = "block";
       } else {
-        status.innerHTML = "⚠️ يرجى السماح بالإشعارات";
+        throw new Error("السيرفر رفض الطلب");
       }
-    } catch (e) { 
-        status.innerHTML = "⚠️ خطأ: تأكد من الإضافة للشاشة الرئيسية";
+
+    } catch (error) {
+      console.log("فشلت المحاولة:", error);
+      if (retryCount < 3) {
+        retryCount++;
+        status.innerHTML = "🔄 فشلت المحاولة، جاري إعادة المحاولة تلقائياً...";
+        setTimeout(smartActivate, 2000); // يحاول مرة ثانية بعد ثانيتين
+      } else {
+        status.innerHTML = "❌ تعذر الربط التلقائي. تأكد أنك أضفت الموقع للشاشة الرئيسية وحاول مجدداً.";
+      }
     }
   }
 
   async function triggerGlobalAlarm() {
-    status.innerHTML = "⏳ جاري إرسال التنبيه...";
-    try {
-        const response = await fetch('https://api.webpushr.com/v1/notification/send/all', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'webpushrKey': KEYS.API_KEY, 'webpushrAuthToken': KEYS.AUTH_TOKEN },
-          body: JSON.stringify({
-            title: "🚨 تنبيه عاجل من سلومي",
-            message: "حالة طوارئ، افتح التنبيه فوراً",
-            target_url: window.location.href.split('?')[0] + "?alarm=true"
-          })
-        });
-        if(response.ok) status.innerHTML = "✅ تم الإرسال للجميع!";
-    } catch (e) {
-        status.innerHTML = "❌ فشل في الإرسال";
-    }
+    const response = await fetch('https://api.webpushr.com/v1/notification/send/all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'webpushrKey': KEYS.API_KEY, 'webpushrAuthToken': KEYS.AUTH_TOKEN },
+      body: JSON.stringify({
+        title: "🚨 تنبيه من سلومي",
+        message: "حالة طوارئ!",
+        target_url: window.location.href + "?alarm=true"
+      })
+    });
+    if(response.ok) document.getElementById('status').innerHTML = "✅ تم الإرسال بنجاح!";
   }
 
   function urlBase64ToUint8Array(base64String) {
