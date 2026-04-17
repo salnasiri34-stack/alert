@@ -7,14 +7,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>نظام التنبيه العاجل 🚨</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png" />
+  <link rel="apple-touch-icon" href="https://img.icons8.com/emoji/96/alert-light.png" />
 
   <style>
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a0a0a; color: #fff; text-align: center; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
     .card { width: 90%; max-width: 400px; padding: 30px; border-radius: 25px; background: #111; border: 1px solid #333; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5); }
     h1 { color: #ffffff; font-size: 24px; margin-bottom: 5px; }
     .subtitle { color: #ff3b30; font-size: 14px; font-weight: bold; margin-bottom: 25px; text-transform: uppercase; }
-    .status-box { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 14px; color: #aaa; border: 1px solid #222; }
+    .status-box { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 14px; color: #aaa; border: 1px solid #222; min-height: 20px; }
     .btn { width: 100%; padding: 18px; margin: 10px 0; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.3s; color: white; }
     #activateBtn { background: #007aff; }
     #alertBtn { background: #ff3b30; display: none; }
@@ -47,10 +47,7 @@
     document.getElementById('bg').classList.add('alarm-active');
     status.innerHTML = "🚨 تنبيه طارئ نشط! 🚨";
     status.style.color = "#ff3b30";
-    beep.play().catch(() => {
-        status.innerHTML = "اضغط هنا لتشغيل الصوت 🔊";
-        window.onclick = () => { beep.play(); };
-    });
+    window.onclick = () => { beep.play(); };
   }
 
   async function startSystem() {
@@ -85,7 +82,7 @@
         target_url: window.location.href.split('?')[0] + "?alarm=true"
       })
     });
-    if(response.ok) status.innerHTML = "✅ تم إرسال التنبيه للكل";
+    if(response.ok) status.innerHTML = "✅ تم إرسال التنبيه";
   }
 
   function urlBase64ToUint8Array(base64String) {
