@@ -1,7 +1,8 @@
 {
-  "name": "إنذار الطوارئ",
+  "name": "نظام إنذار الطوارئ",
   "short_name": "الطوارئ",
-  "start_url": "index.html",
+  "description": "نظام إنذار الطوارئ للعراب سلومي",
+  "start_url": "/alert/index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#ff3b30",
@@ -10,7 +11,8 @@
     {
       "src": "https://cdn-icons-png.flaticon.com/512/559/559343.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "gcm_sender_id": "482941778795"
