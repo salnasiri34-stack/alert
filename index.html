@@ -6,7 +6,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>نظام سلومي</title>
+  <title>نظام سلومي الفيدرالي</title>
   
   <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
   <script>
@@ -27,33 +27,45 @@
   </script>
 
   <style>
-    body { font-family: -apple-system, sans-serif; background: #000; color: #fff; text-align: center; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
-    .card { width: 85%; max-width: 400px; padding: 40px 20px; border-radius: 30px; background: #111; border: 1px solid #333; }
-    .status { background: #222; padding: 10px; border-radius: 10px; margin: 20px 0; color: #34c759; font-weight: bold; }
-    .btn { width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; background: #fff; color: #000; }
+    body { font-family: -apple-system, sans-serif; background: #000; color: #fff; text-align: center; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+    .card { width: 85%; max-width: 400px; padding: 40px 20px; border-radius: 30px; background: #111; border: 1px solid #333; box-shadow: 0 10px 50px rgba(0,0,0,0.7); }
+    #logo { font-size: 70px; cursor: pointer; user-select: none; margin-bottom: 10px; }
+    .status-box { background: #1a1a1a; padding: 12px; border-radius: 12px; margin: 15px 0; border: 1px solid #222; }
+    #statusText { color: #34c759; font-weight: bold; }
+    .btn { width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; transition: 0.3s; }
+    #subBtn { background: #fff; color: #000; }
     #adminArea { display: none; margin-top: 25px; border-top: 1px solid #333; padding-top: 20px; }
-    .inp { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #000; border: 1px solid #444; color: #fff; box-sizing: border-box; }
+    .inp { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #000; border: 1px solid #444; color: #fff; box-sizing: border-box; text-align: center; }
     #sendBtn { background: #ff3b30; color: #fff; }
   </style>
 </head>
 <body>
+
 <div class="card">
-  <div id="logo" style="font-size: 70px; cursor: pointer;">🚨</div>
-  <h2>مركز التحكم الفيدرالي</h2>
-  <div id="status">بانتظار التفعيل..</div>
+  <div id="logo">🚨</div>
+  <h2 style="margin:0;">مركز التحكم</h2>
+  <div style="color: #666; font-size: 14px; margin-bottom: 10px;">نظام السيد سلومي</div>
+  
+  <div class="status-box">
+    <span id="statusText">بانتظار التفعيل..</span>
+  </div>
+  
   <button class="btn" id="subBtn" onclick="startSubscribe()">🔔 تفعيل التنبيهات</button>
+
   <div id="adminArea">
-    <input type="text" id="t" class="inp" placeholder="العنوان..">
-    <textarea id="b" class="inp" placeholder="الرسالة.."></textarea>
+    <input type="text" id="t" class="inp" placeholder="عنوان التنبيه">
+    <textarea id="b" class="inp" placeholder="محتوى الرسالة"></textarea>
     <button class="btn" id="sendBtn" onclick="broadcast()">بث الإشارة النووية 🚀</button>
   </div>
 </div>
+
 <script>
+  // فحص الحالة كل ثانيتين
   setInterval(() => {
     OneSignal.push(function() {
       OneSignal.getNotificationPermission(function(perm) {
         if(perm === 'granted') {
-          document.getElementById('status').innerHTML = "<span class='status'>متصل بنجاح ✅</span>";
+          document.getElementById('statusText').innerText = "متصل بنجاح ✅";
           document.getElementById('subBtn').style.display = "none";
         }
       });
@@ -61,23 +73,54 @@
   }, 2000);
 
   async function broadcast() {
-    const title = document.getElementById('t').value || "تنبيه";
-    const body = document.getElementById('b').value || "رسالة من سلومي";
+    const title = document.getElementById('t').value || "تنبيه عاجل";
+    const body = document.getElementById('b').value || "رسالة من نظام سلومي";
+    const btn = document.getElementById('sendBtn');
+    
+    btn.innerText = "جاري البث... 📡";
+    btn.disabled = true;
+
+    // استخدام جسر العبور لتخطي حماية المتصفح
+    const proxy = "https://cors-anywhere.herokuapp.com/";
+    const url = "https://onesignal.com/api/v1/notifications";
+
     try {
-      await fetch("https://onesignal.com/api/v1/notifications", {
+      const response = await fetch(proxy + url, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Basic os_v2_app_f3iq3hzjczfddet3niv6u4de3lcuzpyuysuuxz4i56gbnugat4cakvbjm5wuc4zbmjjbibsfzxr24xqabovt57hw7gmqkbbihlondia" },
-        body: JSON.stringify({ app_id: "2ed10d9f-2916-4a31-927b-6a2bea7064da", included_segments: ["Total Subscriptions"], headings: {"en": title}, contents: {"en": body} })
+        headers: { 
+          "Content-Type": "application/json", 
+          "Authorization": "Basic os_v2_app_f3iq3hzjczfddet3niv6u4de3lcuzpyuysuuxz4i56gbnugat4cakvbjm5wuc4zbmjjbibsfzxr24xqabovt57hw7gmqkbbihlondia" 
+        },
+        body: JSON.stringify({ 
+          app_id: "2ed10d9f-2916-4a31-927b-6a2bea7064da", 
+          included_segments: ["Total Subscriptions"], 
+          headings: {"en": title}, 
+          contents: {"en": body} 
+        })
       });
-      alert("تم الإرسال!");
-    } catch(e) { alert("استخدم لوحة التحكم للإرسال."); }
+
+      if (response.ok) {
+        alert("تم البث بنجاح! 🚨 وصلت الرسالة لكل الأجهزة");
+      } else {
+        alert("تنبيه: اضغط على الرابط لتفعيل جسر العبور أولاً ثم جرب مرة أخرى.");
+        window.open("https://cors-anywhere.herokuapp.com/corsdemo", "_blank");
+      }
+    } catch(e) {
+      alert("حدث خطأ في الاتصال بالسيرفر.");
+    }
+    
+    btn.innerText = "بث الإشارة النووية 🚀";
+    btn.disabled = false;
   }
 
+  // الدخول لغرفة العمليات بـ 5 ضغطات على اللوجو
   let c = 0;
   document.getElementById('logo').onclick = () => {
     c++;
     if(c >= 5) {
-      if(prompt("رمز المرور:") === "1313") document.getElementById('adminArea').style.display = "block";
+      if(prompt("رمز الدخول العسكري:") === "1313") {
+        document.getElementById('adminArea').style.display = "block";
+      }
       c = 0;
     }
   };
