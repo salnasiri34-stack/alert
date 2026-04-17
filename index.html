@@ -6,97 +6,64 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="manifest" href="manifest.json">
   <title>نظام إنذار الطوارئ 🚨</title>
-  
   <script src="https://cdn.webpushr.com/app.min.js" async></script>
-
   <style>
     :root { --red: #ff3b30; --white: #ffffff; --card: #1c1c1e; }
     body { font-family: -apple-system, system-ui, sans-serif; background: #000; color: #fff; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-    
-    /* زر دخول العراب السري */
     .admin-trigger { position: absolute; top: 20px; right: 20px; width: 45px; height: 45px; background: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #fff; z-index: 100; font-size: 20px; }
-    
     .card { width: 85%; max-width: 380px; padding: 30px 20px; border-radius: 30px; background: var(--card); border: 1px solid #333; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
     h1 { color: var(--red); font-size: 24px; margin-bottom: 5px; }
     #status { color: #8e8e93; font-size: 14px; margin-bottom: 20px; }
-    
     .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; -webkit-tap-highlight-color: transparent; }
     #activateBtn { background: var(--white); color: #000; }
-    
-    /* لوحة التحكم */
     #adminPanel { display: none; margin-top: 15px; border-top: 1px solid #444; padding-top: 15px; }
     input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #444; background: #000; color: #fff; box-sizing: border-box; text-align: right; }
-    
-    /* صندوق الإنذار المستلم */
     #alertBox { display: none; background: rgba(255, 59, 48, 0.2); border: 2px solid var(--red); padding: 15px; border-radius: 15px; margin-bottom: 15px; animation: pulse 1s infinite; }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
   </style>
 </head>
 <body>
-
 <div class="admin-trigger" onclick="checkAdmin()">⚙️</div>
-
 <div class="card">
   <div id="alertBox">
     <h2 style="color: var(--red); margin: 0;">⚠️ إنذار نشط الآن</h2>
     <p id="msgDetails" style="margin-top: 10px;"></p>
   </div>
-  
   <h1>نظام الطوارئ 🚨</h1>
   <p id="status">جاري فحص حالة السيرفر... 📡</p>
   <button class="btn" id="activateBtn" onclick="webpushr('showPrompt')">🔔 تشغيل الإشعارات</button>
-
   <div id="adminPanel">
-    <input type="text" id="aName" placeholder="اسم المرسل (سلومي)">
-    <input type="text" id="aType" placeholder="نوع الإنذار (مثلاً: حريق)">
+    <input type="text" id="aName" placeholder="اسمك (المرسل)">
+    <input type="text" id="aType" placeholder="نوع الإنذار">
     <textarea id="aDesc" rows="2" placeholder="اكتب التفاصيل هنا..."></textarea>
     <button class="btn" style="background: #ff9500; color: #000;" onclick="broadcast()">🚀 إرسال الإنذار للكل</button>
   </div>
 </div>
-
 <script>
-  // حل مشكلة الـ 404 بتوجيه المسار لمجلد alert
   var _webpushr_sw = '/alert/webpushr-sw.js'; 
-
   window.webpushr = window.webpushr || function(){(window.webpushr.q = window.webpushr.q || []).push(arguments)};
   webpushr('setup',{'key':'4f28dee84926f7456d26408a22d82862'});
-
-  // تحديث العداد والواجهة عند الاشتراك
   setInterval(() => {
     if(localStorage.getItem('_webpushr_p') === 'granted'){
       document.getElementById('status').innerText = "✅ متصل! العداد يحسبك الآن";
-      document.getElementById('activateBtn').innerText = "النظام يعمل ✅";
-      document.getElementById('activateBtn').style.background = "#2c2c2e";
-      document.getElementById('activateBtn').style.color = "#8e8e93";
-      document.getElementById('activateBtn').onclick = null;
+      document.getElementById('activateBtn').style.display = 'none';
     }
   }, 1000);
-
   function checkAdmin() {
     if (prompt("رمز دخول العراب:") === "1313") {
       document.getElementById('adminPanel').style.display = 'block';
-      document.getElementById('activateBtn').style.display = 'none';
     }
   }
-
   async function broadcast() {
     const info = `إنذار ${document.getElementById('aType').value} من ${document.getElementById('aName').value}: ${document.getElementById('aDesc').value}`;
     const link = window.location.origin + window.location.pathname + "?m=" + encodeURIComponent(info);
-    
     await fetch('https://api.webpushr.com/v1/notification/send/all', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'webpushrKey': '4f28dee84926f7456d26408a22d82862', 'webpushrAuthToken': '120657' },
-      body: JSON.stringify({
-        title: "⚠️ إنذار طوارئ عاجل",
-        message: info,
-        target_url: link,
-        icon: "https://img.icons8.com/color/96/warning-shield.png"
-      })
+      body: JSON.stringify({ title: "⚠️ إنذار طوارئ عاجل", message: info, target_url: link, icon: "https://img.icons8.com/color/96/warning-shield.png" })
     });
-    alert("✅ تم إرسال الإنذار لجميع المشتركين!");
+    alert("✅ تم إرسال الإنذار!");
   }
-
-  // عرض محتوى الإنذار عند فتح الرابط من الإشعار
   const params = new URLSearchParams(window.location.search);
   if (params.has('m')) {
     document.getElementById('alertBox').style.display = 'block';
