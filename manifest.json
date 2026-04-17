@@ -1,20 +1,17 @@
 {
-  "name": "رادار سلومي",
-  "short_name": "الإنذار",
+  "name": "إنذار الطوارئ",
+  "short_name": "الطوارئ",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#0a0a0a",
+  "background_color": "#000000",
   "theme_color": "#ff3b30",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://img.icons8.com/emoji/96/alert-light.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://img.icons8.com/emoji/96/alert-light.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/559/559343.png",
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "gcm_sender_id": "482941778795"
 }
