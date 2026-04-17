@@ -1,9 +1,7 @@
 {
-  "name": "نظام التنبيه العاجل",
-  "short_name": "التنبيه",
-  "description": "لوحة تحكم سلومي الرسمية",
+  "name": "رادار سلومي",
+  "short_name": "الإنذار",
   "start_url": "index.html",
-  "scope": ".",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#ff3b30",
