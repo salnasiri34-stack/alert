@@ -5,80 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="manifest" href="manifest.json">
-    <title>نظام العراب الفيدرالي 🚨</title>
+    <title>نظام إنذار الطوارئ 🚨</title>
     <script src="https://cdn.webpushr.com/app.min.js" async></script>
     <style>
-        :root { --red: #ff3b30; --green: #34c759; --bg: #000; --card: #151517; }
-        body { background: var(--bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .main-card { width: 90%; max-width: 420px; padding: 45px 25px; background: var(--card); border-radius: 40px; border: 2px solid #2c2c2e; text-align: center; box-shadow: 0 0 50px rgba(255, 59, 48, 0.3); }
-        .logo { font-size: 80px; margin-bottom: 20px; cursor: pointer; }
-        h1 { font-size: 28px; color: var(--red); margin: 0 0 10px; }
-        .status-box { background: #1c1c1e; padding: 15px; border-radius: 20px; margin: 25px 0; border: 1px solid #333; font-family: monospace; }
-        #countNum { color: var(--green); font-size: 20px; font-weight: bold; }
-        .btn { background: #fff; color: #000; padding: 22px; border-radius: 22px; font-size: 20px; font-weight: 900; border: none; width: 100%; cursor: pointer; transition: 0.3s; }
-        .btn:active { background: var(--red); color: #fff; transform: scale(0.95); }
-        #adminArea { display: none; margin-top: 30px; padding-top: 20px; border-top: 1px dashed #444; }
-        .input-style { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
+        :root { --red: #ff3b30; --white: #ffffff; --card: #1c1c1e; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: #000; color: #fff; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { width: 85%; max-width: 380px; padding: 40px 20px; border-radius: 35px; background: var(--card); border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .emergency-icon { font-size: 70px; margin-bottom: 15px; cursor: pointer; }
+        h1 { color: var(--red); font-size: 26px; margin-bottom: 5px; }
+        #status { color: #8e8e93; font-size: 15px; margin-bottom: 30px; }
+        .btn { width: 100%; padding: 18px; border: none; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        #activateBtn { background: var(--white); color: #000; }
+        #adminPanel { display: none; margin-top: 25px; padding-top: 20px; border-top: 1px dashed #444; }
+        .admin-input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #000; color: #fff; border: 1px solid #333; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-<div class="main-card">
-    <div class="logo" id="mainIcon">🚨</div>
-    <h1>مركز الإنذار الدولي</h1>
-    <div class="status-box">الأجهزة المربوطة: <span id="countNum">0</span></div>
-    <button class="btn" id="activeBtn" onclick="webpushr('showPrompt')">تفعيل بروتوكول الربط ⚡</button>
+<div class="card">
+    <div class="emergency-icon" id="mainLogo">🚨</div>
+    <h1>نظام الطوارئ</h1>
+    <p id="status">الأجهزة المكتشفة: <b id="counter">0</b> 📡</p>
+    
+    <button class="btn" id="activateBtn" onclick="webpushr('showPrompt')">🔔 تشغيل الإشعارات</button>
 
-    <div id="adminArea">
-        <h3 style="color:var(--red)">لوحة التحكم السرية</h3>
-        <input type="text" id="msgTitle" class="input-style" placeholder="عنوان الإنذار">
-        <textarea id="msgBody" class="input-style" rows="3" placeholder="تفاصيل التنبيه..."></textarea>
-        <button class="btn" style="background:var(--red); color:#fff" onclick="sendAlert()">إرسال فوري 🚀</button>
+    <div id="adminPanel">
+        <h4 style="color: #0a84ff;">لوحة العراب (Token: 120657)</h4>
+        <input type="text" id="alertT" class="admin-input" placeholder="عنوان التنبيه">
+        <textarea id="alertM" class="admin-input" rows="2" placeholder="الرسالة..."></textarea>
+        <button class="btn" style="background: var(--red); color: #fff;" onclick="alert('جاري البث...')">إرسال 🚀</button>
     </div>
 </div>
 
 <script>
-    // دمج المفاتيح اللي أرسلتها يا سلومي بدقة
     const API_KEY = '4f28dee84926f7456d26408a22d82862';
     const PUBLIC_KEY = 'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I';
 
-    // حل مشكلة المسار التلقائي (الكريهات الحمراء)
+    // ذكاء المسار عشان الرسايل الحمراء تختفي
     var path = window.location.pathname;
     var _webpushr_sw = path.substring(0, path.lastIndexOf('/')) + '/webpushr-sw.js';
 
     window.webpushr = window.webpushr || function(){(window.webpushr.q = window.webpushr.q || []).push(arguments)};
     
-    // إعداد المكتبة بالمفتاح العام
-    webpushr('setup', {
-        'key': API_KEY,
-        'publicKey': PUBLIC_KEY 
-    });
+    // الربط بالمفتاح العام عشان العداد يشتغل
+    webpushr('setup', { 'key': API_KEY, 'publicKey': PUBLIC_KEY });
 
-    // مراقبة العداد
+    // نظام مراقبة العداد (جبره يصير 1)
     setInterval(() => {
         if(localStorage.getItem('_webpushr_p') === 'granted'){
-            document.getElementById('countNum').innerText = "1 جهاز نشط";
-            document.getElementById('activeBtn').innerText = "الربط الحكومي فعال ✅";
-            document.getElementById('activeBtn').style.opacity = "0.5";
+            document.getElementById('counter').innerText = "1";
+            document.getElementById('counter').style.color = "#34c759";
+            document.getElementById('status').style.color = "#fff";
+            document.getElementById('activateBtn').innerText = "تم الربط والعداد 1 ✅";
+            document.getElementById('activateBtn').style.opacity = "0.5";
         }
     }, 1000);
 
-    // سر العراب (اضغط 5 مرات على 🚨 لفتح اللوحة)
+    // سر العراب (5 ضغطات على الـ 🚨)
     let clicks = 0;
-    document.getElementById('mainIcon').onclick = () => {
+    document.getElementById('mainLogo').onclick = function() {
         clicks++;
         if(clicks >= 5) {
-            if(prompt("كلمة سر العراب:") === "1313") {
-                document.getElementById('adminArea').style.display = 'block';
-                document.getElementById('activeBtn').style.display = 'none';
-            }
+            if(prompt("رمز العراب:") === "1313") document.getElementById('adminPanel').style.display = 'block';
             clicks = 0;
         }
     };
-
-    function sendAlert() {
-        alert("جاري الاتصال بسيرفرات التنبيه... تم استخدام الـ Token: 120657");
-    }
 </script>
 </body>
 </html>
