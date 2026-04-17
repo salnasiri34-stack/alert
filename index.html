@@ -1,85 +1,117 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-    <title>نظام إنذار العرّاب 🚨</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>نظام سلومي الفيدرالي 🚨</title>
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; text-align: center; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+    .card { width: 90%; max-width: 400px; padding: 35px; border-radius: 30px; background: #111; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); }
+    h1 { font-size: 26px; margin-bottom: 5px; color: #fff; }
+    .subtitle { color: #ff3b30; font-size: 14px; font-weight: bold; margin-bottom: 25px; letter-spacing: 1px; }
     
-    <script src="https://cdn.webpushr.com/app.min.js" async></script>
+    /* العداد هنا يا سلومي */
+    .status-box { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-bottom: 25px; border: 1px solid #222; }
+    #counter-text { font-size: 16px; color: #aaa; }
+    #countValue { color: #34c759; font-weight: 900; font-size: 20px; }
 
-    <style>
-        :root { --danger: #ff3b30; --green: #34c759; --bg: #000; --card: #121212; }
-        body { background: var(--bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        
-        .main-panel { width: 88%; max-width: 420px; padding: 50px 25px; background: var(--card); border-radius: 40px; border: 2px solid #222; text-align: center; box-shadow: 0 0 60px rgba(255, 59, 48, 0.25); position: relative; }
-        .logo { font-size: 85px; margin-bottom: 25px; cursor: pointer; user-select: none; filter: drop-shadow(0 0 10px rgba(255,59,48,0.5)); }
-        
-        h1 { font-size: 30px; color: var(--danger); margin: 0 0 10px; font-weight: 900; letter-spacing: -1px; }
-        .status-badge { background: #1c1c1e; padding: 14px 24px; border-radius: 50px; font-size: 15px; color: #888; border: 1px solid #333; margin-bottom: 35px; display: inline-block; }
-        #countValue { color: var(--green); font-weight: 900; font-size: 20px; }
-
-        .btn { background: #fff; color: #000; padding: 22px; border-radius: 24px; font-size: 20px; font-weight: 900; border: none; width: 100%; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .btn:active { transform: scale(0.92); background: var(--danger); color: #fff; }
-        
-        /* تأثير النبض النووي */
-        .pulse { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 40px; border: 2px solid var(--danger); animation: pulse-red 2s infinite; pointer-events: none; opacity: 0; }
-        @keyframes pulse-red { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.1); opacity: 0; } }
-    </style>
+    .btn { width: 100%; padding: 20px; margin: 10px 0; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    #activateBtn { background: #fff; color: #000; }
+    #alertBtn { background: #ff3b30; color: #fff; display: none; }
+    
+    .alarm-active { animation: pulse-red 0.5s infinite; }
+    @keyframes pulse-red { 0% { background: #000; } 50% { background: #400; } 100% { background: #000; } }
+  </style>
 </head>
-<body>
+<body id="bg">
 
-<div class="main-panel">
-    <div class="pulse" id="pulseEffect" style="display:none"></div>
-    <div class="logo" id="alarmLogo">🚨</div>
-    <h1>مركز الإنذار الدولي</h1>
-    <div class="status-badge">الأجهزة النشطة بالرادار: <span id="countValue">0</span></div>
-    
-    <button class="btn" id="mainBtn" onclick="webpushr('showPrompt')">تفعيل نظام التنبيه ⚡</button>
+<div class="card">
+  <h1>نظام الإنذار</h1>
+  <div class="subtitle">العرّاب سلومي</div>
+  
+  <div class="status-box">
+    <span id="counter-text">الأجهزة المربوطة: <b id="countValue">0</b> 📡</span>
+  </div>
+
+  <button class="btn" id="activateBtn" onclick="startSystem()">🔔 تفعيل استقبال التنبيهات</button>
+  <button class="btn" id="alertBtn" onclick="triggerGlobalAlarm()">🚨 إرسال تنبيه للجميع</button>
+  <audio id="beep" src="https://www.soundjay.com/buttons/sounds/beep-11.mp3" loop></audio>
 </div>
 
 <script>
-    // مفاتيح العرّاب المعتمدة (REST API + Public Key)
-    const MY_KEY = '4f28dee84926f7456d26408a22d82862';
-    const PUBLIC_VAPID = 'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I';
+  // المفاتيح اللي اشتغلت معك (ثبتناها)
+  const KEYS = {
+    API_KEY: '4f28dee84926f7456d26408a22d82862', 
+    AUTH_TOKEN: '11696',
+    VAPID: 'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I'
+  };
 
-    // إنهاء مشكلة الـ 404 للأبد (تحديد المسار الديناميكي لملف الـ SW)
-    var path = window.location.pathname;
-    var _webpushr_sw = path.substring(0, path.lastIndexOf('/')) + '/webpushr-sw.js';
+  const statusVal = document.getElementById('countValue');
 
-    window.webpushr = window.webpushr || function(){(window.webpushr.q = window.webpushr.q || []).push(arguments)};
-    
-    // تشغيل المحرك الرسمي
-    webpushr('setup', {
-        'key': MY_KEY,
-        'publicKey': PUBLIC_VAPID 
+  // فحص الحالة كل ثانية عشان العداد يقلب 1
+  setInterval(() => {
+    if (Notification.permission === 'granted') {
+      statusVal.innerText = "1";
+      document.getElementById('activateBtn').style.display = "none";
+      document.getElementById('alertBtn').style.display = "block";
+    }
+  }, 1000);
+
+  async function startSystem() {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        const reg = await navigator.serviceWorker.register('sw.js');
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(KEYS.VAPID)
+        });
+
+        // ربط السيرفر
+        await fetch('https://api.webpushr.com/v1/subscriber/add', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json', 
+            'webpushrKey': KEYS.API_KEY, 
+            'webpushrAuthToken': KEYS.AUTH_TOKEN 
+          },
+          body: JSON.stringify(sub)
+        });
+      }
+    } catch (e) { 
+      alert("الرجاء إضافة الموقع للشاشة الرئيسية (Add to Home Screen) أولاً"); 
+    }
+  }
+
+  async function triggerGlobalAlarm() {
+    alert("جاري بث الإشارة النووية... 🚀");
+    await fetch('https://api.webpushr.com/v1/notification/send/all', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'webpushrKey': KEYS.API_KEY, 
+        'webpushrAuthToken': KEYS.AUTH_TOKEN 
+      },
+      body: JSON.stringify({
+        title: "🚨 تنبيه عاجل من سلومي",
+        message: "حالة طوارئ قصوى، افتح الرادار فوراً",
+        target_url: window.location.href
+      })
     });
+  }
 
-    // سحر العداد: مراقبة لحظية للحالة
-    setInterval(() => {
-        if(localStorage.getItem('_webpushr_p') === 'granted'){
-            document.getElementById('countValue').innerText = "1 جهاز";
-            document.getElementById('mainBtn').innerText = "نظام الربط نشط ✅";
-            document.getElementById('mainBtn').style.opacity = "0.4";
-            document.getElementById('mainBtn').style.pointerEvents = "none";
-            document.getElementById('pulseEffect').style.display = "block";
-            document.getElementById('countValue').style.textShadow = "0 0 10px #34c759";
-        }
-    }, 1000);
-
-    // كلمة سر العرّاب لفتح قنوات الإرسال (5 ضغطات على 🚨)
-    let tapCount = 0;
-    document.getElementById('alarmLogo').onclick = () => {
-        tapCount++;
-        if(tapCount >= 5) {
-            if(prompt("رمز دخول العرّاب سلومي:") === "1313") {
-                alert("تم فتح بروتوكول الإرسال الفيدرالي باستخدام التوكن 120657 🫡");
-            }
-            tapCount = 0;
-        }
-    };
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
 </script>
 </body>
 </html>
