@@ -3,66 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚨 إنذار سلومي الرسمي</title>
+    <title>🚨 نظام إنذار سلومي</title>
+    <link rel="manifest" href="manifest.json">
     
     <script>(function(w,d,s,id){if(typeof(w.webpushr)!=='undefined') return;w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};var js,fjs=d.getElementsByTagName(s)[0];js=d.createElement(s);js.id=id;js.async=1;js.src='https://cdn.webpushr.com/app.min.js';fjs.parentNode.insertBefore(js,fjs);}(window,document,'script','webpushr-jssdk'));webpushr('setup',{'key':'BF2Wrik9KIE_JRdYkmlh62-nOR_KqsQVqibivdl8_l2zhVp5uNsoFlRnyIn3hy8mi7REa2yz8IUMVgMAH40w3ZI'});</script>
 
     <style>
-        body { font-family: sans-serif; background-color: #000; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        .emergency-header { background: #ff0000; color: white; padding: 15px; font-weight: bold; font-size: 26px; position: fixed; top: 0; width: 100%; z-index: 100; }
-        .container { padding: 30px; border: 4px solid #fff; border-radius: 10px; margin: 20px; background: #000; }
-        h1 { color: white; font-size: 32px; margin: 20px 0; }
-        .btn-active { background: white; color: black; border: none; padding: 20px 50px; font-size: 22px; font-weight: bold; border-radius: 5px; cursor: pointer; }
-        .alarm-active { animation: flash-bg 0.4s infinite; }
-        @keyframes flash-bg { 0% { background-color: #ff0000; } 50% { background-color: #000; } 100% { background-color: #ff0000; } }
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; }
+        .alarm-btn { background: #ff0000; color: white; border: 4px solid #fff; padding: 25px; font-size: 24px; font-weight: bold; border-radius: 15px; cursor: pointer; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .active { animation: flash 0.3s infinite; }
+        @keyframes flash { 0% { background: #ff0000; } 50% { background: #000; } 100% { background: #ff0000; } }
     </style>
 </head>
-<body id="mainBody">
-    <div class="emergency-header">تنبيه طوارئ عاجل</div>
-    <div class="container">
-        <img src="https://cdn-icons-png.flaticon.com/512/564/564619.png" width="120">
-        <h1>تحذيرات سلومي</h1>
-        <p>يجب تفعيل التنبيهات واضافة الموقع للشاشة الرئيسية</p>
-        <button class="btn-active" onclick="enableEverything()">تفعيل النظام الآن</button>
-    </div>
-
-    <audio id="emergencySound" src="https://www.soundjay.com/buttons/sounds/beep-11.mp3" loop preload="auto"></audio>
+<body id="bg">
+    <h1>🚨 نظام الطوارئ</h1>
+    <button class="alarm-btn" onclick="activate()">تفعيل واستقبال الإنذارات</button>
+    
+    <audio id="snd" src="https://www.soundjay.com/buttons/sounds/beep-11.mp3" loop></audio>
 
     <script>
-        var audio = document.getElementById('emergencySound');
-        var body = document.getElementById('mainBody');
+        const audio = document.getElementById('snd');
+        const bg = document.getElementById('bg');
 
-        function enableEverything() {
-            // تشغيل الصوت لثانية واحدة عشان الآيفون يسمح به مستقبلاً
-            audio.play().then(() => {
-                audio.pause();
-                audio.currentTime = 0;
-            });
-
-            // طلب إذن الإشعارات يدوياً
-            if ('Notification' in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        alert('✅ تم تفعيل الإشعارات بنجاح!');
-                    } else {
-                        alert('❌ لم يتم تفعيل الإشعارات، تأكد من الإعدادات');
-                    }
-                });
-            }
-            
-            // ربط المستخدم بـ Webpushr
+        function activate() {
+            // طلب الإذن يدويًا لضمان الربط
             webpushr('fetch_id', function(sid) {
-                console.log('ID: ' + sid);
+                if(sid) alert("✅ تم الربط بنجاح! رقمك: " + sid);
             });
+            // تشغيل وهمي للصوت عشان الآيفون يفتح السماعة
+            audio.play().then(() => { audio.pause(); });
         }
 
-        // كود لتشغيل الصوت تلقائياً عند الدخول من إشعار
-        window.onload = function() {
-            if(window.location.search.includes('notification=true')) {
-                audio.play();
-                body.classList.add('alarm-active');
-            }
-        };
+        // تشغيل الإنذار فوراً إذا دخلت من الإشعار
+        if(window.location.search.includes('notification=true')) {
+            audio.play();
+            bg.classList.add('active');
+        }
     </script>
 </body>
 </html>
