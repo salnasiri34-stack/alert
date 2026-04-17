@@ -2,7 +2,7 @@ self.addEventListener('install', (e) => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
 
 self.addEventListener('push', (event) => {
-  let data = { title: "🚨 تنبيه عاجل", body: "افتح الرادار فوراً", url: "/?alarm=true" };
+  let data = { title: "🚨 تنبيه عاجل", body: "افتح الرادار فوراً", url: "index.html?alarm=true" };
   if (event.data) {
     try {
       const incoming = event.data.json();
@@ -15,7 +15,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "https://cdn-icons-png.flaticon.com/512/564/564619.png",
+      icon: "https://img.icons8.com/emoji/96/alert-light.png",
+      badge: "https://img.icons8.com/emoji/96/alert-light.png",
       vibrate: [500, 100, 500],
       data: { url: data.url },
       requireInteraction: true
@@ -28,7 +29,7 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then((list) => {
       const url = event.notification.data.url;
-      for (const client of list) { if (client.url === url && 'focus' in client) return client.focus(); }
+      for (const client of list) { if (client.url.includes(url) && 'focus' in client) return client.focus(); }
       return clients.openWindow(url);
     })
   );
