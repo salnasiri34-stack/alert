@@ -6,9 +6,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>رادار العراب 🚨</title>
-  
-  <script src="https://cdn.webpushr.com/app.min.js" async></script>
-  
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: #fff; text-align: center; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
     .card { width: 85%; max-width: 380px; padding: 40px 20px; border-radius: 30px; background: #1c1c1e; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; }
@@ -25,34 +22,57 @@
 <div class="card">
   <h1>نظام التنبيه المركزي 🚨</h1>
   <div id="status">جاري فحص اتصال الرادار... 📡</div>
-  <button class="btn" id="activateBtn" onclick="webpushr('showPrompt')">🔔 تفعيل استقبال التنبيهات</button>
+  <button class="btn" id="activateBtn" onclick="startRegistration()">🔔 تفعيل استقبال التنبيهات</button>
   <button class="btn" id="alertBtn" onclick="triggerAlarm()">🚨 إرسال إنذار عام</button>
 </div>
 
 <script>
-  // 3. كود التجهيز الأساسي
-  window.webpushr = window.webpushr || function(){(window.webpushr.q = window.webpushr.q || []).push(arguments)};
-  webpushr('setup',{'key':'4f28dee84926f7456d26408a22d82862'});
+  // بياناتك الخاصة من Webpushr
+  const CONFIG = {
+    key: '4f28dee84926f7456d26408a22d82862',
+    token: '120657',
+    vapid: 'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I'
+  };
 
-  // مراقبة حالة الاشتراك لإخفاء الزر
-  setInterval(function(){
-      if(localStorage.getItem('_webpushr_p') === 'granted'){
-          document.getElementById('status').innerText = "✅ الرادار جاهز! العداد سيصبح 1 الآن.";
-          document.getElementById('activateBtn').style.display = "none";
-          document.getElementById('alertBtn').style.display = "block";
+  async function startRegistration() {
+    const status = document.getElementById('status');
+    status.innerText = "⏳ جاري محاولة الربط بالسيرفر...";
+
+    try {
+      // 1. طلب إذن الإشعارات
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        status.innerText = "❌ لازم توافق على الإشعارات من إعدادات الجوال";
+        return;
       }
-  }, 1000);
+
+      // 2. تسجيل الـ Service Worker (تم تغيير الاسم هنا فقط إلى webpushr-sw.js)
+      const reg = await navigator.serviceWorker.register('webpushr-sw.js');
+      
+      // 3. الربط مع Webpushr
+      navigator.serviceWorker.ready.then((registration) => {
+        status.innerText = "✅ الرادار جاهز! العداد في الكمبيوتر سيصبح 1 الآن.";
+        document.getElementById('activateBtn').style.display = "none";
+        document.getElementById('alertBtn').style.display = "block";
+      });
+
+    } catch (err) {
+      console.error(err);
+      status.innerText = "⚠️ حدث خطأ في الربط. تأكد أنك فتحت التطبيق من الشاشة الرئيسية.";
+    }
+  }
 
   async function triggerAlarm() {
     const status = document.getElementById('status');
-    status.innerText = "🚀 جاري إرسال الإنذار للجميع...";
+    status.innerText = "🚀 جاري إرسال الإنذار لجميع المشتركين...";
+    
     try {
       const response = await fetch('https://api.webpushr.com/v1/notification/send/all', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json', 
-          'webpushrKey': '4f28dee84926f7456d26408a22d82862', 
-          'webpushrAuthToken': '120657' 
+          'webpushrKey': CONFIG.key, 
+          'webpushrAuthToken': CONFIG.token 
         },
         body: JSON.stringify({
           title: "🚨 تنبيه عاجل من سلومي",
@@ -60,7 +80,12 @@
           target_url: window.location.href
         })
       });
-      if (response.ok) status.innerText = "✅ تم الإرسال بنجاح!";
+
+      if (response.ok) {
+        status.innerText = "✅ تم الإرسال بنجاح للجميع!";
+      } else {
+        status.innerText = "❌ فشل الإرسال. تأكد من إعدادات الـ API.";
+      }
     } catch (err) {
       status.innerText = "❌ خطأ في الاتصال بالسيرفر.";
     }
