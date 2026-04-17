@@ -4,23 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>نظام الطوارئ | العرّاب</title>
+  <title>رادار سلومي 🚨</title>
   
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.page.js" defer></script>
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
   <script>
     window.OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
       OneSignal.init({
         appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
-        serviceWorkerParam: { scope: "/alert/" },
-        serviceWorkerPath: "OneSignalSDKWorker.js",
+        safari_web_id: "web.onesignal.auto.102660d1-030b-4680-8646-7787498c394c",
+        notifyButton: { enable: false }
       });
     });
 
-    // دالة طلب الإذن اللي بتفتح لك الرسالة فوراً
+    // هذا الزر اللي كان يشتغل معك ويطلع الإذن فوراً
     function subscribeUser() {
       OneSignal.push(function() {
-        OneSignal.Notifications.requestPermission();
+        OneSignal.showNativePrompt();
       });
     }
   </script>
@@ -28,50 +28,39 @@
   <style>
     body { font-family: -apple-system, sans-serif; background: #000; color: #fff; text-align: center; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
     .card { width: 90%; max-width: 400px; padding: 35px; border-radius: 30px; background: #111; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+    #mainLogo { font-size: 80px; cursor: pointer; user-select: none; margin-bottom: 10px; }
     .status-box { background: #1a1a1a; padding: 15px; border-radius: 15px; margin: 20px 0; border: 1px solid #222; }
-    #statusText { color: #34c759; font-weight: bold; }
-    .btn { width: 100%; padding: 20px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; transition: 0.3s; margin-top: 10px; }
+    .btn { width: 100%; padding: 20px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; transition: 0.3s; }
     #activateBtn { background: #fff; color: #000; }
     #adminPanel { display: none; margin-top: 20px; border-top: 1px dashed #444; padding-top: 20px; }
-    .admin-input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #000; color: #fff; border: 1px solid #333; box-sizing: border-box; font-size: 16px; }
+    .admin-input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #000; color: #fff; border: 1px solid #333; box-sizing: border-box; }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <div id="mainLogo" style="font-size: 75px; cursor: pointer; user-select: none;">🚨</div>
-  <h1>مركز الإنذار</h1>
-  <div style="color: #ff3b30; font-weight: bold;">النظام الفيدرالي للسيد سلومي</div>
+  <div id="mainLogo">🚨</div>
+  <h1>نظام العرّاب</h1>
+  <div style="color: #ff3b30; font-weight: bold;">تحذير: منطقة عمليات عسكرية</div>
   
   <div class="status-box">
-    <span>الحالة: <b id="statusText">جاهز للعمل</b></span>
+    <span id="statusText">جاهز للاستقبال ✅</span>
   </div>
 
-  <button class="btn" id="activateBtn" onclick="subscribeUser()">🔔 تفعيل استقبال التنبيهات</button>
+  <button class="btn" id="activateBtn" onclick="subscribeUser()">🔔 تفعيل الإشعارات</button>
 
   <div id="adminPanel">
-    <h3 style="color: #007aff;">غرفة القيادة</h3>
-    <input type="text" id="alertTitle" class="admin-input" placeholder="عنوان التنبيه...">
-    <textarea id="alertBody" class="admin-input" placeholder="محتوى الرسالة..."></textarea>
+    <input type="text" id="alertTitle" class="admin-input" placeholder="عنوان الإنذار">
+    <textarea id="alertBody" class="admin-input" placeholder="نص الرسالة"></textarea>
     <button id="sendBtn" class="btn" style="background: #ff3b30; color: #fff;" onclick="sendGlobalPush()">بث الإشارة النووية 🚀</button>
   </div>
 </div>
 
 <script>
-  // تحديث حالة الاتصال تلقائياً
-  setInterval(() => {
-    OneSignal.push(function() {
-      if (OneSignal.Notifications.permission) {
-        document.getElementById('statusText').innerText = "متصل بنجاح ✅";
-        document.getElementById('activateBtn').style.display = "none";
-      }
-    });
-  }, 2000);
-
-  // كود الإرسال النووي بمفاتيحك الخاصة
+  // كود الإرسال اللي يربط موقعك بـ OneSignal
   async function sendGlobalPush() {
-    const title = document.getElementById('alertTitle').value || "إنذار عاجل";
-    const message = document.getElementById('alertBody').value || "حالة طوارئ من نظام سلومي";
+    const title = document.getElementById('alertTitle').value || "إنذار من سلومي";
+    const message = document.getElementById('alertBody').value || "حالة طوارئ قصوى!";
     const btn = document.getElementById('sendBtn');
     
     btn.innerText = "جاري البث... 📡";
@@ -88,26 +77,28 @@
           app_id: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
           included_segments: ["All"],
           headings: {"en": title},
-          contents: {"en": message}
+          contents: {"en": message},
+          ios_sound: "emergency.wav" // هذي الإضافة للصوت
         })
       });
 
-      if (response.ok) alert("تم إرسال الإشارة لكل الجوالات! 🚨");
-      else alert("فشل الإرسال، راجع الإعدادات.");
+      if (response.ok) alert("تم إرسال التنبيه للجميع! 🚨");
+      else alert("خطأ في الإرسال.");
     } catch (e) {
-      alert("خطأ في الشبكة!");
+      alert("مشكلة في الاتصال.");
     }
     btn.innerText = "بث الإشارة النووية 🚀";
     btn.disabled = false;
   }
 
-  // الدخول السري
+  // الدخول السري (5 ضغطات على الجرس)
   let taps = 0;
   document.getElementById('mainLogo').onclick = () => {
     taps++;
     if(taps >= 5) {
       if(prompt("كلمة سر العرّاب:") === "1313") {
         document.getElementById('adminPanel').style.display = "block";
+        document.getElementById('activateBtn').style.display = "none";
       }
       taps = 0;
     }
