@@ -1,9 +1,15 @@
 {
-  "name": "نظام إنذار الطوارئ",
-  "short_name": "الطوارئ",
+  "name": "Federal Emergency System",
+  "short_name": "العراب",
   "start_url": "/alert/index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#ff3b30",
-  "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/559/559343.png", "sizes": "512x512", "type": "image/png" }]
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/559/559343.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
