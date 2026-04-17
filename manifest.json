@@ -1,6 +1,6 @@
 {
-  "name": "Federal System",
-  "short_name": "الإنذار",
+  "name": "Federal Emergency System",
+  "short_name": "نظام العرّاب",
   "start_url": "/alert/index.html",
   "display": "standalone",
   "background_color": "#000000",
