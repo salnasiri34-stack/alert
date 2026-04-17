@@ -3,38 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام تحذيرات سلومي</title>
+    <title>🚨 نظام إنذار سلومي الرسمي</title>
     
-    <script>(function(w,d, s, id) {if(typeof(w.webpushr)!=='undefined') return;w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};var js, fjs = d.getElementsByTagName(s)[0];js = d.createElement(s); js.id = id;js.async=1;js.src = "https://cdn.webpushr.com/app.min.js";fjs.parentNode.appendChild(js);}(window,document, 'script', 'webpushr-jssdk'));webpushr('setup',{'key':'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I' });</script>
-    
+    <script>(function(w,d,s,id){if(typeof(w.webpushr)!=='undefined') return;w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};var js,fjs=d.getElementsByTagName(s)[0];js=d.createElement(s);js.id=id;js.async=1;js.src='https://cdn.webpushr.com/app.min.js';fjs.parentNode.insertBefore(js,fjs);}(window,document,'script','webpushr-jssdk'));webpushr('setup',{'key':'BF2Wrik9KIE_JRdYkmlh62-nOR_KqsQVqibivdl8_l2zhVp5uNsoFlRnyIn3hy8mi7REa2yz8IUMVgMAH40w3ZI'});</script>
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b0b0b; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; }
-        .container { padding: 30px; border: 2px solid #ffcc00; border-radius: 20px; margin: 20px; box-shadow: 0 0 25px rgba(255, 204, 0, 0.2); background: rgba(255, 255, 255, 0.05); }
-        h1 { color: #ffcc00; font-size: 28px; margin-bottom: 10px; }
-        p { font-size: 18px; color: #ddd; line-height: 1.6; }
-        .btn-active { background: linear-gradient(45deg, #ffcc00, #ff9900); color: black; border: none; padding: 20px 40px; font-size: 22px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3); transition: 0.3s; }
-        .btn-active:active { transform: scale(0.95); }
-        .footer-text { margin-top: 25px; font-size: 14px; color: #777; }
+        body { font-family: sans-serif; background-color: #000; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        .emergency-header { background: #ff0000; color: white; padding: 15px; font-weight: bold; font-size: 26px; position: fixed; top: 0; width: 100%; box-shadow: 0 5px 15px rgba(255,0,0,0.5); z-index: 100; }
+        .container { padding: 30px; border: 4px solid #fff; border-radius: 10px; margin: 20px; background: rgba(0,0,0,0.9); position: relative; z-index: 10; }
+        h1 { color: white; font-size: 32px; font-weight: bold; margin: 20px 0; }
+        p { font-size: 20px; line-height: 1.6; margin-bottom: 30px; }
+        
+        /* حركة فلاش الإنذار الرسمي */
+        .alarm-active { animation: flash-bg 0.4s infinite; }
+        @keyframes flash-bg {
+            0% { background-color: #ff0000; }
+            50% { background-color: #000; }
+            100% { background-color: #ff0000; }
+        }
+
+        .btn-active { background: white; color: black; border: none; padding: 20px 50px; font-size: 22px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0 0 20px rgba(255,255,255,0.3); transition: 0.2s; }
+        .btn-active:active { transform: scale(0.9); }
     </style>
 </head>
-<body>
+<body id="mainBody">
+    <div class="emergency-header">تنبيه طوارئ عاجل</div>
+    
     <div class="container">
-        <div style="font-size: 60px; margin-bottom: 20px;">⚠️</div>
-        <h1>نظام تحذيرات سلومي</h1>
-        <p>يرجى تفعيل التنبيهات لتصلك رسائل الطوارئ، الأمطار، والتحذيرات الهامة فور صدورها.</p>
-        <button class="btn-active" onclick="activateSystem()">تفعيل النظام الآن</button>
-        <div id="status" class="footer-text">حالة النظام: بانتظار الاتصال...</div>
+        <img src="https://cdn-icons-png.flaticon.com/512/564/564619.png" width="120" alt="تحذير">
+        <h1>تحذيرات سلومي</h1>
+        <p>يوجد تصرف بهدوء وعدم وضع جوالاتكم في وضع الصامت.</p>
+        <button class="btn-active" onclick="toggleAlarm()">تفعيل / إيقاف الإنذار (تجربة)</button>
     </div>
 
+    <audio id="emergencySound" src="https://www.soundjay.com/buttons/sounds/beep-11.mp3" loop></audio>
+
     <script>
-        function activateSystem() {
-            // كود Webpushr يطلب الإذن تلقائياً عند استدعاء الموقع
-            // لكن هنا نؤكد الحالة للمستخدم
-            if (Notification.permission === "granted") {
-                document.getElementById('status').innerText = "✅ النظام يعمل: أنت الآن ضمن شبكة العراب";
-                document.getElementById('status').style.color = "#00ff00";
+        var isPlaying = false;
+        var audio = document.getElementById('emergencySound');
+        var body = document.getElementById('mainBody');
+
+        function toggleAlarm() {
+            if (!isPlaying) {
+                audio.play();
+                body.classList.add('alarm-active');
+                isPlaying = true;
             } else {
-                alert("اضغط 'سماح' (Allow) عندما يظهر لك طلب المتصفح لتفعيل الإشعارات.");
+                audio.pause();
+                audio.currentTime = 0;
+                body.classList.remove('alarm-active');
+                isPlaying = false;
             }
         }
     </script>
