@@ -19,7 +19,7 @@
       });
     });
 
-    // الزر اللي يطلب الإذن فوراً
+    // الزر اللي يفتح السماح فوراً
     function subscribeUser() {
       OneSignal.push(function() {
         OneSignal.showNativePrompt();
@@ -101,16 +101,16 @@
 <div class="card">
   <div id="mainLogo">🚨</div>
   <h1 style="margin: 10px 0;">مركز الإنذار</h1>
-  <div style="color: #ff3b30; font-weight: bold; letter-spacing: 1px;">النظام الفيدرالي للسيد سلومي</div>
+  <div style="color: #ff3b30; font-weight: bold;">النظام الفيدرالي للسيد سلومي</div>
   
   <div class="status-box">
-    <span>حالة الاتصال: <b id="countValue">جاري الفحص..</b></span>
+    <span>حالة النظام: <b id="countValue">بانتظار الإشارة..</b></span>
   </div>
 
   <button class="btn" id="activateBtn" onclick="subscribeUser()">🔔 تفعيل استقبال التنبيهات</button>
 
   <div id="adminPanel">
-    <h3 style="color: #007aff; margin-bottom: 15px;">غرفة القيادة التحذيرية</h3>
+    <h3 style="color: #007aff; margin-bottom: 15px;">غرفة القيادة</h3>
     <input type="text" id="alertTitle" class="admin-input" placeholder="عنوان التنبيه...">
     <textarea id="alertBody" class="admin-input" rows="3" placeholder="محتوى الرسالة..."></textarea>
     <button id="sendBtn" class="btn" onclick="sendGlobalPush()">بث الإشارة النووية 🚀</button>
@@ -118,24 +118,22 @@
 </div>
 
 <script>
-  // تحديث الحالة تلقائياً للتأكد من الربط
+  // تحديث الحالة التلقائي
   setInterval(() => {
     OneSignal.push(function() {
       OneSignal.getNotificationPermission(function(permission) {
         if (permission === 'granted') {
           document.getElementById('countValue').innerText = "متصل بنجاح ✅";
           document.getElementById('activateBtn').style.display = "none";
-        } else {
-          document.getElementById('countValue').innerText = "انتظار التفعيل.. ⏳";
         }
       });
     });
   }, 2000);
 
-  // كود الإرسال النووي المتكامل (دعم الأيفون + الصوت + المفاتيح)
+  // كود الإرسال المصحح لحل مشكلة السيرفر
   async function sendGlobalPush() {
     const title = document.getElementById('alertTitle').value || "إنذار عاجل";
-    const message = document.getElementById('alertBody').value || "تم تفعيل حالة الطوارئ من قبل سلومي";
+    const message = document.getElementById('alertBody').value || "حالة طوارئ من نظام سلومي";
     const btn = document.getElementById('sendBtn');
     
     btn.innerText = "جاري البث... 📡";
@@ -153,31 +151,30 @@
           included_segments: ["Total Subscriptions"],
           headings: {"en": title},
           contents: {"en": message},
-          isIos: true,
-          ios_sound: "emergency.wav"
+          isIos: true
         })
       });
 
       if (response.ok) {
-        alert("تم اختراق الأجهزة وبث الإشارة بنجاح! 🚨🔥");
+        alert("تم البث بنجاح يا وحش! 🚨🔥");
       } else {
-        const err = await response.json();
-        alert("خطأ في الإرسال: " + (err.errors ? err.errors[0] : "فشل الاتصال"));
+        const errorData = await response.json();
+        alert("مشكلة في السيرفر: " + (errorData.errors ? errorData.errors[0] : "تأكد من الـ API Key"));
       }
     } catch (e) {
-      alert("مشكلة تقنية في الاتصال بالسيرفر!");
+      alert("مشكلة اتصال! تأكد أنك تستخدم تطبيق الشاشة الرئيسية.");
     }
     
     btn.innerText = "بث الإشارة النووية 🚀";
     btn.disabled = false;
   }
 
-  // الدخول السري (5 ضغطات على الجرس)
+  // الدخول السري (5 ضغطات)
   let taps = 0;
   document.getElementById('mainLogo').onclick = () => {
     taps++;
     if(taps >= 5) {
-      if(prompt("كلمة سر العرّاب:") === "1313") {
+      if(prompt("كلمة السر:") === "1313") {
         document.getElementById('adminPanel').style.display = "block";
         document.getElementById('activateBtn').style.display = "none";
       }
