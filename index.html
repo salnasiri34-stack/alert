@@ -1,97 +1,27 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>رادار العراب 🚨</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: #fff; text-align: center; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-    .card { width: 85%; max-width: 380px; padding: 40px 20px; border-radius: 30px; background: #1c1c1e; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; }
-    h1 { font-size: 24px; margin-bottom: 10px; color: #ff3b30; }
-    #status { font-size: 15px; color: #8e8e93; margin-bottom: 30px; line-height: 1.4; min-height: 45px; }
-    .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    #activateBtn { background: #007aff; color: white; }
-    #activateBtn:active { background: #0056b3; transform: scale(0.98); }
-    #alertBtn { background: #ff3b30; color: white; display: none; }
-  </style>
-</head>
-<body>
-
-<div class="card">
-  <h1>نظام التنبيه المركزي 🚨</h1>
-  <div id="status">جاري فحص اتصال الرادار... 📡</div>
-  <button class="btn" id="activateBtn" onclick="startRegistration()">🔔 تفعيل استقبال التنبيهات</button>
-  <button class="btn" id="alertBtn" onclick="triggerAlarm()">🚨 إرسال إنذار عام</button>
-</div>
-
-<script>
-  // بياناتك الخاصة من Webpushr
-  const CONFIG = {
-    key: '4f28dee84926f7456d26408a22d82862',
-    token: '120657',
-    vapid: 'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I'
-  };
-
-  async function startRegistration() {
-    const status = document.getElementById('status');
-    status.innerText = "⏳ جاري محاولة الربط بالسيرفر...";
-
-    try {
-      // 1. طلب إذن الإشعارات
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        status.innerText = "❌ لازم توافق على الإشعارات من إعدادات الجوال";
-        return;
-      }
-
-      // 2. تسجيل الـ Service Worker بالاسم الجديد والمطلوب
-      const reg = await navigator.serviceWorker.register('webpushr-sw.js');
-      
-      // 3. الربط مع Webpushr
-      // ننتظر حتى يصبح الـ Service Worker جاهزاً
-      navigator.serviceWorker.ready.then((registration) => {
-        status.innerText = "✅ الرادار جاهز! العداد في الكمبيوتر سيصبح 1 الآن.";
-        document.getElementById('activateBtn').style.display = "none";
-        document.getElementById('alertBtn').style.display = "block";
-      });
-
-    } catch (err) {
-      console.error(err);
-      status.innerText = "⚠️ حدث خطأ في الربط. تأكد أنك فتحت التطبيق من الشاشة الرئيسية.";
-    }
-  }
-
-  async function triggerAlarm() {
-    const status = document.getElementById('status');
-    status.innerText = "🚀 جاري إرسال الإنذار لجميع المشتركين...";
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنذار سلومي 🚨</title>
+    <script>
+    (function(w,d,s,id){
+        if(typeof(w.webpushr)!=='undefined') return;
+        w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};
+        var js, fjs = d.getElementsByTagName(s)[0];
+        js = d.createElement(s); js.id = id; js.async = true;
+        js.src = "https://cdn.webpushr.com/app.min.js";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(window,document,'script','webpushr-jssdk'));
     
-    try {
-      const response = await fetch('https://api.webpushr.com/v1/notification/send/all', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'webpushrKey': CONFIG.key, 
-          'webpushrAuthToken': CONFIG.token 
-        },
-        body: JSON.stringify({
-          title: "🚨 تنبيه عاجل من سلومي",
-          message: "تم تفعيل نظام الإنذار! استعدوا.",
-          target_url: window.location.href
-        })
-      });
-
-      if (response.ok) {
-        status.innerText = "✅ تم الإرسال بنجاح للجميع!";
-      } else {
-        status.innerText = "❌ فشل الإرسال. تأكد من إعدادات الـ API.";
-      }
-    } catch (err) {
-      status.innerText = "❌ خطأ في الاتصال بالسيرفر.";
-    }
-  }
-</script>
-
+    // تفعيل الربط
+    webpushr('setup',{'key':'4f28dee84926f7456d26408a22d82862'});
+    </script>
+</head>
+<body style="background:#000; color:#fff; text-align:center; padding-top:100px; font-family:sans-serif;">
+    <h1>نظام الإنذار 🚨</h1>
+    <p id="msg">انتظر ثواني لتفعيل الاشتراك...</p>
+    <br>
+    <p>بعد تفعيل الجرس، سيظهر جوالك في الموقع.</p>
 </body>
 </html>
