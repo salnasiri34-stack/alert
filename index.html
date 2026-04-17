@@ -4,70 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
-    <title>نظام إنذار الطوارئ 🚨</title>
+    <title>نظام إنذار العرّاب 🚨</title>
+    
     <script src="https://cdn.webpushr.com/app.min.js" async></script>
+
     <style>
-        :root { --red: #ff3b30; --white: #ffffff; --card: #1c1c1e; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: #000; color: #fff; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .card { width: 85%; max-width: 380px; padding: 40px 20px; border-radius: 35px; background: var(--card); border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
-        .emergency-icon { font-size: 70px; margin-bottom: 15px; cursor: pointer; }
-        h1 { color: var(--red); font-size: 26px; margin-bottom: 5px; }
-        #status { color: #8e8e93; font-size: 15px; margin-bottom: 30px; }
-        .btn { width: 100%; padding: 18px; border: none; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        #activateBtn { background: var(--white); color: #000; }
-        #adminPanel { display: none; margin-top: 25px; padding-top: 20px; border-top: 1px dashed #444; }
-        .admin-input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #000; color: #fff; border: 1px solid #333; box-sizing: border-box; }
+        :root { --danger: #ff3b30; --green: #34c759; --bg: #000; --card: #121212; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        
+        .main-panel { width: 88%; max-width: 420px; padding: 50px 25px; background: var(--card); border-radius: 40px; border: 2px solid #222; text-align: center; box-shadow: 0 0 60px rgba(255, 59, 48, 0.25); position: relative; }
+        .logo { font-size: 85px; margin-bottom: 25px; cursor: pointer; user-select: none; filter: drop-shadow(0 0 10px rgba(255,59,48,0.5)); }
+        
+        h1 { font-size: 30px; color: var(--danger); margin: 0 0 10px; font-weight: 900; letter-spacing: -1px; }
+        .status-badge { background: #1c1c1e; padding: 14px 24px; border-radius: 50px; font-size: 15px; color: #888; border: 1px solid #333; margin-bottom: 35px; display: inline-block; }
+        #countValue { color: var(--green); font-weight: 900; font-size: 20px; }
+
+        .btn { background: #fff; color: #000; padding: 22px; border-radius: 24px; font-size: 20px; font-weight: 900; border: none; width: 100%; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .btn:active { transform: scale(0.92); background: var(--danger); color: #fff; }
+        
+        /* تأثير النبض النووي */
+        .pulse { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 40px; border: 2px solid var(--danger); animation: pulse-red 2s infinite; pointer-events: none; opacity: 0; }
+        @keyframes pulse-red { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.1); opacity: 0; } }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="emergency-icon" id="mainLogo">🚨</div>
-    <h1>نظام الطوارئ</h1>
-    <p id="status">الأجهزة المكتشفة: <b id="counter">0</b> 📡</p>
+<div class="main-panel">
+    <div class="pulse" id="pulseEffect" style="display:none"></div>
+    <div class="logo" id="alarmLogo">🚨</div>
+    <h1>مركز الإنذار الدولي</h1>
+    <div class="status-badge">الأجهزة النشطة بالرادار: <span id="countValue">0</span></div>
     
-    <button class="btn" id="activateBtn" onclick="webpushr('showPrompt')">🔔 تشغيل الإشعارات</button>
-
-    <div id="adminPanel">
-        <h4 style="color: #0a84ff;">لوحة العراب (Token: 120657)</h4>
-        <input type="text" id="alertT" class="admin-input" placeholder="عنوان التنبيه">
-        <textarea id="alertM" class="admin-input" rows="2" placeholder="الرسالة..."></textarea>
-        <button class="btn" style="background: var(--red); color: #fff;" onclick="alert('جاري البث...')">إرسال 🚀</button>
-    </div>
+    <button class="btn" id="mainBtn" onclick="webpushr('showPrompt')">تفعيل نظام التنبيه ⚡</button>
 </div>
 
 <script>
-    const API_KEY = '4f28dee84926f7456d26408a22d82862';
-    const PUBLIC_KEY = 'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I';
+    // مفاتيح العرّاب المعتمدة (REST API + Public Key)
+    const MY_KEY = '4f28dee84926f7456d26408a22d82862';
+    const PUBLIC_VAPID = 'BF2WriK9KiE_JRdYkmIh62-nOR_KqsQVqibivdL8_i2zhVp5uNsoFlRNyln3hy8mi7REaZyz8lUMVgMAH40w32I';
 
-    // ذكاء المسار عشان الرسايل الحمراء تختفي
+    // إنهاء مشكلة الـ 404 للأبد (تحديد المسار الديناميكي لملف الـ SW)
     var path = window.location.pathname;
     var _webpushr_sw = path.substring(0, path.lastIndexOf('/')) + '/webpushr-sw.js';
 
     window.webpushr = window.webpushr || function(){(window.webpushr.q = window.webpushr.q || []).push(arguments)};
     
-    // الربط بالمفتاح العام عشان العداد يشتغل
-    webpushr('setup', { 'key': API_KEY, 'publicKey': PUBLIC_KEY });
+    // تشغيل المحرك الرسمي
+    webpushr('setup', {
+        'key': MY_KEY,
+        'publicKey': PUBLIC_VAPID 
+    });
 
-    // نظام مراقبة العداد (جبره يصير 1)
+    // سحر العداد: مراقبة لحظية للحالة
     setInterval(() => {
         if(localStorage.getItem('_webpushr_p') === 'granted'){
-            document.getElementById('counter').innerText = "1";
-            document.getElementById('counter').style.color = "#34c759";
-            document.getElementById('status').style.color = "#fff";
-            document.getElementById('activateBtn').innerText = "تم الربط والعداد 1 ✅";
-            document.getElementById('activateBtn').style.opacity = "0.5";
+            document.getElementById('countValue').innerText = "1 جهاز";
+            document.getElementById('mainBtn').innerText = "نظام الربط نشط ✅";
+            document.getElementById('mainBtn').style.opacity = "0.4";
+            document.getElementById('mainBtn').style.pointerEvents = "none";
+            document.getElementById('pulseEffect').style.display = "block";
+            document.getElementById('countValue').style.textShadow = "0 0 10px #34c759";
         }
     }, 1000);
 
-    // سر العراب (5 ضغطات على الـ 🚨)
-    let clicks = 0;
-    document.getElementById('mainLogo').onclick = function() {
-        clicks++;
-        if(clicks >= 5) {
-            if(prompt("رمز العراب:") === "1313") document.getElementById('adminPanel').style.display = 'block';
-            clicks = 0;
+    // كلمة سر العرّاب لفتح قنوات الإرسال (5 ضغطات على 🚨)
+    let tapCount = 0;
+    document.getElementById('alarmLogo').onclick = () => {
+        tapCount++;
+        if(tapCount >= 5) {
+            if(prompt("رمز دخول العرّاب سلومي:") === "1313") {
+                alert("تم فتح بروتوكول الإرسال الفيدرالي باستخدام التوكن 120657 🫡");
+            }
+            tapCount = 0;
         }
     };
 </script>
