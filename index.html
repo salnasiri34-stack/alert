@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" /> <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json">
   <title>نظام إنذار الطوارئ 🚨</title>
   <script src="https://cdn.webpushr.com/app.min.js" async></script>
   <style>
     :root { --red: #ff3b30; --white: #ffffff; --card: #1c1c1e; }
     body { font-family: -apple-system, system-ui, sans-serif; background: #000; color: #fff; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-    .admin-trigger { position: absolute; top: 20px; right: 20px; width: 45px; height: 45px; background: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #fff; z-index: 100; }
+    .admin-trigger { position: absolute; top: 20px; right: 20px; width: 45px; height: 45px; background: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #fff; z-index: 100; font-size: 20px; }
     .card { width: 85%; max-width: 380px; padding: 30px 20px; border-radius: 30px; background: var(--card); border: 1px solid #333; }
-    h1 { color: var(--red); font-size: 24px; }
-    .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    h1 { color: var(--red); font-size: 24px; margin-bottom: 5px; }
+    #status { color: #8e8e93; font-size: 14px; margin-bottom: 20px; }
+    .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; -webkit-tap-highlight-color: transparent; }
     #activateBtn { background: var(--white); color: #000; }
   </style>
 </head>
@@ -23,20 +24,25 @@
 
 <div class="card">
   <h1>نظام الطوارئ 🚨</h1>
-  <p id="status" style="color:#8e8e93">بانتظار الربط بالسيرفر... 📡</p>
+  <p id="status">جاري فحص الاتصال بالرادار... 📡</p>
   <button class="btn" id="activateBtn" onclick="webpushr('showPrompt')">🔔 تشغيل الإشعارات</button>
 </div>
 
 <script>
-  // كود إجباري لربط الملف الضائع
-  var _webpushr_sw = 'webpushr-sw.js'; 
+  // توجيه المتصفح للملف الثالث داخل مجلد alert
+  var _webpushr_sw = '/alert/webpushr-sw.js'; 
+
   window.webpushr = window.webpushr || function(){(window.webpushr.q = window.webpushr.q || []).push(arguments)};
   webpushr('setup',{'key':'4f28dee84926f7456d26408a22d82862'});
 
+  // مراقبة نجاح الاشتراك لتحديث العداد
   setInterval(() => {
     if(localStorage.getItem('_webpushr_p') === 'granted'){
-      document.getElementById('status').innerText = "✅ تم الربط! العداد شغال";
-      document.getElementById('activateBtn').style.display = "none";
+      document.getElementById('status').innerText = "✅ تم الاتصال! العداد يحسبك الآن";
+      document.getElementById('activateBtn').innerText = "مفعل بنجاح ✅";
+      document.getElementById('activateBtn').style.background = "#2c2c2e";
+      document.getElementById('activateBtn').style.color = "#8e8e93";
+      document.getElementById('activateBtn').onclick = null;
     }
   }, 1000);
 
