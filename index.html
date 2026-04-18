@@ -8,6 +8,7 @@
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
+      
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
@@ -16,91 +17,97 @@
         });
 
         OneSignal.Notifications.addEventListener("click", function(event) {
-            const msgBody = event.notification.body;
-            const now = new Date();
-            const timeString = now.toLocaleDateString('ar-SA') + " | " + now.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
-            
-            localStorage.setItem('lastAlertMsg', msgBody);
-            localStorage.setItem('lastAlertTime', timeString);
-            
-            showEmergencyUI(msgBody, timeString);
+            processAlert(event.notification.body);
+        });
+
+        OneSignal.Notifications.addEventListener("foregroundWillDisplay", function(event) {
+            processAlert(event.notification.body);
         });
       });
 
-      function subscribeUser() {
-        OneSignal.Notifications.requestPermission();
+      function processAlert(originalMsg) {
+          const now = new Date();
+          const time = now.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+          
+          // الرسالة الثابتة اللي طلبتها يا سلومي
+          const fullMessage = originalMsg + " - يرجى اتباع أنظمة السلامة ⚠️";
+          
+          localStorage.setItem('tempMsg', fullMessage);
+          localStorage.setItem('tempTime', time);
+          
+          document.getElementById('mainUI').style.display = 'none';
+          document.getElementById('receiptUI').style.display = 'block';
+          document.getElementById('previewMsg').innerText = fullMessage;
       }
 
-      function checkLastAlert() {
-        const savedMsg = localStorage.getItem('lastAlertMsg');
-        const savedTime = localStorage.getItem('lastAlertTime');
-        if (savedMsg) {
-            showEmergencyUI(savedMsg, savedTime);
-        } else {
-            alert('لا توجد بلاغات مسجلة حالياً.');
-        }
+      function startAlarm() {
+          const msg = localStorage.getItem('tempMsg');
+          const time = localStorage.getItem('tempTime');
+          
+          document.getElementById('receiptUI').style.display = 'none';
+          document.getElementById('alertUI').style.display = 'block';
+          document.getElementById('dynamicMsg').innerText = msg;
+          document.getElementById('timeLabel').innerText = "وقت البلاغ: " + time;
+
+          const audio = document.getElementById('alarmSound');
+          audio.volume = 1.0; 
+          audio.play(); 
+
+          if (navigator.vibrate) {
+              // اهتزاز طويل ومستمر يحاكي إنذار الآيفون
+              navigator.vibrate([1000, 500, 1000, 500, 1000]);
+          }
+      }
+
+      function checkManual() {
+          const m = localStorage.getItem('tempMsg');
+          if(m) {
+              document.getElementById('mainUI').style.display = 'none';
+              document.getElementById('receiptUI').style.display = 'block';
+              document.getElementById('previewMsg').innerText = m;
+          } else {
+              alert("لا يوجد بلاغ جديد");
+          }
       }
     </script>
 
     <style>
-        body { margin: 0; background: #f4f7f9; color: #333; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
-        .card { background: white; padding: 40px; border-radius: 25px; width: 85%; max-width: 450px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 8px solid #007bff; }
-        .btn-subscribe { background: #007bff; color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 18px; cursor: pointer; margin-bottom: 20px; }
-        .btn-alert { background: #dc3545; color: white; border: none; padding: 20px; border-radius: 15px; width: 100%; font-weight: bold; font-size: 20px; cursor: pointer; }
-        .emergency-icon { font-size: 60px; color: #dc3545; animation: blink 0.6s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .time-badge { background: #f8f9fa; color: #666; padding: 5px 15px; border-radius: 20px; font-size: 13px; display: inline-block; margin-bottom: 15px; border: 1px solid #eee; }
+        body { margin: 0; background: #f0f2f5; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
+        .card { background: white; padding: 30px; border-radius: 25px; width: 85%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 8px solid #007bff; }
+        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 18px; }
+        .btn-blue { background: #007bff; color: white; }
+        .btn-green { background: #28a745; color: white; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        .emergency-icon { font-size: 50px; color: #dc3545; animation: blink 0.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
     </style>
 </head>
 <body>
 
     <div class="card" id="mainUI">
-        <h2>مركز التنبيهات العائلية</h2>
-        <div style="background: #e7f3ff; color: #007bff; padding: 10px; border-radius: 10px; font-weight: bold; margin-bottom: 20px;">حالة النظام: متصل</div>
-        <button class="btn-subscribe" onclick="subscribeUser()">🔔 تفعيل جرس الإنذار (سماح)</button>
-        <p style="color: #666; font-size: 14px;">اضغط سماح لتلقي بلاغات الطوارئ فور صدورها.</p>
-        <hr style="border: 0.5px solid #eee; margin: 25px 0;">
-        <button class="btn-alert" onclick="checkLastAlert()">📢 عرض آخر بلاغ مستلم</button>
+        <h2>نظام إنذار العائلة</h2>
+        <button class="btn btn-blue" onclick="OneSignal.Notifications.requestPermission()">🔔 تفعيل التنبيهات</button>
+        <hr style="margin:20px 0; border: 0.5px solid #eee;">
+        <button class="btn" style="background:#6c757d; color:white;" onclick="checkManual()">📢 عرض آخر بلاغ</button>
     </div>
 
-    <div class="card" id="alertUI" style="display:none; border-top: 8px solid #dc3545;">
+    <div class="card" id="receiptUI" style="display:none; border-top-color: #28a745;">
+        <h2 style="color:#28a745">وصل بلاغ جديد!</h2>
+        <p id="previewMsg" style="font-weight:bold; font-size: 18px;"></p>
+        <button class="btn btn-green" onclick="startAlarm()">🔊 تشغيل صوت الإنذار</button>
+    </div>
+
+    <div class="card" id="alertUI" style="display:none; border-top-color: #dc3545;">
         <div class="emergency-icon">⚠️</div>
-        <h2 style="color: #dc3545;">تنبيه عاجل</h2>
-        <div id="timeDisplay" class="time-badge">تاريخ البلاغ: --</div>
-        <p id="dynamicMsg" style="font-size: 22px; font-weight: bold; color: #000; min-height: 50px;"></p>
-        <hr style="border: 0.5px solid #eee;">
-        <button onclick="stopAndReload()" style="background:#6c757d; color:white; border:none; padding:12px; border-radius:10px; cursor:pointer; width: 100%; font-weight: bold;">إيقاف الإنذار والعودة</button>
+        <h2 style="color:#dc3545">بلاغ عاجل!</h2>
+        <div id="timeLabel" style="font-size: 13px; color: #666; margin-bottom: 10px;"></div>
+        <p id="dynamicMsg" style="font-size: 22px; font-weight: bold; color: #000;"></p>
+        <button class="btn" onclick="location.reload()" style="background:#eee">إغلاق الإنذار</button>
     </div>
 
     <audio id="alarmSound" loop preload="auto">
-        <source src="https://actions.google.com/sounds/v1/alarms/emergency_it_is_emergency.ogg" type="audio/ogg">
-        <source src="https://www.soundjay.com/buttons/beep-01a.mp3" type="audio/mpeg">
+        <source src="https://www.soundjay.com/buttons/sounds/alarm-clock-01.mp3" type="audio/mpeg">
     </audio>
 
-    <script>
-        function showEmergencyUI(message, time) {
-            document.getElementById('mainUI').style.display = 'none';
-            document.getElementById('alertUI').style.display = 'block';
-            
-            document.getElementById('dynamicMsg').innerText = message;
-            document.getElementById('timeDisplay').innerText = "تاريخ البلاغ: " + time;
-            
-            const audio = document.getElementById('alarmSound');
-            audio.volume = 1.0; // أعلى مستوى صوت
-            audio.play().catch(e => console.log("تحتاج تفاعل"));
-            
-            if (navigator.vibrate) {
-                // اهتزاز طويل وقوي
-                navigator.vibrate([500, 200, 500, 200, 500, 200, 1000]);
-            }
-        }
-
-        function stopAndReload() {
-            const audio = document.getElementById('alarmSound');
-            audio.pause();
-            audio.currentTime = 0;
-            location.reload();
-        }
-    </script>
 </body>
 </html>
