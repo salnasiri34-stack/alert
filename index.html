@@ -1,133 +1,105 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>نظام سلومي للطوارئ</title>
-  
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-  <script>
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({
-        appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
-        safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
-        notifyButton: { enable: false },
-        allowLocalhostAsSecureOrigin: true
-      });
-    });
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع سلومي - التنبيهات</title>
 
-    // دالة تفعيل التنبيهات المطورة
-    function startSubscribe() {
-      OneSignalDeferred.push(function(OneSignal) { 
-        OneSignal.showNativePrompt(); 
-      });
-    }
-  </script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: #fff; text-align: center; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-    .card { width: 85%; max-width: 400px; padding: 40px 20px; border-radius: 30px; background: #111; border: 1px solid #333; box-shadow: 0 10px 50px rgba(0,0,0,0.7); border-top: 4px solid #ff3b30; }
-    #logo { font-size: 70px; cursor: pointer; margin-bottom: 10px; transition: transform 0.2s; }
-    #logo:active { transform: scale(0.9); }
-    h2 { margin: 10px 0; font-size: 24px; }
-    .status-box { background: #1a1a1a; padding: 12px; border-radius: 12px; margin: 15px 0; border: 1px solid #222; }
-    #statusText { color: #ff9500; font-weight: bold; }
-    .btn { width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; transition: opacity 0.2s; }
-    .btn:active { opacity: 0.8; }
-    #subBtn { background: #fff; color: #000; }
-    #adminArea { display: none; margin-top: 25px; border-top: 1px solid #333; padding-top: 20px; }
-    .inp { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #000; border: 1px solid #444; color: #fff; text-align: center; box-sizing: border-box; }
-    #sendBtn { background: #ff3b30; color: #fff; }
-  </style>
+    <script>
+      // إعدادات OneSignal الصحيحة للنسخة الجديدة
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
+          safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
+          notifyButton: {
+            enable: true, /* تفعيل زر الجرس */
+            size: 'large',
+            position: 'bottom-right',
+            colors: {
+              'circle.background': '#007bff',
+              'circle.foreground': 'white',
+              'badge.background': '#007bff',
+              'badge.foreground': 'white',
+              'badge.bordercolor': 'white',
+              'pulse.color': 'white',
+              'dialog.button.background.hover': '#0069d9',
+              'dialog.button.background.active': '#0069d9',
+              'dialog.button.background': '#007bff',
+              'dialog.button.foreground': 'white'
+            },
+            text: {
+              'tip.state.unsubscribed': 'الاشتراك في التنبيهات',
+              'tip.state.subscribed': 'تم الاشتراك بنجاح',
+              'tip.state.blocked': 'أنت مانع التنبيهات',
+              'message.prenotify': 'اضغط هنا للاشتراك في التنبيهات',
+              'message.action.subscribed': 'شكراً لك!',
+              'message.action.resubscribed': 'تم التفعيل مجدداً',
+              'message.action.unsubscribed': 'تم إلغاء الاشتراك',
+              'dialog.main.title': 'إعدادات التنبيهات',
+              'dialog.main.button.subscribe': 'اشتراك',
+              'dialog.main.button.unsubscribe': 'إلغاء'
+            }
+          },
+          // إظهار نافذة الاشتراك تلقائياً
+          promptOptions: {
+            slidedown: {
+              enabled: true,
+              autoPrompt: true,
+              timeDelay: 3,
+              pageViews: 1
+            }
+          }
+        });
+      });
+
+      // دالة طلب الإذن الجديدة (عشان الزر يشتغل بدون أخطاء)
+      async function requestNotify() {
+        OneSignalDeferred.push(async function(OneSignal) {
+          try {
+            await OneSignal.Notifications.requestPermission();
+          } catch (e) {
+            console.log("الاشتراك مفعل مسبقاً أو تم منعه من المتصفح");
+          }
+        });
+      }
+    </script>
+
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle, #2c3e50, #000000);
+            color: white; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px; border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center; max-width: 400px;
+        }
+        h1 { margin-bottom: 20px; font-size: 2.5rem; }
+        p { margin-bottom: 30px; opacity: 0.8; }
+        .btn {
+            background: #007bff; color: white; border: none;
+            padding: 15px 40px; border-radius: 50px;
+            font-size: 1.2rem; cursor: pointer; font-weight: bold;
+            transition: 0.3s; box-shadow: 0 4px 15px rgba(0,123,255,0.4);
+        }
+        .btn:hover { background: #0056b3; transform: translateY(-3px); }
+    </style>
 </head>
 <body>
 
-<div class="card">
-  <div id="logo">🚨</div>
-  <h2>غرفة القيادة</h2>
-  <div class="status-box">الحالة: <span id="statusText">بانتظار التفعيل..</span></div>
-  
-  <button class="btn" id="subBtn" onclick="startSubscribe()">🔔 تفعيل التنبيهات</button>
-
-  <div id="adminArea">
-    <input type="text" id="t" class="inp" placeholder="عنوان التنبيه">
-    <textarea id="b" class="inp" placeholder="محتوى الرسالة"></textarea>
-    <button class="btn" id="sendBtn" onclick="broadcast()">بث الإشارة النووية 🚀</button>
-  </div>
-</div>
-
-<script>
-  // تحديث حالة الاتصال تلقائياً
-  setInterval(() => {
-    if (window.OneSignal) {
-        OneSignal.push(async function() {
-          const isSubscribed = await OneSignal.isPushNotificationsEnabled();
-          if(isSubscribed) {
-            document.getElementById('statusText').innerText = "متصل بنجاح ✅";
-            document.getElementById('statusText').style.color = "#34c759";
-            document.getElementById('subBtn').style.display = "none";
-          }
-        });
-    }
-  }, 2000);
-
-  // دالة إرسال التنبيه باستخدام مفتاحك الجديد
-  async function broadcast() {
-    const title = document.getElementById('t').value || "إنذار أحمر 🚨";
-    const body = document.getElementById('b').value || "تحذير من نظام سلومي";
-    const btn = document.getElementById('sendBtn');
-    
-    btn.innerText = "جاري البث... 📡";
-    
-    // استخدمنا CORS Proxy مؤقت لحل مشكلة الحماية في المتصفح
-    const proxy = "https://cors-anywhere.herokuapp.com/";
-    const url = "https://onesignal.com/api/v1/notifications";
-
-    try {
-      const response = await fetch(proxy + url, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          "Authorization": "Basic os_v2_app_f3iq3hzjczfddet3niv6u4de3lcuzpyuysuuxz4i56gbnugat4cakvbjm5wuc4zbmjjbibsfzxr24xqabovt57hw7gmqkbbihlondia" 
-        },
-        body: JSON.stringify({ 
-          app_id: "2ed10d9f-2916-4a31-927b-6a2bea7064da", 
-          included_segments: ["Total Subscriptions"], 
-          headings: {"en": title}, 
-          contents: {"en": body},
-          priority: 10 
-        })
-      });
-
-      if (response.ok) {
-        alert("تم البث! شيك على جوالك 🚨");
-      } else {
-        window.open("https://cors-anywhere.herokuapp.com/corsdemo", "_blank");
-        alert("اضغط زر 'Request Temporary Access' في الصفحة اللي انفتحت، ثم ارجع هنا واضغط إرسال.");
-      }
-    } catch(e) {
-      alert("خطأ في الاتصال. تأكد من تفعيل بروكسي CORS");
-    }
-    btn.innerText = "بث الإشارة النووية 🚀";
-  }
-
-  // منطقة الأدمن السرية (اضغط على الإيموجي 5 مرات)
-  let count = 0;
-  document.getElementById('logo').onclick = () => {
-    count++;
-    if(count >= 5) {
-      const pw = prompt("أدخل رمز الدخول الفيدرالي:");
-      if(pw === "1313") {
-        document.getElementById('adminArea').style.display = "block";
-      }
-      count = 0;
-    }
-  };
-</script>
+    <div class="container">
+        <h1>موقع سلومي 🚀</h1>
+        <p>جرب تضغط الزر تحت.. إذا ما طلع خطأ أحمر في الكونسول، يعني شغلنا 100%!</p>
+        <button class="btn" onclick="requestNotify()">تفعيل التنبيهات</button>
+    </div>
 
 </body>
 </html>
