@@ -6,7 +6,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>نظام سلومي الفيدرالي</title>
+  <title>نظام سلومي للطوارئ</title>
   
   <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
   <script>
@@ -20,30 +20,39 @@
       });
     });
 
+    // دالة تفعيل التنبيهات
     function startSubscribe() {
-      OneSignal.push(function() { OneSignal.showNativePrompt(); });
+      OneSignal.push(function() { 
+        OneSignal.showNativePrompt(); 
+      });
     }
   </script>
 
   <style>
-    body { font-family: -apple-system, sans-serif; background: #000; color: #fff; text-align: center; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: #fff; text-align: center; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
     .card { width: 85%; max-width: 400px; padding: 40px 20px; border-radius: 30px; background: #111; border: 1px solid #333; box-shadow: 0 10px 50px rgba(0,0,0,0.7); border-top: 4px solid #ff3b30; }
-    #logo { font-size: 70px; cursor: pointer; margin-bottom: 10px; }
+    #logo { font-size: 70px; cursor: pointer; margin-bottom: 10px; transition: transform 0.2s; }
+    #logo:active { transform: scale(0.9); }
+    h2 { margin: 10px 0; font-size: 24px; }
     .status-box { background: #1a1a1a; padding: 12px; border-radius: 12px; margin: 15px 0; border: 1px solid #222; }
-    #statusText { color: #34c759; font-weight: bold; }
-    .btn { width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; }
+    #statusText { color: #ff9500; font-weight: bold; }
+    .btn { width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; transition: opacity 0.2s; }
+    .btn:active { opacity: 0.8; }
     #subBtn { background: #fff; color: #000; }
     #adminArea { display: none; margin-top: 25px; border-top: 1px solid #333; padding-top: 20px; }
-    .inp { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #000; border: 1px solid #444; color: #fff; text-align: center; }
+    .inp { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #000; border: 1px solid #444; color: #fff; text-align: center; box-sizing: border-box; }
     #sendBtn { background: #ff3b30; color: #fff; }
   </style>
 </head>
 <body>
+
 <div class="card">
   <div id="logo">🚨</div>
   <h2>غرفة القيادة</h2>
-  <div class="status-box"><span id="statusText">بانتظار الإشارة..</span></div>
+  <div class="status-box">الحالة: <span id="statusText">بانتظار التفعيل..</span></div>
+  
   <button class="btn" id="subBtn" onclick="startSubscribe()">🔔 تفعيل التنبيهات</button>
+
   <div id="adminArea">
     <input type="text" id="t" class="inp" placeholder="عنوان التنبيه">
     <textarea id="b" class="inp" placeholder="محتوى الرسالة"></textarea>
@@ -52,21 +61,25 @@
 </div>
 
 <script>
+  // تحديث حالة الاتصال تلقائياً
   setInterval(() => {
     OneSignal.push(function() {
-      OneSignal.getNotificationPermission(function(perm) {
-        if(perm === 'granted') {
+      OneSignal.getNotificationPermission(function(permission) {
+        if(permission === 'granted') {
           document.getElementById('statusText').innerText = "متصل بنجاح ✅";
+          document.getElementById('statusText').style.color = "#34c759";
           document.getElementById('subBtn').style.display = "none";
         }
       });
     });
   }, 2000);
 
+  // دالة إرسال التنبيه
   async function broadcast() {
     const title = document.getElementById('t').value || "إنذار أحمر 🚨";
     const body = document.getElementById('b').value || "تحذير من نظام سلومي";
     const btn = document.getElementById('sendBtn');
+    
     btn.innerText = "جاري البث... 📡";
     
     const proxy = "https://cors-anywhere.herokuapp.com/";
@@ -88,16 +101,33 @@
           priority: 10 
         })
       });
-      if (response.ok) alert("تم البث! شيك على جوالك 🚨");
-      else window.open("https://cors-anywhere.herokuapp.com/corsdemo", "_blank");
-    } catch(e) { alert("خطأ اتصال"); }
+
+      if (response.ok) {
+        alert("تم البث! شيك على جوالك 🚨");
+      } else {
+        // إذا فشل بسبب الـ Proxy يفتح صفحة التفعيل
+        window.open("https://cors-anywhere.herokuapp.com/corsdemo", "_blank");
+        alert("اضغط على الزر في الصفحة الجديدة ثم ارجع جرب ترسل");
+      }
+    } catch(e) {
+      alert("خطأ في الاتصال بالخادم");
+    }
     btn.innerText = "بث الإشارة النووية 🚀";
   }
 
-  let c = 0;
+  // منطقة الأدمن السرية (اضغط على الإيموجي 5 مرات)
+  let count = 0;
   document.getElementById('logo').onclick = () => {
-    c++; if(c >= 5) { if(prompt("رمز الدخول:") === "1313") document.getElementById('adminArea').style.display = "block"; c = 0; }
+    count++;
+    if(count >= 5) {
+      const pw = prompt("أدخل رمز الدخول الفيدرالي:");
+      if(pw === "1313") {
+        document.getElementById('adminArea').style.display = "block";
+      }
+      count = 0;
+    }
   };
 </script>
+
 </body>
 </html>
