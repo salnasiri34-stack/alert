@@ -2,101 +2,158 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مركز التنبيهات العائلية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام الإنذار المبكر 🛡️</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="نظام الإنذار">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/559/559343.png">
 
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      
-      // دالة تشغيل الإنذار (معدلة لتكون أسرع وأقوى)
-      function triggerAlarm(msg) {
-          if (!msg) return;
-          const fullMsg = msg + " - يرجى اتباع أنظمة السلامة ⚠️";
-          const time = new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
-          
-          document.getElementById('mainUI').style.display = 'none';
-          document.getElementById('alertUI').style.display = 'block';
-          document.getElementById('dynamicMsg').innerText = fullMsg;
-          document.getElementById('timeLabel').innerText = "وقت البلاغ: " + time;
-          
-          const audio = document.getElementById('alarmSound');
-          audio.muted = false;
-          audio.play().catch(() => {
-              // إذا المتصفح منع الصوت، نظهر زر التشغيل الإجباري
-              document.getElementById('soundBtn').style.display = 'block';
-          });
-          
-          if (navigator.vibrate) navigator.vibrate([1000, 500, 1000]);
-          localStorage.setItem('lastAlert', JSON.stringify({msg: fullMsg, time: time}));
-      }
-
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
-          safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
-        });
-
-        // أهم تعديل: سحب البيانات مباشرة من OneSignal فور فتح التطبيق
-        OneSignal.Notifications.addEventListener("click", function(e) {
-            triggerAlarm(e.notification.body);
-        });
-
-        // فحص دوري كل ثانية (في حال تأخر وصول الإشعار للكود)
-        setInterval(async () => {
-            const isSub = await OneSignal.Notifications.permission;
-            if (isSub) {
-               // هنا الكود يحاول "يصيد" أي إشعار نشط
-            }
-        }, 1000);
-      });
-
-      function forcePlay() {
-          const audio = document.getElementById('alarmSound');
-          audio.play();
-          document.getElementById('soundBtn').style.display = 'none';
-      }
-
-      function checkHistory() {
-          const saved = localStorage.getItem('lastAlert');
-          if (saved) {
-              const data = JSON.parse(saved);
-              triggerAlarm(data.msg.split(" - ")[0]); // نرسل الرسالة الأصلية فقط للدالة
-          } else {
-              alert("لا يوجد بلاغ سابق محفوظ");
-          }
-      }
-    </script>
 
     <style>
-        body { margin: 0; background: #f0f2f5; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
-        .card { background: white; padding: 30px; border-radius: 25px; width: 85%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 8px solid #007bff; }
-        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 18px; }
-        .btn-blue { background: #007bff; color: white; }
-        .btn-danger { background: #dc3545; color: white; animation: blinker 1s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0.5; } }
+        :root {
+            --bg-color: #f4f7f9;
+            --main-card: #ffffff;
+            --primary-blue: #0047ab;
+            --danger-red: #d0021b;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.4s ease;
+        }
+
+        .container {
+            text-align: center;
+            width: 85%;
+            max-width: 380px;
+            padding: 40px 20px;
+            background: var(--main-card);
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            z-index: 2;
+        }
+
+        .icon-box { font-size: 70px; margin-bottom: 15px; }
+        h1 { font-size: 22px; color: #1a1a1a; margin-bottom: 8px; font-weight: 700; }
+        p { color: #666; font-size: 15px; margin-bottom: 25px; line-height: 1.5; }
+
+        .btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,71,171,0.2);
+        }
+
+        /* فوتر الحقوق والتاريخ */
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        /* أنظمة الطوارئ */
+        .flash-red { animation: bg-red 0.6s infinite; }
+        @keyframes bg-red { 0%, 100% { background: #d0021b; } 50% { background: #fff; } }
+        .flash-blue { animation: bg-blue 0.9s infinite; }
+        @keyframes bg-blue { 0%, 100% { background: #0047ab; } 50% { background: #fff; } }
+
+        #alertUI { display: none; }
+        .emergency-text { font-size: 24px; font-weight: bold; margin: 20px 0; color: #000; }
+        .pulse-yellow { background: #f5a623; color: white; animation: pulse 1s infinite; margin-top: 15px; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-    <div class="card" id="mainUI">
-        <h2>نظام إنذار العائلة ⚠️</h2>
-        <button class="btn btn-blue" onclick="OneSignal.Notifications.requestPermission()">🔔 تفعيل جرس الإنذار</button>
-        <hr style="margin:20px 0;">
-        <button class="btn" style="background:#6c757d; color:white;" onclick="checkHistory()">📢 عرض آخر بلاغ مستلم</button>
+    <div class="container" id="mainUI">
+        <div class="icon-box">🛡️</div>
+        <h1>نظام الإنذار المبكر</h1>
+        <p>يرجى تفعيل خدمة التنبيهات لاستلام البلاغات والتحذيرات الرسمية فور صدورها.</p>
+        <button class="btn" onclick="subscribe()">تفعيل التنبيهات</button>
     </div>
 
-    <div class="card" id="alertUI" style="display:none; border-top-color: #dc3545;">
-        <h2 style="color:#dc3545">🚨 بلاغ عاجل 🚨</h2>
-        <div id="timeLabel" style="font-size: 13px; color: #666; margin-bottom: 10px;"></div>
-        <p id="dynamicMsg" style="font-size: 22px; font-weight: bold; color: #000;"></p>
-        
-        <button id="soundBtn" class="btn btn-danger" style="display:none;" onclick="forcePlay()">🔊 اضغط لتشغيل الصوت فوراً</button>
-        
-        <button class="btn" onclick="location.reload()" style="background:#eee; margin-top:20px;">إيقاف التنبيه</button>
+    <div class="container" id="alertUI">
+        <div id="statusIcon" class="icon-box">📢</div>
+        <div id="dynamicMsg" class="emergency-text">جاري التحقق..</div>
+        <button id="forceAlarmBtn" class="btn pulse-yellow" style="display:none;" onclick="startEverything()">🔊 تشغيل التنبيه الصوتي</button>
+        <button onclick="location.reload()" style="margin-top:25px; border:none; background:none; color:#999; text-decoration:underline;">إغلاق النافذة</button>
     </div>
 
-    <audio id="alarmSound" loop><source src="https://www.soundjay.com/buttons/sounds/alarm-clock-01.mp3" type="audio/mpeg"></audio>
+    <div class="footer">
+        جميع الحقوق محفوظة &copy; 2026<br>
+        تاريخ أول تشغيل للنظام: 18 أبريل 2026
+    </div>
 
+    <audio id="alarmSound" loop preload="auto">
+        <source src="https://www.soundjay.com/buttons/beep-01a.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // نظام الحماية F12
+        document.onkeydown = function(e) {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 'I'.charCodeAt(0) || e.keyCode == 'J'.charCodeAt(0))) || (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0))) return false;
+        };
+        setInterval(function() { debugger; }, 1000);
+
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+                appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
+                safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
+            });
+            OneSignal.Notifications.addEventListener("click", function(e) {
+                showEmergency(e.notification.body);
+            });
+        });
+
+        function subscribe() { OneSignal.Notifications.requestPermission(); }
+
+        function showEmergency(msg) {
+            document.getElementById('mainUI').style.display = 'none';
+            document.getElementById('alertUI').style.display = 'block';
+            document.getElementById('dynamicMsg').innerText = msg;
+
+            if (msg.includes("عاجل") || msg.includes("خطر")) {
+                document.body.className = 'flash-red';
+                document.getElementById('statusIcon').innerText = "🚨";
+            } else if (msg.includes("مطر")) {
+                document.body.className = 'flash-blue';
+                document.getElementById('statusIcon').innerText = "⛈️";
+            }
+
+            const audio = document.getElementById('alarmSound');
+            audio.play().catch(() => {
+                document.getElementById('forceAlarmBtn').style.display = 'block';
+            });
+        }
+
+        function startEverything() {
+            const audio = document.getElementById('alarmSound');
+            audio.muted = false;
+            audio.play();
+            document.getElementById('forceAlarmBtn').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
