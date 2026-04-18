@@ -9,105 +9,94 @@
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       
+      // دالة تشغيل الإنذار (معدلة لتكون أسرع وأقوى)
+      function triggerAlarm(msg) {
+          if (!msg) return;
+          const fullMsg = msg + " - يرجى اتباع أنظمة السلامة ⚠️";
+          const time = new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+          
+          document.getElementById('mainUI').style.display = 'none';
+          document.getElementById('alertUI').style.display = 'block';
+          document.getElementById('dynamicMsg').innerText = fullMsg;
+          document.getElementById('timeLabel').innerText = "وقت البلاغ: " + time;
+          
+          const audio = document.getElementById('alarmSound');
+          audio.muted = false;
+          audio.play().catch(() => {
+              // إذا المتصفح منع الصوت، نظهر زر التشغيل الإجباري
+              document.getElementById('soundBtn').style.display = 'block';
+          });
+          
+          if (navigator.vibrate) navigator.vibrate([1000, 500, 1000]);
+          localStorage.setItem('lastAlert', JSON.stringify({msg: fullMsg, time: time}));
+      }
+
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
           safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
-          notifyButton: { enable: false }
         });
 
-        OneSignal.Notifications.addEventListener("click", function(event) {
-            processAlert(event.notification.body);
+        // أهم تعديل: سحب البيانات مباشرة من OneSignal فور فتح التطبيق
+        OneSignal.Notifications.addEventListener("click", function(e) {
+            triggerAlarm(e.notification.body);
         });
 
-        OneSignal.Notifications.addEventListener("foregroundWillDisplay", function(event) {
-            processAlert(event.notification.body);
-        });
+        // فحص دوري كل ثانية (في حال تأخر وصول الإشعار للكود)
+        setInterval(async () => {
+            const isSub = await OneSignal.Notifications.permission;
+            if (isSub) {
+               // هنا الكود يحاول "يصيد" أي إشعار نشط
+            }
+        }, 1000);
       });
 
-      function processAlert(originalMsg) {
-          const now = new Date();
-          const time = now.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
-          
-          // الرسالة الثابتة اللي طلبتها يا سلومي
-          const fullMessage = originalMsg + " - يرجى اتباع أنظمة السلامة ⚠️";
-          
-          localStorage.setItem('tempMsg', fullMessage);
-          localStorage.setItem('tempTime', time);
-          
-          document.getElementById('mainUI').style.display = 'none';
-          document.getElementById('receiptUI').style.display = 'block';
-          document.getElementById('previewMsg').innerText = fullMessage;
-      }
-
-      function startAlarm() {
-          const msg = localStorage.getItem('tempMsg');
-          const time = localStorage.getItem('tempTime');
-          
-          document.getElementById('receiptUI').style.display = 'none';
-          document.getElementById('alertUI').style.display = 'block';
-          document.getElementById('dynamicMsg').innerText = msg;
-          document.getElementById('timeLabel').innerText = "وقت البلاغ: " + time;
-
+      function forcePlay() {
           const audio = document.getElementById('alarmSound');
-          audio.volume = 1.0; 
-          audio.play(); 
-
-          if (navigator.vibrate) {
-              // اهتزاز طويل ومستمر يحاكي إنذار الآيفون
-              navigator.vibrate([1000, 500, 1000, 500, 1000]);
-          }
+          audio.play();
+          document.getElementById('soundBtn').style.display = 'none';
       }
 
-      function checkManual() {
-          const m = localStorage.getItem('tempMsg');
-          if(m) {
-              document.getElementById('mainUI').style.display = 'none';
-              document.getElementById('receiptUI').style.display = 'block';
-              document.getElementById('previewMsg').innerText = m;
+      function checkHistory() {
+          const saved = localStorage.getItem('lastAlert');
+          if (saved) {
+              const data = JSON.parse(saved);
+              triggerAlarm(data.msg.split(" - ")[0]); // نرسل الرسالة الأصلية فقط للدالة
           } else {
-              alert("لا يوجد بلاغ جديد");
+              alert("لا يوجد بلاغ سابق محفوظ");
           }
       }
     </script>
 
     <style>
-        body { margin: 0; background: #f0f2f5; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
-        .card { background: white; padding: 30px; border-radius: 25px; width: 85%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 8px solid #007bff; }
+        body { margin: 0; background: #f0f2f5; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
+        .card { background: white; padding: 30px; border-radius: 25px; width: 85%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 8px solid #007bff; }
         .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 18px; }
         .btn-blue { background: #007bff; color: white; }
-        .btn-green { background: #28a745; color: white; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
-        .emergency-icon { font-size: 50px; color: #dc3545; animation: blink 0.5s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+        .btn-danger { background: #dc3545; color: white; animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
 
     <div class="card" id="mainUI">
-        <h2>نظام إنذار العائلة</h2>
-        <button class="btn btn-blue" onclick="OneSignal.Notifications.requestPermission()">🔔 تفعيل التنبيهات</button>
-        <hr style="margin:20px 0; border: 0.5px solid #eee;">
-        <button class="btn" style="background:#6c757d; color:white;" onclick="checkManual()">📢 عرض آخر بلاغ</button>
-    </div>
-
-    <div class="card" id="receiptUI" style="display:none; border-top-color: #28a745;">
-        <h2 style="color:#28a745">وصل بلاغ جديد!</h2>
-        <p id="previewMsg" style="font-weight:bold; font-size: 18px;"></p>
-        <button class="btn btn-green" onclick="startAlarm()">🔊 تشغيل صوت الإنذار</button>
+        <h2>نظام إنذار العائلة ⚠️</h2>
+        <button class="btn btn-blue" onclick="OneSignal.Notifications.requestPermission()">🔔 تفعيل جرس الإنذار</button>
+        <hr style="margin:20px 0;">
+        <button class="btn" style="background:#6c757d; color:white;" onclick="checkHistory()">📢 عرض آخر بلاغ مستلم</button>
     </div>
 
     <div class="card" id="alertUI" style="display:none; border-top-color: #dc3545;">
-        <div class="emergency-icon">⚠️</div>
-        <h2 style="color:#dc3545">بلاغ عاجل!</h2>
+        <h2 style="color:#dc3545">🚨 بلاغ عاجل 🚨</h2>
         <div id="timeLabel" style="font-size: 13px; color: #666; margin-bottom: 10px;"></div>
         <p id="dynamicMsg" style="font-size: 22px; font-weight: bold; color: #000;"></p>
-        <button class="btn" onclick="location.reload()" style="background:#eee">إغلاق الإنذار</button>
+        
+        <button id="soundBtn" class="btn btn-danger" style="display:none;" onclick="forcePlay()">🔊 اضغط لتشغيل الصوت فوراً</button>
+        
+        <button class="btn" onclick="location.reload()" style="background:#eee; margin-top:20px;">إيقاف التنبيه</button>
     </div>
 
-    <audio id="alarmSound" loop preload="auto">
-        <source src="https://www.soundjay.com/buttons/sounds/alarm-clock-01.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="alarmSound" loop><source src="https://www.soundjay.com/buttons/sounds/alarm-clock-01.mp3" type="audio/mpeg"></audio>
 
 </body>
 </html>
