@@ -8,21 +8,21 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>نظام سلومي للطوارئ</title>
   
-  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
-    window.OneSignal = window.OneSignal || [];
-    OneSignal.push(function() {
-      OneSignal.init({
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
         appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
-        safari_web_id: "web.onesignal.auto.102660d1-030b-4680-8646-7787498c394c",
+        safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
         notifyButton: { enable: false },
         allowLocalhostAsSecureOrigin: true
       });
     });
 
-    // دالة تفعيل التنبيهات
+    // دالة تفعيل التنبيهات المطورة
     function startSubscribe() {
-      OneSignal.push(function() { 
+      OneSignalDeferred.push(function(OneSignal) { 
         OneSignal.showNativePrompt(); 
       });
     }
@@ -63,18 +63,19 @@
 <script>
   // تحديث حالة الاتصال تلقائياً
   setInterval(() => {
-    OneSignal.push(function() {
-      OneSignal.getNotificationPermission(function(permission) {
-        if(permission === 'granted') {
-          document.getElementById('statusText').innerText = "متصل بنجاح ✅";
-          document.getElementById('statusText').style.color = "#34c759";
-          document.getElementById('subBtn').style.display = "none";
-        }
-      });
-    });
+    if (window.OneSignal) {
+        OneSignal.push(async function() {
+          const isSubscribed = await OneSignal.isPushNotificationsEnabled();
+          if(isSubscribed) {
+            document.getElementById('statusText').innerText = "متصل بنجاح ✅";
+            document.getElementById('statusText').style.color = "#34c759";
+            document.getElementById('subBtn').style.display = "none";
+          }
+        });
+    }
   }, 2000);
 
-  // دالة إرسال التنبيه
+  // دالة إرسال التنبيه باستخدام مفتاحك الجديد
   async function broadcast() {
     const title = document.getElementById('t').value || "إنذار أحمر 🚨";
     const body = document.getElementById('b').value || "تحذير من نظام سلومي";
@@ -82,6 +83,7 @@
     
     btn.innerText = "جاري البث... 📡";
     
+    // استخدمنا CORS Proxy مؤقت لحل مشكلة الحماية في المتصفح
     const proxy = "https://cors-anywhere.herokuapp.com/";
     const url = "https://onesignal.com/api/v1/notifications";
 
@@ -97,7 +99,6 @@
           included_segments: ["Total Subscriptions"], 
           headings: {"en": title}, 
           contents: {"en": body},
-          ios_sound: "ping.wav",
           priority: 10 
         })
       });
@@ -105,12 +106,11 @@
       if (response.ok) {
         alert("تم البث! شيك على جوالك 🚨");
       } else {
-        // إذا فشل بسبب الـ Proxy يفتح صفحة التفعيل
         window.open("https://cors-anywhere.herokuapp.com/corsdemo", "_blank");
-        alert("اضغط على الزر في الصفحة الجديدة ثم ارجع جرب ترسل");
+        alert("اضغط زر 'Request Temporary Access' في الصفحة اللي انفتحت، ثم ارجع هنا واضغط إرسال.");
       }
     } catch(e) {
-      alert("خطأ في الاتصال بالخادم");
+      alert("خطأ في الاتصال. تأكد من تفعيل بروكسي CORS");
     }
     btn.innerText = "بث الإشارة النووية 🚀";
   }
