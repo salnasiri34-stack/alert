@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الإنذار الرسمي</title>
+    <title>نظام التنبيهات العاجلة</title>
 
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -12,77 +12,64 @@
         await OneSignal.init({
           appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
           safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
-          notifyButton: { 
-            enable: true,
-            position: 'bottom-right'
-          }
+          notifyButton: { enable: true }
         });
       });
     </script>
 
     <style>
-        body {
-            margin: 0; background-color: #000; color: white;
-            font-family: 'Arial', sans-serif; overflow: hidden;
-            display: flex; justify-content: center; align-items: center; height: 100vh;
-        }
-        .warning-icon {
-            font-size: 80px; color: #ffcc00;
-            animation: blink 0.4s infinite; display: none;
-            margin: 20px 0;
-        }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
-        .emergency-box { 
-            text-align: center; display: none; 
-            border: 4px solid #ffcc00; padding: 25px; 
-            border-radius: 20px; width: 85%; max-width: 400px;
-        }
-        button { 
-            background: #ffcc00; color: black; border: none; 
-            padding: 25px; font-size: 22px; font-weight: bold; 
-            border-radius: 15px; cursor: pointer; width: 100%;
-            box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
-        }
+        body { margin: 0; background: #f4f7f9; color: #333; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
+        .card { background: white; padding: 40px; border-radius: 25px; width: 85%; max-width: 450px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 8px solid #007bff; }
+        h2 { color: #007bff; margin-bottom: 10px; }
+        .status-box { background: #e7f3ff; color: #007bff; padding: 10px; border-radius: 10px; font-weight: bold; margin-bottom: 25px; }
+        .btn-alert { background: #dc3545; color: white; border: none; padding: 20px; border-radius: 15px; width: 100%; font-weight: bold; font-size: 20px; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3); }
+        .btn-alert:active { transform: scale(0.98); }
+        .warning-ui { display: none; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .emergency-icon { font-size: 60px; color: #dc3545; animation: blink 0.6s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="startScreen" style="width: 90%; text-align: center;">
-        <button onclick="startEmergency()">⚠️ اضغط لفتح البلاغ العاجل ⚠️</button>
+    <div class="card">
+        <div id="normalContent">
+            <h2>مركز التنبيهات العائلية</h2>
+            <div class="status-box">الحالة: النظام يعمل ومتصل</div>
+            <p style="color: #666;">فضلاً فعل الجرس لتلقي تنبيهات الأمطار والحالات العاجلة فوراً.</p>
+            <hr style="border: 0.5px solid #eee; margin: 25px 0;">
+            <button class="btn-alert" onclick="activateEmergency()">🔔 عرض التنبيه الحالي</button>
+        </div>
+
+        <div id="emergencyContent" class="warning-ui">
+            <div class="emergency-icon">⚠️</div>
+            <h2 style="color: #dc3545;">تنبيه عاجل</h2>
+            <p id="msgText" style="font-size: 22px; font-weight: bold;">جاري استلام بيانات الحالة الجوية...</p>
+            <div class="emergency-icon">⚠️</div>
+            <button onclick="location.reload()" style="background:#6c757d; color:white; border:none; padding:10px; border-radius:10px; margin-top:20px; cursor:pointer;">إغلاق التنبيه</button>
+        </div>
     </div>
 
-    <div id="emergencyContent" class="emergency-box">
-        <div class="warning-icon">⚠️</div>
-        <h1 style="color: #ffcc00; font-size: 30px;">تحذير: طوارئ عاجلة</h1>
-        <p id="msgText" style="font-size: 20px; line-height: 1.6;">جاري معالجة البيانات الأمنية...</p>
-        <div class="warning-icon">⚠️</div>
-    </div>
-
-    <audio id="emergencySound" loop>
-        <source src="https://www.soundjay.com/buttons/beep-01a.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="emergencySound" loop><source src="https://www.soundjay.com/buttons/beep-01a.mp3" type="audio/mpeg"></audio>
 
     <script>
-        function startEmergency() {
-            // 1. إظهار العناصر المخفية
-            document.getElementById('startScreen').style.display = 'none';
-            document.getElementById('emergencyContent').style.display = 'block';
-            document.querySelectorAll('.warning-icon').forEach(el => el.style.display = 'block');
-            
-            // 2. تشغيل الصوت فوراً
-            var audio = document.getElementById('emergencySound');
+        function activateEmergency() {
+            // تشغيل الصوت والاهتزاز للتنبيه
+            const audio = document.getElementById('emergencySound');
             audio.play();
-
-            // 3. تفعيل الاهتزاز القوي (للأجهزة الداعمة)
+            
             if (navigator.vibrate) {
-                navigator.vibrate([500, 200, 500, 200, 800, 200, 1000]);
+                // اهتزاز رسمي متقطع (لفت انتباه)
+                navigator.vibrate([100, 100, 100, 100, 800]);
             }
 
-            // 4. تغيير النص بعد 3 ثواني لزيادة الحماس
+            document.getElementById('normalContent').style.display = 'none';
+            document.getElementById('emergencyContent').style.display = 'block';
+
+            // هنا تقدر تغير الرسالة بناءً على الحالة
             setTimeout(() => {
-                document.getElementById('msgText').innerHTML = "تم رصد دخول غير مصرح به!<br>الرجاء البقاء في مكانك.";
-                if (navigator.vibrate) navigator.vibrate([1000, 500, 2000]);
-            }, 3000);
+                document.getElementById('msgText').innerHTML = "يرجى الانتباه: هناك حالة مطر غزيرة متوقعة.<br>الرجاء أخذ الحيطة والحذر.";
+            }, 1500);
         }
     </script>
 </body>
