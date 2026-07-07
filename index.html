@@ -8,7 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="نظام الإنذار">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/559/559343.png">
+    <!-- تم تغيير أيقونة التطبيق هنا إلى علامة التعجب الصفراء بدقة بناءً على طلبك ⚠️ -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/179/179386.png">
 
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
@@ -130,23 +131,6 @@
 
         function subscribe() { OneSignal.Notifications.requestPermission(); }
 
-        // دالة إرسال التنبيه إلى تليجرام عائلة سلومي المطور
-        function sendTelegramAlert(message) {
-            const botToken = '8852126562:AAHaXl12bmj0Nb-eKkZ8zQgFXhKcsUKHwoc';
-            const chatId = '-1004353865079';
-            const url = `https://api.telegram.com/bot${botToken}/sendMessage`;
-            
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: `🚨 *إشعار إنذار مبكر جديد:* \n\n${message}`,
-                    parse_mode: 'Markdown'
-                })
-            }).catch(error => console.error('Telegram Error:', error));
-        }
-
         function showEmergency(msg) {
             document.getElementById('mainUI').style.display = 'none';
             document.getElementById('alertUI').style.display = 'block';
@@ -164,9 +148,6 @@
             audio.play().catch(() => {
                 document.getElementById('forceAlarmBtn').style.display = 'block';
             });
-
-            // هنا الإضافة الذكية: إرسال نفس الرسالة تلقائياً للتليجرام
-            sendTelegramAlert(msg);
         }
 
         function startEverything() {
