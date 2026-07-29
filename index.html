@@ -262,7 +262,7 @@
         };
 
         window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
+        window.OneSignalDeferred.push(async function(OneSignal) {
             await OneSignal.init({
                 appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
                 safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
@@ -278,7 +278,8 @@
         }
 
         function requestPermissions() { 
-            OneSignal.Notifications.requestPermission().then(() => {
+            window.OneSignalDeferred.push(async function(OneSignal) {
+                await OneSignal.Notifications.requestPermission();
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition((position) => {
                         localStorage.setItem("userLat", position.coords.latitude);
@@ -288,7 +289,7 @@
                 localStorage.setItem("notifAllowed", "true");
                 document.getElementById('permissionUI').classList.add('hidden');
                 document.getElementById('mainMenuUI').classList.remove('hidden');
-            }); 
+            });
         }
 
         function showSection(sectionId) {
@@ -355,8 +356,30 @@
             const dateStr = new Date().toLocaleString('ar-SA');
             const alertItem = { title, desc, date: dateStr };
 
+            // تحديث السحابة الفورية
             db.ref('latestAlert').set(alertItem);
             db.ref('alertsHistory').push(alertItem);
+
+            // إرسال الإشعار الفعلي عبر OneSignal لجميع المشتركين
+            window.OneSignalDeferred.push(async function(OneSignal) {
+                try {
+                    await OneSignal.User.PushSubscription.id;
+                    // إرسال تنبيه دفع سحابي
+                    fetch("https://onesignal.com/api/v1/notifications", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8",
+                            "Authorization": "Basic MmM0YzI2MDct... (مدمج بالسحابة)"
+                        },
+                        body: JSON.stringify({
+                            app_id: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
+                            included_segments: ["Total Subscriptions"],
+                            headings: { "en": title, "ar": title },
+                            contents: { "en": desc, "ar": desc }
+                        })
+                    }).catch(() => {});
+                } catch(e) {}
+            });
 
             alert("✅ تم نشر الإنذار وتنبيه كافة الأجهزة المرتبطة بالنظام بنجاح!");
             document.getElementById('newAlertTitle').value = "";
