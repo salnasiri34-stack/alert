@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام الإنذار المبكر 🛡️ - سلومي</title>
+    <title>نظام الإنذار المبكر 🛡️</title>
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="نظام الإنذار">
+    <meta name="apple-mobile-web-app-title" content="الإنذار المبكر">
     
-    <!-- ربط الأيقونة وملف الـ manifest -->
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
 
+    <!-- مكتبة Firebase السحابية للتحكم والتزامن الفوري -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
     <style>
@@ -22,6 +24,8 @@
             --main-card: #ffffff;
             --primary-blue: #0047ab;
             --danger-red: #d0021b;
+            --safe-green: #2ecc71;
+            --warning-yellow: #f39c12;
         }
 
         body {
@@ -32,117 +36,186 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             min-height: 100vh;
             overflow-y: auto;
             transition: background 0.4s ease;
+        }
+
+        .ticker-bar {
+            width: 100%;
+            background: #b30000;
+            color: white;
+            padding: 10px 0;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .ticker-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 20s linear infinite;
+        }
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
         }
 
         .container {
             text-align: center;
             width: 85%;
             max-width: 400px;
-            padding: 30px 20px;
+            padding: 25px 20px;
             background: var(--main-card);
             border-radius: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            margin: 20px 0;
+            margin: 15px 0;
             z-index: 2;
         }
 
-        .icon-box { font-size: 60px; margin-bottom: 15px; }
-        h1, h2 { font-size: 20px; color: #1a1a1a; margin-bottom: 8px; font-weight: 700; }
-        p { color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+        .icon-box { font-size: 55px; margin-bottom: 10px; }
+        h1, h2 { font-size: 19px; color: #1a1a1a; margin-bottom: 8px; font-weight: 700; }
+        p { color: #666; font-size: 13px; margin-bottom: 15px; line-height: 1.5; }
 
         .btn {
             background: var(--primary-blue);
             color: white;
             border: none;
-            padding: 14px;
+            padding: 13px;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             width: 100%;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,71,171,0.2);
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
-        .btn-red { background: #d0021b; }
-        .btn-green { background: #2ecc71; }
+        .btn-red { background: var(--danger-red); box-shadow: 0 4px 12px rgba(208,2,27,0.3); }
+        .btn-green { background: var(--safe-green); }
+        .btn-sos { background: #e74c3c; font-size: 17px; animation: pulse-sos 1.5s infinite; }
+
+        @keyframes pulse-sos {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
 
         input, textarea {
             width: 90%;
-            padding: 12px;
-            margin: 8px 0;
+            padding: 11px;
+            margin: 6px 0;
             border-radius: 8px;
             border: 1px solid #ddd;
             background: #fafafa;
-            font-size: 15px;
+            font-size: 14px;
             text-align: right;
         }
-        textarea { height: 90px; resize: none; }
+        textarea { height: 80px; resize: none; }
 
         .hidden { display: none !important; }
 
         .alert-box {
             background: #f9f9f9;
-            border-right: 4px solid #d0021b;
-            padding: 12px;
-            margin: 10px 0;
+            border-right: 4px solid var(--danger-red);
+            padding: 10px;
+            margin: 8px 0;
             text-align: right;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 12px;
         }
 
-        /* فوتر الحقوق والتاريخ */
+        .safety-guide-card {
+            background: #fdfefe;
+            border: 1px solid #e1e8ed;
+            border-right: 4px solid var(--primary-blue);
+            padding: 10px;
+            margin: 8px 0;
+            text-align: right;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
         .footer {
             text-align: center;
-            color: #999;
+            color: #888;
             font-size: 11px;
             line-height: 1.5;
-            margin-bottom: 15px;
+            margin: 10px 0 20px 0;
         }
 
-        /* ألوان الحالات العامة */
-        .bg-state-red { background-color: #5c1d1d !important; }
-        .bg-state-green { background-color: #1b4d2e !important; }
+        .bg-state-red { background-color: #4a0d0d !important; }
+        .bg-state-green { background-color: #0d381c !important; }
 
         .flash-red { animation: bg-red 0.6s infinite; }
-        @keyframes bg-red { 0%, 100% { background: #d0021b; } 50% { background: #fff; } }
+        @keyframes bg-red { 0%, 100% { background: var(--danger-red); } 50% { background: #fff; } }
         
-        .pulse-yellow { background: #f5a623; color: white; animation: pulse 1s infinite; }
+        .pulse-yellow { background: var(--warning-yellow); color: white; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body id="pageBody" oncontextmenu="return false;">
 
-    <!-- 1. شاشة السماح للإشعارات أولاً -->
+    <div class="ticker-bar">
+        <div class="ticker-text">🚨 تنبيه متقدم: نظام الإنذار المبكر للعمليات الطارئة والمتابعة الميدانية الآمنة 🛡️</div>
+    </div>
+
+    <!-- 1. شاشة السماح للصلاحيات -->
     <div class="container" id="permissionUI">
         <div class="icon-box">⚠️</div>
         <h1>نظام الإنذار المبكر</h1>
-        <p>يرجى تفعيل خدمة التنبيهات لاستلام البلاغات والتحذيرات الرسمية فور صدورها.</p>
-        <button class="btn" onclick="subscribe()">سماح بالتنبيهات 🔔</button>
+        <p>يرجى تفعيل التنبيهات وصلاحية الموقع الجغرافي لتمكين خدمات الطوارئ والبلاغات بدقة.</p>
+        <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
     </div>
 
-    <!-- 2. القائمة الرئيسية (بعد تفعيل التنبيهات) -->
+    <!-- 2. القائمة الرئيسية -->
     <div class="container hidden" id="mainMenuUI">
-        <div class="icon-box">🛡️</div>
+        <div class="icon-box" id="mainStatusIcon">🟢</div>
         <h2>مركز العمليات والإنذار</h2>
-        <p>مرحباً بك في نظام الطوارئ الذكي</p>
+        <p>حالة التأهب العام للمنطقة</p>
         
+        <button class="btn btn-sos" onclick="sendSOS()">🚨 طلب استغاثة طارئة (SOS)</button>
         <button class="btn" onclick="showSection('historyUI')">عرض الإنذارات السابقة 📋</button>
+        <button class="btn" onclick="showSection('safetyUI')">تعليمات وإرشادات السلامة 📘</button>
         <button class="btn" onclick="showSection('adminLoginUI')">لوحة تحكم المسؤول 🔐</button>
+        
+        <hr style="border:0.5px solid #eee; margin: 12px 0;">
+        
+        <button class="btn btn-red" onclick="setGlobalState('RED')">تحويل الكل لوضع الخطر 🚨</button>
+        <button class="btn btn-green" onclick="setGlobalState('GREEN')">تحويل الكل لوضع الاستقرار 🟢</button>
     </div>
 
-    <!-- 3. شاشة سجل الإنذارات السابقة -->
+    <!-- 3. سجل الإنذارات -->
     <div class="container hidden" id="historyUI">
         <h2>📋 سجل الإنذارات السابقة</h2>
-        <div id="alertsListContainer" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px;"></div>
+        <div id="alertsListContainer" style="max-height: 220px; overflow-y: auto; margin-bottom: 12px;"></div>
         <button class="btn" onclick="showSection('mainMenuUI')">الرجوع للقائمة</button>
     </div>
 
-    <!-- 4. شاشة تسجيل دخول المسؤول (الرمز السري الموحد لكل العمليات الإدارية) -->
+    <!-- 4. إرشادات السلامة -->
+    <div class="container hidden" id="safetyUI">
+        <h2>📘 إرشادات الطوارئ والسلامة</h2>
+        <div style="max-height: 220px; overflow-y: auto; text-align: right; margin-bottom: 12px;">
+            <div class="safety-guide-card">
+                <strong>🌧️ في حال السيول والأمطار:</strong>
+                <p style="margin:4px 0;">ابتعد عن بطون الأودية ومجاري السيول ولا تقامر بعبور الطرق المغمورة بالمياه.</p>
+            </div>
+            <div class="safety-guide-card">
+                <strong>⚡ في حال الصواعق الرعدية:</strong>
+                <p style="margin:4px 0;">احرص على البقاء داخل المباني المغلقة وافصل الأجهزة الكهربائية الحساسة.</p>
+            </div>
+            <div class="safety-guide-card">
+                <strong>🔥 في حال الحريق:</strong>
+                <p style="margin:4px 0;">اتوجه فوراً لأقرب مخرج طوارئ ولا تستخدم المصاعد الكهربائية أبداً.</p>
+            </div>
+        </div>
+        <button class="btn" onclick="showSection('mainMenuUI')">رجوع</button>
+    </div>
+
+    <!-- 5. دخول المسؤول -->
     <div class="container hidden" id="adminLoginUI">
         <h2>🔐 دخول المسؤول</h2>
         <p>أدخل الرمز السري الخاص بالمدير:</p>
@@ -151,36 +224,26 @@
         <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">رجوع</button>
     </div>
 
-    <!-- 5. لوحة تحكم سلومي (إضافة إنذار + أزرار التحكم باللون الأحمر والأخضر للجميع) -->
+    <!-- 6. لوحة التحكم -->
     <div class="container hidden" id="adminPanelUI">
         <h2>🛠️ لوحة تحكم سلومي</h2>
-        
-        <div style="background: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
-            <p style="margin: 0 0 8px 0; font-weight: bold; color: #333;">التحكم العام باللون (لكل الأجهزة):</p>
-            <button class="btn btn-red" onclick="setGlobalState('RED')">وضع الإنذار والخطر 🚨 (أحمر)</button>
-            <button class="btn btn-green" onclick="setGlobalState('GREEN')">وضع الاستقرار والأمان 🟢 (أخضر)</button>
-        </div>
-
-        <hr style="border:0.5px solid #ddd; margin: 15px 0;">
-        
-        <input type="text" id="newAlertTitle" placeholder="عنوان الإنذار (مثال: تحذير جوي)">
+        <input type="text" id="newAlertTitle" placeholder="عنوان الإنذار (مثال: تحذير جوي عاجل)">
         <textarea id="newAlertDesc" placeholder="نص الإنذار بالتفصيل..."></textarea>
-        <button class="btn btn-red" onclick="publishAlert()">نشر الإنذار وحفظه 🚀</button>
-        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">العودة للرئيسية</button>
+        <button class="btn btn-red" onclick="publishGlobalAlert()">نشر وتنبيه كل الأجهزة 🚀</button>
+        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">إلغاء والعودة</button>
     </div>
 
-    <!-- شاشة استقبال إشعار مباشر -->
+    <!-- شاشة استقبال الطوارئ -->
     <div class="container hidden" id="alertUI">
         <div id="statusIcon" class="icon-box">📢</div>
-        <div id="dynamicMsg" class="emergency-text" style="font-size: 18px; font-weight: bold; margin: 15px 0;">جاري التحقق..</div>
+        <div id="dynamicMsg" style="font-size: 17px; font-weight: bold; margin: 12px 0;">جاري التحقق..</div>
         <button id="forceAlarmBtn" class="btn pulse-yellow hidden" onclick="startEverything()">🔊 تشغيل التنبيه الصوتي</button>
-        <button class="btn" style="background:#7f8c8d;" onclick="location.reload()">العودة للرئيسية</button>
+        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">العودة للرئيسية</button>
     </div>
 
     <div class="footer">
         جميع الحقوق محفوظة للمخترع: سليمان الناصري (سلومي) &copy; 2026<br>
-        موقع تجريبي - محاكاة تقنية تدعم رؤية 2030 الرقمية<br>
-        تاريخ أول تشغيل للنظام: 18 أبريل 2026
+        نظام مركزي متزامن عبر السحابة التقنية
     </div>
 
     <audio id="alarmSound" loop preload="auto">
@@ -188,39 +251,40 @@
     </audio>
 
     <script>
-        // نظام الحماية F12
+        const firebaseConfig = {
+            databaseURL: "https://saloomy-alert-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         document.onkeydown = function(e) {
             if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 'I'.charCodeAt(0) || e.keyCode == 'J'.charCodeAt(0))) || (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0))) return false;
         };
-        setInterval(function() { debugger; }, 1000);
 
-        // OneSignal Init
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {
             await OneSignal.init({
                 appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
                 safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
             });
-            OneSignal.Notifications.addEventListener("click", function(e) {
-                showEmergency(e.notification.body);
-            });
         });
 
-        // التحقق عند فتح الصفحة من الإشعارات والحالة المخزنة العامة
         window.onload = function() {
             if (localStorage.getItem("notifAllowed") === "true") {
                 document.getElementById('permissionUI').classList.add('hidden');
                 document.getElementById('mainMenuUI').classList.remove('hidden');
             }
-            loadAlertsHistory();
-            applySavedGlobalState();
-            
-            // تحديث دوري لكل جهاز ليقرأ إذا سلومي غير لون الشاشة
-            setInterval(applySavedGlobalState, 2000);
+            listenToDatabase();
         }
 
-        function subscribe() { 
+        function requestPermissions() { 
             OneSignal.Notifications.requestPermission().then(() => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        localStorage.setItem("userLat", position.coords.latitude);
+                        localStorage.setItem("userLng", position.coords.longitude);
+                    }, () => {});
+                }
                 localStorage.setItem("notifAllowed", "true");
                 document.getElementById('permissionUI').classList.add('hidden');
                 document.getElementById('mainMenuUI').classList.remove('hidden');
@@ -231,6 +295,7 @@
             document.getElementById('permissionUI').classList.add('hidden');
             document.getElementById('mainMenuUI').classList.add('hidden');
             document.getElementById('historyUI').classList.add('hidden');
+            document.getElementById('safetyUI').classList.add('hidden');
             document.getElementById('adminLoginUI').classList.add('hidden');
             document.getElementById('adminPanelUI').classList.add('hidden');
             document.getElementById('alertUI').classList.add('hidden');
@@ -242,7 +307,7 @@
         function verifyPin() {
             const pin = document.getElementById('pinCodeInput').value;
             if (pin === "131213") {
-                alert("أهلاً بك يا سلومي 👑");
+                alert("أهلاً بك يا سلومي يا قائد النظام 👑");
                 document.getElementById('pinCodeInput').value = "";
                 showSection('adminPanelUI');
             } else {
@@ -250,30 +315,36 @@
             }
         }
 
-        // تحكم المدير باللون وحفظه بحيث ينعكس على كل من يفتح الموقع
+        function sendSOS() {
+            if(confirm("هل أنت متأكد من إرسال بلاغ الاستغاثة الطارئة وموقعك لغرفة العمليات؟")) {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        const timeStr = new Date().toLocaleString('ar-SA');
+
+                        db.ref('sosAlerts').push({
+                            latitude: lat,
+                            longitude: lng,
+                            time: timeStr,
+                            status: "طوارئ نشطة"
+                        });
+
+                        alert("🚨 تم إرسال إحداثيات موقعك وبلاغ الاستغاثة بنجاح إلى لوحة تحكمك الخاصة!");
+                    }, () => {
+                        alert("⚠️ تعذر الحصول على الموقع، يرجى السماح للموقع بالعمل.");
+                    });
+                } else {
+                    alert("متصفحك لا يدعم تحديد الموقع الجغرافي.");
+                }
+            }
+        }
+
         function setGlobalState(state) {
-            localStorage.setItem('systemGlobalState', state);
-            applySavedGlobalState();
-            if (state === 'RED') {
-                alert("🚨 تم تفعيل الوضع الأحمر على جميع أجهزة المتصلين!");
-            } else {
-                alert("🟢 تم تفعيل الوضع الأخضر على جميع أجهزة المتصلين!");
-            }
+            db.ref('systemState').set(state);
         }
 
-        function applySavedGlobalState() {
-            const state = localStorage.getItem('systemGlobalState');
-            const body = document.getElementById('pageBody');
-            body.classList.remove('bg-state-red', 'bg-state-green');
-            
-            if (state === 'RED') {
-                body.classList.add('bg-state-red');
-            } else if (state === 'GREEN') {
-                body.classList.add('bg-state-green');
-            }
-        }
-
-        function publishAlert() {
+        function publishGlobalAlert() {
             const title = document.getElementById('newAlertTitle').value;
             const desc = document.getElementById('newAlertDesc').value;
             if(!title || !desc) {
@@ -284,46 +355,71 @@
             const dateStr = new Date().toLocaleString('ar-SA');
             const alertItem = { title, desc, date: dateStr };
 
-            let list = JSON.parse(localStorage.getItem('saloomyAlerts') || "[]");
-            list.unshift(alertItem);
-            localStorage.setItem('saloomyAlerts', JSON.stringify(list));
+            db.ref('latestAlert').set(alertItem);
+            db.ref('alertsHistory').push(alertItem);
 
-            alert("✅ تم نشر وحفظ الإنذار في الأرشيف بنجاح!");
+            alert("✅ تم نشر الإنذار وتنبيه كافة الأجهزة المرتبطة بالنظام بنجاح!");
             document.getElementById('newAlertTitle').value = "";
             document.getElementById('newAlertDesc').value = "";
             showSection('mainMenuUI');
         }
 
-        function loadAlertsHistory() {
-            const container = document.getElementById('alertsListContainer');
-            let list = JSON.parse(localStorage.getItem('saloomyAlerts') || "[]");
-            
-            if(list.length === 0) {
-                container.innerHTML = "<p style='color:#888;'>لا توجد إنذارات سابقة مسجلة حالياً.</p>";
-                return;
-            }
-
-            let html = "";
-            list.forEach(item => {
-                html += `<div class="alert-box">
-                    <strong style="color:#d0021b;">${item.title}</strong>
-                    <p style="margin: 5px 0; color:#333;">${item.desc}</p>
-                    <small style="color:#888;">📅 ${item.date}</small>
-                </div>`;
+        function listenToDatabase() {
+            db.ref('systemState').on('value', (snapshot) => {
+                const state = snapshot.val();
+                const body = document.getElementById('pageBody');
+                const mainIcon = document.getElementById('mainStatusIcon');
+                body.className = "";
+                if (state === 'RED') {
+                    body.classList.add('bg-state-red');
+                    if(mainIcon) mainIcon.innerText = "🚨";
+                } else if (state === 'GREEN') {
+                    body.classList.add('bg-state-green');
+                    if(mainIcon) mainIcon.innerText = "🟢";
+                }
             });
-            container.innerHTML = html;
+
+            db.ref('latestAlert').on('value', (snapshot) => {
+                const alertData = snapshot.val();
+                if(alertData && localStorage.getItem("notifAllowed") === "true") {
+                    triggerEmergencyBroadcast(alertData.title + ": " + alertData.desc);
+                }
+            });
         }
 
-        function showEmergency(msg) {
+        function loadAlertsHistory() {
+            const container = document.getElementById('alertsListContainer');
+            db.ref('alertsHistory').once('value', (snapshot) => {
+                let list = [];
+                snapshot.forEach((child) => {
+                    list.unshift(child.val());
+                });
+
+                if(list.length === 0) {
+                    container.innerHTML = "<p style='color:#888;'>لا توجد إنذارات سابقة مسجلة حالياً.</p>";
+                    return;
+                }
+
+                let html = "";
+                list.forEach(item => {
+                    html += `<div class="alert-box">
+                        <strong style="color:#d0021b;">${item.title}</strong>
+                        <p style="margin: 4px 0; color:#333;">${item.desc}</p>
+                        <small style="color:#888;">📅 ${item.date}</small>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            });
+        }
+
+        function triggerEmergencyBroadcast(msg) {
             document.getElementById('permissionUI').classList.add('hidden');
             document.getElementById('mainMenuUI').classList.add('hidden');
             document.getElementById('alertUI').classList.remove('hidden');
             document.getElementById('dynamicMsg').innerText = msg;
 
-            if (msg.includes("عاجل") || msg.includes("خطر")) {
-                document.body.className = 'flash-red';
-                document.getElementById('statusIcon').innerText = "🚨";
-            }
+            document.body.className = 'flash-red';
+            document.getElementById('statusIcon').innerText = "🚨";
 
             const audio = document.getElementById('alarmSound');
             audio.play().catch(() => {
