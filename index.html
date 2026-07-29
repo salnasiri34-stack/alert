@@ -8,9 +8,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="نظام الإنذار">
-    <!-- أيقونة علامة التعجب الصفراء بناءً على طلبك ⚠️ -->
+    
+    <!-- ربط الأيقونة وملف الـ manifest -->
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
@@ -102,7 +104,7 @@
             margin-bottom: 15px;
         }
 
-        /* أنظمة الطوارئ للخلفية والألوان */
+        /* ألوان الحالات العامة */
         .bg-state-red { background-color: #5c1d1d !important; }
         .bg-state-green { background-color: #1b4d2e !important; }
 
@@ -131,11 +133,6 @@
         
         <button class="btn" onclick="showSection('historyUI')">عرض الإنذارات السابقة 📋</button>
         <button class="btn" onclick="showSection('adminLoginUI')">لوحة تحكم المسؤول 🔐</button>
-        
-        <hr style="border:0.5px solid #eee; margin: 15px 0;">
-        
-        <button class="btn btn-red" onclick="setManualState('RED')">وضع الإنذار والخطر 🚨</button>
-        <button class="btn btn-green" onclick="setManualState('GREEN')">وضع الاستقرار والأمان 🟢</button>
     </div>
 
     <!-- 3. شاشة سجل الإنذارات السابقة -->
@@ -145,7 +142,7 @@
         <button class="btn" onclick="showSection('mainMenuUI')">الرجوع للقائمة</button>
     </div>
 
-    <!-- 4. شاشة تسجيل دخول المسؤول (الرمز السري) -->
+    <!-- 4. شاشة تسجيل دخول المسؤول (الرمز السري الموحد لكل العمليات الإدارية) -->
     <div class="container hidden" id="adminLoginUI">
         <h2>🔐 دخول المسؤول</h2>
         <p>أدخل الرمز السري الخاص بالمدير:</p>
@@ -154,13 +151,22 @@
         <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">رجوع</button>
     </div>
 
-    <!-- 5. لوحة تحكم سلومي (إضافة إنذار جديد) -->
+    <!-- 5. لوحة تحكم سلومي (إضافة إنذار + أزرار التحكم باللون الأحمر والأخضر للجميع) -->
     <div class="container hidden" id="adminPanelUI">
         <h2>🛠️ لوحة تحكم سلومي</h2>
+        
+        <div style="background: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
+            <p style="margin: 0 0 8px 0; font-weight: bold; color: #333;">التحكم العام باللون (لكل الأجهزة):</p>
+            <button class="btn btn-red" onclick="setGlobalState('RED')">وضع الإنذار والخطر 🚨 (أحمر)</button>
+            <button class="btn btn-green" onclick="setGlobalState('GREEN')">وضع الاستقرار والأمان 🟢 (أخضر)</button>
+        </div>
+
+        <hr style="border:0.5px solid #ddd; margin: 15px 0;">
+        
         <input type="text" id="newAlertTitle" placeholder="عنوان الإنذار (مثال: تحذير جوي)">
         <textarea id="newAlertDesc" placeholder="نص الإنذار بالتفصيل..."></textarea>
         <button class="btn btn-red" onclick="publishAlert()">نشر الإنذار وحفظه 🚀</button>
-        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">إلغاء والعودة</button>
+        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">العودة للرئيسية</button>
     </div>
 
     <!-- شاشة استقبال إشعار مباشر -->
@@ -200,13 +206,17 @@
             });
         });
 
-        // التحقق إذا وافق مسبقاً على الإشعارات
+        // التحقق عند فتح الصفحة من الإشعارات والحالة المخزنة العامة
         window.onload = function() {
             if (localStorage.getItem("notifAllowed") === "true") {
                 document.getElementById('permissionUI').classList.add('hidden');
                 document.getElementById('mainMenuUI').classList.remove('hidden');
             }
             loadAlertsHistory();
+            applySavedGlobalState();
+            
+            // تحديث دوري لكل جهاز ليقرأ إذا سلومي غير لون الشاشة
+            setInterval(applySavedGlobalState, 2000);
         }
 
         function subscribe() { 
@@ -240,15 +250,26 @@
             }
         }
 
-        function setManualState(state) {
+        // تحكم المدير باللون وحفظه بحيث ينعكس على كل من يفتح الموقع
+        function setGlobalState(state) {
+            localStorage.setItem('systemGlobalState', state);
+            applySavedGlobalState();
+            if (state === 'RED') {
+                alert("🚨 تم تفعيل الوضع الأحمر على جميع أجهزة المتصلين!");
+            } else {
+                alert("🟢 تم تفعيل الوضع الأخضر على جميع أجهزة المتصلين!");
+            }
+        }
+
+        function applySavedGlobalState() {
+            const state = localStorage.getItem('systemGlobalState');
             const body = document.getElementById('pageBody');
-            body.className = ""; // تنظيف الفئات السابقة
+            body.classList.remove('bg-state-red', 'bg-state-green');
+            
             if (state === 'RED') {
                 body.classList.add('bg-state-red');
-                alert("🚨 تم تحويل النظام إلى وضع الخطر والطوارئ!");
-            } else {
+            } else if (state === 'GREEN') {
                 body.classList.add('bg-state-green');
-                alert("🟢 تم تحويل النظام إلى وضع الاستقرار والأمان.");
             }
         }
 
