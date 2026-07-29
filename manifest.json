@@ -1,21 +1,22 @@
 {
   "name": "نظام الإنذار المبكر",
-  "short_name": "الإنذار المبكر",
-  "description": "نظام بث الإشارات والتحكم في التنبيهات",
+  "short_name": "الإنذار",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#ff3b30",
+  "background_color": "#121212",
+  "theme_color": "#f1c40f",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/564/564619.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "icon.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/564/564619.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
