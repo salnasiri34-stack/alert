@@ -13,7 +13,6 @@
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
 
-    <!-- مكتبة Firebase السحابية للتحكم والتزامن الفوري -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -24,181 +23,54 @@
             --main-card: #ffffff;
             --primary-blue: #0047ab;
             --danger-red: #d0021b;
-            --safe-green: #2ecc71;
-            --warning-yellow: #f39c12;
         }
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            overflow-y: auto;
-            transition: background 0.4s ease;
-        }
+        body { margin: 0; padding: 0; font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; overflow-y: auto; }
 
-        .ticker-bar {
-            width: 100%;
-            background: #b30000;
-            color: white;
-            padding: 10px 0;
-            font-size: 13px;
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 10;
-        }
-        .ticker-text {
-            display: inline-block;
-            padding-left: 100%;
-            animation: ticker 20s linear infinite;
-        }
-        @keyframes ticker {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-100%, 0, 0); }
-        }
+        .ticker-bar { width: 100%; background: #b30000; color: white; padding: 10px 0; font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10; }
+        .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 20s linear infinite; }
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        .container {
-            text-align: center;
-            width: 85%;
-            max-width: 400px;
-            padding: 25px 20px;
-            background: var(--main-card);
-            border-radius: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            margin: 15px 0;
-            z-index: 2;
-        }
-
+        .container { text-align: center; width: 85%; max-width: 400px; padding: 25px 20px; background: var(--main-card); border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin: 15px 0; z-index: 2; }
         .icon-box { font-size: 55px; margin-bottom: 10px; }
         h1, h2 { font-size: 19px; color: #1a1a1a; margin-bottom: 8px; font-weight: 700; }
         p { color: #666; font-size: 13px; margin-bottom: 15px; line-height: 1.5; }
 
-        .btn {
-            background: var(--primary-blue);
-            color: white;
-            border: none;
-            padding: 13px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,71,171,0.2);
-            margin: 6px 0;
-        }
-
-        .btn-red { background: var(--danger-red); box-shadow: 0 4px 12px rgba(208,2,27,0.3); }
-        .btn-green { background: var(--safe-green); }
+        .btn { background: var(--primary-blue); color: white; border: none; padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; box-shadow: 0 4px 12px rgba(0,71,171,0.2); margin: 6px 0; }
         .btn-sos { background: #e74c3c; font-size: 17px; animation: pulse-sos 1.5s infinite; }
+        @keyframes pulse-sos { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); } 100% { transform: scale(1); } }
 
-        @keyframes pulse-sos {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-        }
-
-        input, textarea {
-            width: 90%;
-            padding: 11px;
-            margin: 6px 0;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            background: #fafafa;
-            font-size: 14px;
-            text-align: right;
-        }
-        textarea { height: 80px; resize: none; }
+        .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
 
         .hidden { display: none !important; }
-
-        .alert-box {
-            background: #f9f9f9;
-            border-right: 4px solid var(--danger-red);
-            padding: 10px;
-            margin: 8px 0;
-            text-align: right;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-
-        .safety-guide-card {
-            background: #fdfefe;
-            border: 1px solid #e1e8ed;
-            border-right: 4px solid var(--primary-blue);
-            padding: 10px;
-            margin: 8px 0;
-            text-align: right;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-
-        .footer {
-            text-align: center;
-            color: #888;
-            font-size: 11px;
-            line-height: 1.5;
-            margin: 10px 0 20px 0;
-        }
-
-        .bg-state-red { background-color: #4a0d0d !important; }
-        .bg-state-green { background-color: #0d381c !important; }
-
-        .flash-red { animation: bg-red 0.6s infinite; }
-        @keyframes bg-red { 0%, 100% { background: var(--danger-red); } 50% { background: #fff; } }
-        
-        .pulse-yellow { background: var(--warning-yellow); color: white; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        .footer { text-align: center; color: #888; font-size: 11px; line-height: 1.5; margin: 10px 0 20px 0; }
     </style>
 </head>
 <body id="pageBody" oncontextmenu="return false;">
 
     <div class="ticker-bar">
-        <div class="ticker-text">🚨 تنبيه متقدم: نظام الإنذار المبكر للعمليات الطارئة والمتابعة الميدانية الآمنة 🛡️</div>
+        <div class="ticker-text">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</div>
     </div>
 
-    <!-- 1. شاشة السماح للصلاحيات -->
+    <!-- شاشة السماح للصلاحيات -->
     <div class="container" id="permissionUI">
         <div class="icon-box">⚠️</div>
-        <h1>نظام الإنذار المبكر</h1>
-        <p>يرجى تفعيل التنبيهات وصلاحية الموقع الجغرافي لتمكين خدمات الطوارئ والبلاغات بدقة.</p>
+        <h1>تفعيل صلاحيات الطوارئ</h1>
+        <p>يرجى تفعيل التنبيهات وموقعك الجغرافي لضمان عمل زر الاستغاثة بدقة.</p>
         <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
     </div>
 
-    <!-- 2. القائمة الرئيسية -->
+    <!-- الشاشة الرئيسية (تحتوي على زر الـ SOS وإرشادات السلامة) -->
     <div class="container hidden" id="mainMenuUI">
-        <div class="icon-box" id="mainStatusIcon">🟢</div>
-        <h2>مركز العمليات والإنذار</h2>
-        <p>حالة التأهب العام للمنطقة</p>
-        
+        <div class="icon-box">🚨</div>
+        <h2>مركز الاستغاثة الطارئة</h2>
+        <p>اضغط على الزر أدناه عند الحاجة للمساعدة العاجلة</p>
         <button class="btn btn-sos" onclick="sendSOS()">🚨 طلب استغاثة طارئة (SOS)</button>
-        <button class="btn" onclick="showSection('historyUI')">عرض الإنذارات السابقة 📋</button>
-        <button class="btn" onclick="showSection('safetyUI')">تعليمات وإرشادات السلامة 📘</button>
-        <button class="btn" onclick="showSection('adminLoginUI')">لوحة تحكم المسؤول 🔐</button>
-        
-        <hr style="border:0.5px solid #eee; margin: 12px 0;">
-        
-        <button class="btn btn-red" onclick="setGlobalState('RED')">تحويل الكل لوضع الخطر 🚨</button>
-        <button class="btn btn-green" onclick="setGlobalState('GREEN')">تحويل الكل لوضع الاستقرار 🟢</button>
-    </div>
 
-    <!-- 3. سجل الإنذارات -->
-    <div class="container hidden" id="historyUI">
-        <h2>📋 سجل الإنذارات السابقة</h2>
-        <div id="alertsListContainer" style="max-height: 220px; overflow-y: auto; margin-bottom: 12px;"></div>
-        <button class="btn" onclick="showSection('mainMenuUI')">الرجوع للقائمة</button>
-    </div>
+        <hr style="border:0.5px solid #eee; margin: 20px 0;">
 
-    <!-- 4. إرشادات السلامة -->
-    <div class="container hidden" id="safetyUI">
         <h2>📘 إرشادات الطوارئ والسلامة</h2>
-        <div style="max-height: 220px; overflow-y: auto; text-align: right; margin-bottom: 12px;">
+        <div style="text-align: right;">
             <div class="safety-guide-card">
                 <strong>🌧️ في حال السيول والأمطار:</strong>
                 <p style="margin:4px 0;">ابتعد عن بطون الأودية ومجاري السيول ولا تقامر بعبور الطرق المغمورة بالمياه.</p>
@@ -212,54 +84,16 @@
                 <p style="margin:4px 0;">اتوجه فوراً لأقرب مخرج طوارئ ولا تستخدم المصاعد الكهربائية أبداً.</p>
             </div>
         </div>
-        <button class="btn" onclick="showSection('mainMenuUI')">رجوع</button>
-    </div>
-
-    <!-- 5. دخول المسؤول -->
-    <div class="container hidden" id="adminLoginUI">
-        <h2>🔐 دخول المسؤول</h2>
-        <p>أدخل الرمز السري الخاص بالمدير:</p>
-        <input type="password" id="pinCodeInput" placeholder="أدخل الرمز السري">
-        <button class="btn" onclick="verifyPin()">دخول</button>
-        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">رجوع</button>
-    </div>
-
-    <!-- 6. لوحة التحكم -->
-    <div class="container hidden" id="adminPanelUI">
-        <h2>🛠️ لوحة تحكم سلومي</h2>
-        <input type="text" id="newAlertTitle" placeholder="عنوان الإنذار (مثال: تحذير جوي عاجل)">
-        <textarea id="newAlertDesc" placeholder="نص الإنذار بالتفصيل..."></textarea>
-        <button class="btn btn-red" onclick="publishGlobalAlert()">نشر وتنبيه كل الأجهزة 🚀</button>
-        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">إلغاء والعودة</button>
-    </div>
-
-    <!-- شاشة استقبال الطوارئ -->
-    <div class="container hidden" id="alertUI">
-        <div id="statusIcon" class="icon-box">📢</div>
-        <div id="dynamicMsg" style="font-size: 17px; font-weight: bold; margin: 12px 0;">جاري التحقق..</div>
-        <button id="forceAlarmBtn" class="btn pulse-yellow hidden" onclick="startEverything()">🔊 تشغيل التنبيه الصوتي</button>
-        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">العودة للرئيسية</button>
     </div>
 
     <div class="footer">
-        جميع الحقوق محفوظة للمخترع: سليمان الناصري (سلومي) &copy; 2026<br>
-        نظام مركزي متزامن عبر السحابة التقنية
+        جميع الحقوق محفوظة للمخترع: سليمان الناصري (سلومي) &copy; 2026
     </div>
 
-    <audio id="alarmSound" loop preload="auto">
-        <source src="https://www.soundjay.com/buttons/beep-01a.mp3" type="audio/mpeg">
-    </audio>
-
     <script>
-        const firebaseConfig = {
-            databaseURL: "https://saloomy-alert-default-rtdb.firebaseio.com/"
-        };
+        const firebaseConfig = { databaseURL: "https://saloomy-alert-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
-        document.onkeydown = function(e) {
-            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 'I'.charCodeAt(0) || e.keyCode == 'J'.charCodeAt(0))) || (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0))) return false;
-        };
 
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         window.OneSignalDeferred.push(async function(OneSignal) {
@@ -274,7 +108,6 @@
                 document.getElementById('permissionUI').classList.add('hidden');
                 document.getElementById('mainMenuUI').classList.remove('hidden');
             }
-            listenToDatabase();
         }
 
         function requestPermissions() { 
@@ -292,169 +125,52 @@
             });
         }
 
-        function showSection(sectionId) {
-            document.getElementById('permissionUI').classList.add('hidden');
-            document.getElementById('mainMenuUI').classList.add('hidden');
-            document.getElementById('historyUI').classList.add('hidden');
-            document.getElementById('safetyUI').classList.add('hidden');
-            document.getElementById('adminLoginUI').classList.add('hidden');
-            document.getElementById('adminPanelUI').classList.add('hidden');
-            document.getElementById('alertUI').classList.add('hidden');
-
-            document.getElementById(sectionId).classList.remove('hidden');
-            if(sectionId === 'historyUI') loadAlertsHistory();
-        }
-
-        function verifyPin() {
-            const pin = document.getElementById('pinCodeInput').value;
-            if (pin === "131213") {
-                alert("أهلاً بك يا سلومي يا قائد النظام 👑");
-                document.getElementById('pinCodeInput').value = "";
-                showSection('adminPanelUI');
-            } else {
-                alert("❌ الرمز السري غير صحيح!");
-            }
-        }
-
         function sendSOS() {
-            if(confirm("هل أنت متأكد من إرسال بلاغ الاستغاثة الطارئة وموقعك لغرفة العمليات؟")) {
+            if(confirm("هل أنت متأكد من إرسال بلاغ الاستغاثة الطارئة وموقعك عبر الواتساب؟")) {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition((position) => {
                         const lat = position.coords.latitude;
                         const lng = position.coords.longitude;
-                        const timeStr = new Date().toLocaleString('ar-SA');
+                        const timeNow = new Date().toLocaleTimeString('ar-SA');
+                        
+                        let userAgent = navigator.userAgent;
+                        let deviceTypeEn = "Unknown", deviceTypeAr = "غير معروف";
+                        if (/iphone/i.test(userAgent)) { deviceTypeEn = "iPhone"; deviceTypeAr = "أيفون (iPhone)"; }
+                        else if (/android/i.test(userAgent)) { deviceTypeEn = "Android"; deviceTypeAr = "أندرويد (Android)"; }
+                        else if (/ipad/i.test(userAgent)) { deviceTypeEn = "iPad"; deviceTypeAr = "آيباد (iPad)"; }
+                        else if (/windows/i.test(userAgent)) { deviceTypeEn = "Windows PC"; deviceTypeAr = "كمبيوتر ويندوز (Windows)"; }
 
-                        db.ref('sosAlerts').push({
-                            latitude: lat,
-                            longitude: lng,
-                            time: timeStr,
-                            status: "طوارئ نشطة"
+                        const myPhoneNumber = "966500919401"; 
+
+                        const message = `🚨 *طلب استغاثة طارئة (SOS)* 🚨%0A` +
+                                      `📱 *الجهاز:* ${deviceTypeAr}%0A` +
+                                      `⏰ *الوقت:* ${timeNow}%0A` +
+                                      `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
+                                      `📍 *رابط الموقع:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
+                                      `⚠️ *أحتاج إلى المساعدة الفورية!*%0A%0A` +
+                                      `-----------------------------------%0A` +
+                                      `🚨 *EMERGENCY SOS ALERT* 🚨%0A` +
+                                      `📱 *Device:* ${deviceTypeEn}%0A` +
+                                      `⏰ *Time:* ${timeNow}%0A` +
+                                      `🔢 *Coordinates:* ${lat}, ${lng}%0A` +
+                                      `📍 *Location Link:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
+                                      `⚠️ *I need immediate assistance!*`;
+
+                        window.open(`https://wa.me/${myPhoneNumber}?text=${message}`, '_blank');
+
+                        db.ref('sosAlerts').push({ 
+                            latitude: lat, 
+                            longitude: lng, 
+                            time: timeNow, 
+                            status: "طوارئ نشطة" 
                         });
 
-                        alert("🚨 تم إرسال إحداثيات موقعك وبلاغ الاستغاثة بنجاح إلى لوحة تحكمك الخاصة!");
-                    }, () => {
-                        alert("⚠️ تعذر الحصول على الموقع، يرجى السماح للموقع بالعمل.");
-                    });
+                        alert("🚨 تم إرسال البلاغ بنجاح!");
+                    }, () => alert("⚠️ تعذر الحصول على الموقع، يرجى تفعيل GPS."));
                 } else {
                     alert("متصفحك لا يدعم تحديد الموقع الجغرافي.");
                 }
             }
-        }
-
-        function setGlobalState(state) {
-            db.ref('systemState').set(state);
-        }
-
-        function publishGlobalAlert() {
-            const title = document.getElementById('newAlertTitle').value;
-            const desc = document.getElementById('newAlertDesc').value;
-            if(!title || !desc) {
-                alert("الرجاء تعبئة العنوان والنص!");
-                return;
-            }
-
-            const dateStr = new Date().toLocaleString('ar-SA');
-            const alertItem = { title, desc, date: dateStr };
-
-            // تحديث السحابة الفورية
-            db.ref('latestAlert').set(alertItem);
-            db.ref('alertsHistory').push(alertItem);
-
-            // إرسال الإشعار الفعلي عبر OneSignal لجميع المشتركين
-            window.OneSignalDeferred.push(async function(OneSignal) {
-                try {
-                    await OneSignal.User.PushSubscription.id;
-                    // إرسال تنبيه دفع سحابي
-                    fetch("https://onesignal.com/api/v1/notifications", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json; charset=utf-8",
-                            "Authorization": "Basic MmM0YzI2MDct... (مدمج بالسحابة)"
-                        },
-                        body: JSON.stringify({
-                            app_id: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
-                            included_segments: ["Total Subscriptions"],
-                            headings: { "en": title, "ar": title },
-                            contents: { "en": desc, "ar": desc }
-                        })
-                    }).catch(() => {});
-                } catch(e) {}
-            });
-
-            alert("✅ تم نشر الإنذار وتنبيه كافة الأجهزة المرتبطة بالنظام بنجاح!");
-            document.getElementById('newAlertTitle').value = "";
-            document.getElementById('newAlertDesc').value = "";
-            showSection('mainMenuUI');
-        }
-
-        function listenToDatabase() {
-            db.ref('systemState').on('value', (snapshot) => {
-                const state = snapshot.val();
-                const body = document.getElementById('pageBody');
-                const mainIcon = document.getElementById('mainStatusIcon');
-                body.className = "";
-                if (state === 'RED') {
-                    body.classList.add('bg-state-red');
-                    if(mainIcon) mainIcon.innerText = "🚨";
-                } else if (state === 'GREEN') {
-                    body.classList.add('bg-state-green');
-                    if(mainIcon) mainIcon.innerText = "🟢";
-                }
-            });
-
-            db.ref('latestAlert').on('value', (snapshot) => {
-                const alertData = snapshot.val();
-                if(alertData && localStorage.getItem("notifAllowed") === "true") {
-                    triggerEmergencyBroadcast(alertData.title + ": " + alertData.desc);
-                }
-            });
-        }
-
-        function loadAlertsHistory() {
-            const container = document.getElementById('alertsListContainer');
-            db.ref('alertsHistory').once('value', (snapshot) => {
-                let list = [];
-                snapshot.forEach((child) => {
-                    list.unshift(child.val());
-                });
-
-                if(list.length === 0) {
-                    container.innerHTML = "<p style='color:#888;'>لا توجد إنذارات سابقة مسجلة حالياً.</p>";
-                    return;
-                }
-
-                let html = "";
-                list.forEach(item => {
-                    html += `<div class="alert-box">
-                        <strong style="color:#d0021b;">${item.title}</strong>
-                        <p style="margin: 4px 0; color:#333;">${item.desc}</p>
-                        <small style="color:#888;">📅 ${item.date}</small>
-                    </div>`;
-                });
-                container.innerHTML = html;
-            });
-        }
-
-        function triggerEmergencyBroadcast(msg) {
-            document.getElementById('permissionUI').classList.add('hidden');
-            document.getElementById('mainMenuUI').classList.add('hidden');
-            document.getElementById('alertUI').classList.remove('hidden');
-            document.getElementById('dynamicMsg').innerText = msg;
-
-            document.body.className = 'flash-red';
-            document.getElementById('statusIcon').innerText = "🚨";
-
-            const audio = document.getElementById('alarmSound');
-            audio.play().catch(() => {
-                document.getElementById('forceAlarmBtn').classList.remove('hidden');
-            });
-        }
-
-        function startEverything() {
-            const audio = document.getElementById('alarmSound');
-            audio.muted = false;
-            audio.play();
-            document.getElementById('forceAlarmBtn').classList.add('hidden');
         }
     </script>
 </body>
