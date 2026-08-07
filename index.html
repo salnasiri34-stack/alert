@@ -60,7 +60,7 @@
         <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
     </div>
 
-    <!-- الشاشة الرئيسية (تحتوي على زر الـ SOS وإرشادات السلامة) -->
+    <!-- الشاشة الرئيسية -->
     <div class="container hidden" id="mainMenuUI">
         <div class="icon-box">🚨</div>
         <h2>مركز الاستغاثة الطارئة</h2>
@@ -126,50 +126,51 @@
         }
 
         function sendSOS() {
-            if(confirm("هل أنت متأكد من إرسال بلاغ الاستغاثة الطارئة وموقعك عبر الواتساب؟")) {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition((position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        const timeNow = new Date().toLocaleTimeString('ar-SA');
-                        
-                        let userAgent = navigator.userAgent;
-                        let deviceTypeEn = "Unknown", deviceTypeAr = "غير معروف";
-                        if (/iphone/i.test(userAgent)) { deviceTypeEn = "iPhone"; deviceTypeAr = "أيفون (iPhone)"; }
-                        else if (/android/i.test(userAgent)) { deviceTypeEn = "Android"; deviceTypeAr = "أندرويد (Android)"; }
-                        else if (/ipad/i.test(userAgent)) { deviceTypeEn = "iPad"; deviceTypeAr = "آيباد (iPad)"; }
-                        else if (/windows/i.test(userAgent)) { deviceTypeEn = "Windows PC"; deviceTypeAr = "كمبيوتر ويندوز (Windows)"; }
+            // استخدام الإحداثيات المخزنة مسبقاً لضمان الفتح الفوري بدون تأخير
+            let lat = localStorage.getItem("userLat") || "24.4672";
+            let lng = localStorage.getItem("userLng") || "39.6142";
+            const timeNow = new Date().toLocaleTimeString('ar-SA');
+            
+            let userAgent = navigator.userAgent;
+            let deviceTypeEn = "Unknown", deviceTypeAr = "غير معروف";
+            if (/iphone/i.test(userAgent)) { deviceTypeEn = "iPhone"; deviceTypeAr = "أيفون (iPhone)"; }
+            else if (/android/i.test(userAgent)) { deviceTypeEn = "Android"; deviceTypeAr = "أندرويد (Android)"; }
+            else if (/ipad/i.test(userAgent)) { deviceTypeEn = "iPad"; deviceTypeAr = "آيباد (iPad)"; }
+            else if (/windows/i.test(userAgent)) { deviceTypeEn = "Windows PC"; deviceTypeAr = "كمبيوتر ويندوز (Windows)"; }
 
-                        const myPhoneNumber = "966500919401"; 
+            const myPhoneNumber = "966500919401"; 
 
-                        const message = `🚨 *طلب استغاثة طارئة (SOS)* 🚨%0A` +
-                                      `📱 *الجهاز:* ${deviceTypeAr}%0A` +
-                                      `⏰ *الوقت:* ${timeNow}%0A` +
-                                      `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
-                                      `📍 *رابط الموقع:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
-                                      `⚠️ *أحتاج إلى المساعدة الفورية!*%0A%0A` +
-                                      `-----------------------------------%0A` +
-                                      `🚨 *EMERGENCY SOS ALERT* 🚨%0A` +
-                                      `📱 *Device:* ${deviceTypeEn}%0A` +
-                                      `⏰ *Time:* ${timeNow}%0A` +
-                                      `🔢 *Coordinates:* ${lat}, ${lng}%0A` +
-                                      `📍 *Location Link:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
-                                      `⚠️ *I need immediate assistance!*`;
+            const message = `🚨 *طلب استغاثة طارئة (SOS)* 🚨%0A` +
+                          `📱 *الجهاز:* ${deviceTypeAr}%0A` +
+                          `⏰ *الوقت:* ${timeNow}%0A` +
+                          `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
+                          `📍 *رابط الموقع:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
+                          `⚠️ *أحتاج إلى المساعدة الفورية!*%0A%0A` +
+                          `-----------------------------------%0A` +
+                          `🚨 *EMERGENCY SOS ALERT* 🚨%0A` +
+                          `📱 *Device:* ${deviceTypeEn}%0A` +
+                          `⏰ *Time:* ${timeNow}%0A` +
+                          `🔢 *Coordinates:* ${lat}, ${lng}%0A` +
+                          `📍 *Location Link:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
+                          `⚠️ *I need immediate assistance!*`;
 
-                        window.open(`https://wa.me/${myPhoneNumber}?text=${message}`, '_blank');
+            // فتح الواتساب مباشرة وفوراً بدون مربعات تنبيه تعيق المتصفح
+            window.open(`https://wa.me/${myPhoneNumber}?text=${message}`, '_blank');
 
-                        db.ref('sosAlerts').push({ 
-                            latitude: lat, 
-                            longitude: lng, 
-                            time: timeNow, 
-                            status: "طوارئ نشطة" 
-                        });
+            // إرسال البيانات لقاعدة البيانات في الخلفية بهدوء
+            db.ref('sosAlerts').push({ 
+                latitude: lat, 
+                longitude: lng, 
+                time: timeNow, 
+                status: "طوارئ نشطة" 
+            });
 
-                        alert("🚨 تم إرسال البلاغ بنجاح!");
-                    }, () => alert("⚠️ تعذر الحصول على الموقع، يرجى تفعيل GPS."));
-                } else {
-                    alert("متصفحك لا يدعم تحديد الموقع الجغرافي.");
-                }
+            // محاولة تحديث الإحداثيات بدقة عالية للمرة القادمة
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    localStorage.setItem("userLat", position.coords.latitude);
+                    localStorage.setItem("userLng", position.coords.longitude);
+                }, () => {});
             }
         }
     </script>
