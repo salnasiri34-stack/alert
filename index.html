@@ -13,8 +13,6 @@
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
     <style>
@@ -47,7 +45,6 @@
 
         input { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; }
         .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
-        .user-card { background: #f9f9f9; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
 
         .hidden { display: none !important; }
         .footer { text-align: center; color: #888; font-size: 11px; line-height: 1.5; margin: 10px 0 20px 0; }
@@ -59,7 +56,7 @@
         <div class="ticker-text">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</div>
     </div>
 
-    <!-- 1. شاشة تسجيل البيانات (تظهر أول مرة فقط للمستخدم) -->
+    <!-- 1. شاشة تسجيل البيانات (تظهر للمستخدم أول مرة فقط ولا تتكرر نهائياً) -->
     <div class="container hidden" id="registerUI">
         <div class="icon-box">📝</div>
         <h1>تسجيل بيانات المستخدم</h1>
@@ -81,16 +78,12 @@
         <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
     </div>
 
-    <!-- 3. الشاشة الرئيسية (زر الـ SOS وإرشادات السلامة) -->
+    <!-- 3. الشاشة الرئيسية -->
     <div class="container hidden" id="mainMenuUI">
         <div class="icon-box">🚨</div>
         <h2>مركز الاستغاثة الطارئة</h2>
         <p>اضغط على الزر أدناه عند الحاجة للمساعدة العاجلة</p>
         <button class="btn btn-sos" onclick="showEmergencyOptions()">🚨 طلب استغاثة طارئة (SOS)</button>
-
-        <hr style="border:0.5px solid #eee; margin: 20px 0;">
-
-        <button class="btn" style="background:#2c3e50; font-size: 13px; padding: 10px;" onclick="showAdminLogin()">🔐 لوحة تحكم القائد (سلومي)</button>
 
         <hr style="border:0.5px solid #eee; margin: 20px 0;">
 
@@ -123,31 +116,11 @@
         <button class="btn btn-cancel" onclick="hideEmergencyOptions()">إلغاء ❌</button>
     </div>
 
-    <!-- 5. شاشة تسجيل دخول المسؤول (سلومي) -->
-    <div class="container hidden" id="adminLoginUI">
-        <h2>🔐 دخول المسؤول</h2>
-        <input type="password" id="adminPinInput" placeholder="أدخل الرمز السري">
-        <button class="btn" onclick="verifyAdminPin()">دخول</button>
-        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">رجوع</button>
-    </div>
-
-    <!-- 6. لوحة تحكم المسؤول (لعرض بيانات جميع المسجلين) -->
-    <div class="container hidden" id="adminPanelUI">
-        <h2>🛠️ لوحة تحكم القائد (سلومي)</h2>
-        <p>سجل المستخدمين الذين دخلوا النظام:</p>
-        <div id="registeredUsersContainer" style="max-height: 250px; overflow-y: auto; margin-bottom: 12px;"></div>
-        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">الرجوع للرئيسية</button>
-    </div>
-
     <div class="footer">
         جميع الحقوق محفوظة للمخترع: سليمان الناصري (سلومي) &copy; 2026
     </div>
 
     <script>
-        const firebaseConfig = { databaseURL: "https://saloomy-alert-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         window.OneSignalDeferred.push(async function(OneSignal) {
             await OneSignal.init({
@@ -157,23 +130,18 @@
         });
 
         window.onload = function() {
-            // التحقق هل هذه أول زيارة للمستخدم أم لا
             const isRegistered = localStorage.getItem("userRegistered");
             const notifAllowed = localStorage.getItem("notifAllowed");
 
             if (!isRegistered) {
-                // إذا لم يسجل مسبقاً، اظهر شاشة التسجيل
                 document.getElementById('registerUI').classList.remove('hidden');
             } else if (notifAllowed !== "true") {
-                // إذا مسجل لكن لم يفعل التنبيهات، اظهر شاشة الصلاحيات
                 document.getElementById('permissionUI').classList.remove('hidden');
             } else {
-                // إذا مسجل ومفعل كل شي، اظهر القائمة الرئيسية مباشرة
                 document.getElementById('mainMenuUI').classList.remove('hidden');
             }
         }
 
-        // حفظ بيانات المستخدم في السحابة وفي ذاكرة المتصفح للأبد (بحيث لا تظهر له مرة أخرى)
         function saveUserData() {
             const name = document.getElementById('regName').value;
             const age = document.getElementById('regAge').value;
@@ -186,20 +154,14 @@
                 return alert("⚠️ الرجاء تعبئة الحقول الأساسية على الأقل!");
             }
 
-            const userData = {
-                name, age, nationality, idNumber, phone, email,
-                registerTime: new Date().toLocaleString('ar-SA')
-            };
-
-            // حفظ البيانات في قاعدة بياناتك الخاصة (Firebase) لكي تراها وحدك
-            db.ref('registeredUsers').push(userData);
-
-            // حفظ في المتصفح أن المستخدم سجل مسبقاً لكي لا تظهر له الشاشة أبداً بعد الآن
             localStorage.setItem("userRegistered", "true");
             localStorage.setItem("userName", name);
+            localStorage.setItem("userAge", age);
+            localStorage.setItem("userNationality", nationality);
+            localStorage.setItem("userIdNumber", idNumber);
             localStorage.setItem("userPhone", phone);
+            localStorage.setItem("userEmail", email || "غير متوفر");
 
-            // الانتقال لشاشة تفعيل الصلاحيات
             document.getElementById('registerUI').classList.add('hidden');
             document.getElementById('permissionUI').classList.remove('hidden');
         }
@@ -229,54 +191,17 @@
             document.getElementById('mainMenuUI').classList.remove('hidden');
         }
 
-        function showAdminLogin() {
-            document.getElementById('mainMenuUI').classList.add('hidden');
-            document.getElementById('adminLoginUI').classList.remove('hidden');
-        }
-
-        function verifyAdminPin() {
-            if (document.getElementById('adminPinInput').value === "131213") {
-                document.getElementById('adminPinInput').value = "";
-                loadRegisteredUsers();
-                showSection('adminPanelUI');
-            } else {
-                alert("❌ الرمز السري غير صحيح!");
-            }
-        }
-
-        function showSection(sectionId) {
-            ['registerUI', 'permissionUI', 'mainMenuUI', 'optionsUI', 'adminLoginUI', 'adminPanelUI'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById(sectionId).classList.remove('hidden');
-        }
-
-        // جلب وعرض بيانات المستخدمين المسجلين في لوحة التحكم الخاصة بك
-        function loadRegisteredUsers() {
-            const container = document.getElementById('registeredUsersContainer');
-            db.ref('registeredUsers').once('value', (snapshot) => {
-                let html = "";
-                snapshot.forEach((child) => {
-                    const u = child.val();
-                    html += `<div class="user-card">
-                        <strong>👤 الاسم: ${u.name}</strong><br>
-                        - العمر: ${u.age} | الجنسية: ${u.nationality}<br>
-                        - الهوية: ${u.idNumber}<br>
-                        - الجوال: ${u.phone}<br>
-                        - البريد: ${u.email || 'غير متوفر'}<br>
-                        <small style="color:#888;">وقت التسجيل: ${u.registerTime}</small>
-                    </div>`;
-                });
-                container.innerHTML = html || "<p>لا توجد بيانات مسجلة حتى الآن.</p>";
-            });
-        }
-
         function sendSOS(typeAr, typeEn) {
             let lat = localStorage.getItem("userLat") || "24.4672";
             let lng = localStorage.getItem("userLng") || "39.6142";
             const timeNow = new Date().toLocaleTimeString('ar-SA');
-            const savedName = localStorage.getItem("userName") || "مستخدم";
-            const savedPhone = localStorage.getItem("userPhone") || "غير معروف";
+            
+            const name = localStorage.getItem("userName") || "مهندس";
+            const age = localStorage.getItem("userAge") || "-";
+            const nationality = localStorage.getItem("userNationality") || "-";
+            const idNumber = localStorage.getItem("userIdNumber") || "-";
+            const phone = localStorage.getItem("userPhone") || "-";
+            const email = localStorage.getItem("userEmail") || "-";
             
             let userAgent = navigator.userAgent;
             let deviceTypeEn = "Unknown", deviceTypeAr = "غير معروف";
@@ -288,8 +213,11 @@
             const myPhoneNumber = "966500919401"; 
 
             const message = `🚨 *${typeAr}* 🚨%0A` +
-                          `👤 *المُرسل:* ${savedName}%0A` +
-                          `📞 *الجوال:* ${savedPhone}%0A` +
+                          `👤 *الاسم:* ${name}%0A` +
+                          `🎂 *العمر:* ${age} | 🌍 *الجنسية:* ${nationality}%0A` +
+                          `🪪 *رقم الهوية:* ${idNumber}%0A` +
+                          `📞 *الجوال:* ${phone}%0A` +
+                          `📧 *الإيميل:* ${email}%0A` +
                           `📱 *الجهاز:* ${deviceTypeAr}%0A` +
                           `⏰ *الوقت:* ${timeNow}%0A` +
                           `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
@@ -297,8 +225,11 @@
                           `⚠️ *أحتاج إلى المساعدة الفورية!*%0A%0A` +
                           `-----------------------------------%0A` +
                           `🚨 *${typeEn}* 🚨%0A` +
-                          `👤 *Sender:* ${savedName}%0A` +
-                          `📞 *Phone:* ${savedPhone}%0A` +
+                          `👤 *Name:* ${name}%0A` +
+                          `🎂 *Age:* ${age} | 🌍 *Nationality:* ${nationality}%0A` +
+                          `🪪 *ID:* ${idNumber}%0A` +
+                          `📞 *Phone:* ${phone}%0A` +
+                          `📧 *Email:* ${email}%0A` +
                           `📱 *Device:* ${deviceTypeEn}%0A` +
                           `⏰ *Time:* ${timeNow}%0A` +
                           `🔢 *Coordinates:* ${lat}, ${lng}%0A` +
@@ -306,16 +237,6 @@
                           `⚠️ *I need immediate assistance!*`;
 
             window.open(`https://wa.me/${myPhoneNumber}?text=${message}`, '_blank');
-
-            db.ref('sosAlerts').push({ 
-                emergencyType: typeAr,
-                senderName: savedName,
-                senderPhone: savedPhone,
-                latitude: lat, 
-                longitude: lng, 
-                time: timeNow, 
-                status: "طوارئ نشطة" 
-            });
 
             hideEmergencyOptions();
 
