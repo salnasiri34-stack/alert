@@ -40,7 +40,14 @@
         .btn-sos { background: #e74c3c; font-size: 17px; animation: pulse-sos 1.5s infinite; }
         @keyframes pulse-sos { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); } 100% { transform: scale(1); } }
 
+        .btn-medical { background: #e67e22; }
+        .btn-security { background: #2c3e50; }
+        .btn-fire { background: #c0392b; }
+        .btn-cancel { background: #95a5a6; }
+
+        input { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; }
         .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
+        .user-card { background: #f9f9f9; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
 
         .hidden { display: none !important; }
         .footer { text-align: center; color: #888; font-size: 11px; line-height: 1.5; margin: 10px 0 20px 0; }
@@ -52,20 +59,38 @@
         <div class="ticker-text">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</div>
     </div>
 
-    <!-- شاشة السماح للصلاحيات -->
-    <div class="container" id="permissionUI">
+    <!-- 1. شاشة تسجيل البيانات (تظهر أول مرة فقط للمستخدم) -->
+    <div class="container hidden" id="registerUI">
+        <div class="icon-box">📝</div>
+        <h1>تسجيل بيانات المستخدم</h1>
+        <p>يرجى إدخال بياناتك الشخصية للمتابعة (للمرة الأولى فقط):</p>
+        <input type="text" id="regName" placeholder="الاسم الكامل">
+        <input type="number" id="regAge" placeholder="العمر">
+        <input type="text" id="regNationality" placeholder="الجنسية">
+        <input type="text" id="regIdNumber" placeholder="رقم الهوية">
+        <input type="tel" id="regPhone" placeholder="رقم الجوال">
+        <input type="email" id="regEmail" placeholder="البريد الإلكتروني">
+        <button class="btn" onclick="saveUserData()">حفظ ومتابعة 🚀</button>
+    </div>
+
+    <!-- 2. شاشة تفعيل صلاحيات التنبيهات والموقع -->
+    <div class="container hidden" id="permissionUI">
         <div class="icon-box">⚠️</div>
         <h1>تفعيل صلاحيات الطوارئ</h1>
         <p>يرجى تفعيل التنبيهات وموقعك الجغرافي لضمان عمل زر الاستغاثة بدقة.</p>
         <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
     </div>
 
-    <!-- الشاشة الرئيسية -->
+    <!-- 3. الشاشة الرئيسية (زر الـ SOS وإرشادات السلامة) -->
     <div class="container hidden" id="mainMenuUI">
         <div class="icon-box">🚨</div>
         <h2>مركز الاستغاثة الطارئة</h2>
         <p>اضغط على الزر أدناه عند الحاجة للمساعدة العاجلة</p>
-        <button class="btn btn-sos" onclick="sendSOS()">🚨 طلب استغاثة طارئة (SOS)</button>
+        <button class="btn btn-sos" onclick="showEmergencyOptions()">🚨 طلب استغاثة طارئة (SOS)</button>
+
+        <hr style="border:0.5px solid #eee; margin: 20px 0;">
+
+        <button class="btn" style="background:#2c3e50; font-size: 13px; padding: 10px;" onclick="showAdminLogin()">🔐 لوحة تحكم القائد (سلومي)</button>
 
         <hr style="border:0.5px solid #eee; margin: 20px 0;">
 
@@ -86,6 +111,34 @@
         </div>
     </div>
 
+    <!-- 4. شاشة اختيار نوع الطوارئ -->
+    <div class="container hidden" id="optionsUI">
+        <div class="icon-box">⚠️</div>
+        <h2>حدد نوع الحالة الطارئة</h2>
+        <p>اختر القسم المختص لسرعة الاستجابة:</p>
+        <button class="btn btn-medical" onclick="sendSOS('حالة طوارئ طبية 🏥', 'Medical Emergency 🏥')">🏥 طارئ طبي (إسعاف)</button>
+        <button class="btn btn-security" onclick="sendSOS('حالة طوارئ أمنية 🛡️', 'Security Emergency 🛡️')">🛡️ طارئ أمني (شرطة/أمن)</button>
+        <button class="btn btn-fire" onclick="sendSOS('حالة حريق / إنقاذ 🔥', 'Fire / Rescue Emergency 🔥')">🔥 حريق أو إنقاذ</button>
+        <button class="btn btn-sos" onclick="sendSOS('استغاثة طارئة عامة 🚨', 'General SOS Alert 🚨')">🚨 استغاثة عامة</button>
+        <button class="btn btn-cancel" onclick="hideEmergencyOptions()">إلغاء ❌</button>
+    </div>
+
+    <!-- 5. شاشة تسجيل دخول المسؤول (سلومي) -->
+    <div class="container hidden" id="adminLoginUI">
+        <h2>🔐 دخول المسؤول</h2>
+        <input type="password" id="adminPinInput" placeholder="أدخل الرمز السري">
+        <button class="btn" onclick="verifyAdminPin()">دخول</button>
+        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">رجوع</button>
+    </div>
+
+    <!-- 6. لوحة تحكم المسؤول (لعرض بيانات جميع المسجلين) -->
+    <div class="container hidden" id="adminPanelUI">
+        <h2>🛠️ لوحة تحكم القائد (سلومي)</h2>
+        <p>سجل المستخدمين الذين دخلوا النظام:</p>
+        <div id="registeredUsersContainer" style="max-height: 250px; overflow-y: auto; margin-bottom: 12px;"></div>
+        <button class="btn" style="background:#7f8c8d;" onclick="showSection('mainMenuUI')">الرجوع للرئيسية</button>
+    </div>
+
     <div class="footer">
         جميع الحقوق محفوظة للمخترع: سليمان الناصري (سلومي) &copy; 2026
     </div>
@@ -104,10 +157,51 @@
         });
 
         window.onload = function() {
-            if (localStorage.getItem("notifAllowed") === "true") {
-                document.getElementById('permissionUI').classList.add('hidden');
+            // التحقق هل هذه أول زيارة للمستخدم أم لا
+            const isRegistered = localStorage.getItem("userRegistered");
+            const notifAllowed = localStorage.getItem("notifAllowed");
+
+            if (!isRegistered) {
+                // إذا لم يسجل مسبقاً، اظهر شاشة التسجيل
+                document.getElementById('registerUI').classList.remove('hidden');
+            } else if (notifAllowed !== "true") {
+                // إذا مسجل لكن لم يفعل التنبيهات، اظهر شاشة الصلاحيات
+                document.getElementById('permissionUI').classList.remove('hidden');
+            } else {
+                // إذا مسجل ومفعل كل شي، اظهر القائمة الرئيسية مباشرة
                 document.getElementById('mainMenuUI').classList.remove('hidden');
             }
+        }
+
+        // حفظ بيانات المستخدم في السحابة وفي ذاكرة المتصفح للأبد (بحيث لا تظهر له مرة أخرى)
+        function saveUserData() {
+            const name = document.getElementById('regName').value;
+            const age = document.getElementById('regAge').value;
+            const nationality = document.getElementById('regNationality').value;
+            const idNumber = document.getElementById('regIdNumber').value;
+            const phone = document.getElementById('regPhone').value;
+            const email = document.getElementById('regEmail').value;
+
+            if(!name || !age || !nationality || !idNumber || !phone) {
+                return alert("⚠️ الرجاء تعبئة الحقول الأساسية على الأقل!");
+            }
+
+            const userData = {
+                name, age, nationality, idNumber, phone, email,
+                registerTime: new Date().toLocaleString('ar-SA')
+            };
+
+            // حفظ البيانات في قاعدة بياناتك الخاصة (Firebase) لكي تراها وحدك
+            db.ref('registeredUsers').push(userData);
+
+            // حفظ في المتصفح أن المستخدم سجل مسبقاً لكي لا تظهر له الشاشة أبداً بعد الآن
+            localStorage.setItem("userRegistered", "true");
+            localStorage.setItem("userName", name);
+            localStorage.setItem("userPhone", phone);
+
+            // الانتقال لشاشة تفعيل الصلاحيات
+            document.getElementById('registerUI').classList.add('hidden');
+            document.getElementById('permissionUI').classList.remove('hidden');
         }
 
         function requestPermissions() { 
@@ -125,11 +219,64 @@
             });
         }
 
-        function sendSOS() {
-            // استخدام الإحداثيات المخزنة مسبقاً لضمان الفتح الفوري بدون تأخير
+        function showEmergencyOptions() {
+            document.getElementById('mainMenuUI').classList.add('hidden');
+            document.getElementById('optionsUI').classList.remove('hidden');
+        }
+
+        function hideEmergencyOptions() {
+            document.getElementById('optionsUI').classList.add('hidden');
+            document.getElementById('mainMenuUI').classList.remove('hidden');
+        }
+
+        function showAdminLogin() {
+            document.getElementById('mainMenuUI').classList.add('hidden');
+            document.getElementById('adminLoginUI').classList.remove('hidden');
+        }
+
+        function verifyAdminPin() {
+            if (document.getElementById('adminPinInput').value === "131213") {
+                document.getElementById('adminPinInput').value = "";
+                loadRegisteredUsers();
+                showSection('adminPanelUI');
+            } else {
+                alert("❌ الرمز السري غير صحيح!");
+            }
+        }
+
+        function showSection(sectionId) {
+            ['registerUI', 'permissionUI', 'mainMenuUI', 'optionsUI', 'adminLoginUI', 'adminPanelUI'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // جلب وعرض بيانات المستخدمين المسجلين في لوحة التحكم الخاصة بك
+        function loadRegisteredUsers() {
+            const container = document.getElementById('registeredUsersContainer');
+            db.ref('registeredUsers').once('value', (snapshot) => {
+                let html = "";
+                snapshot.forEach((child) => {
+                    const u = child.val();
+                    html += `<div class="user-card">
+                        <strong>👤 الاسم: ${u.name}</strong><br>
+                        - العمر: ${u.age} | الجنسية: ${u.nationality}<br>
+                        - الهوية: ${u.idNumber}<br>
+                        - الجوال: ${u.phone}<br>
+                        - البريد: ${u.email || 'غير متوفر'}<br>
+                        <small style="color:#888;">وقت التسجيل: ${u.registerTime}</small>
+                    </div>`;
+                });
+                container.innerHTML = html || "<p>لا توجد بيانات مسجلة حتى الآن.</p>";
+            });
+        }
+
+        function sendSOS(typeAr, typeEn) {
             let lat = localStorage.getItem("userLat") || "24.4672";
             let lng = localStorage.getItem("userLng") || "39.6142";
             const timeNow = new Date().toLocaleTimeString('ar-SA');
+            const savedName = localStorage.getItem("userName") || "مستخدم";
+            const savedPhone = localStorage.getItem("userPhone") || "غير معروف";
             
             let userAgent = navigator.userAgent;
             let deviceTypeEn = "Unknown", deviceTypeAr = "غير معروف";
@@ -140,32 +287,38 @@
 
             const myPhoneNumber = "966500919401"; 
 
-            const message = `🚨 *طلب استغاثة طارئة (SOS)* 🚨%0A` +
+            const message = `🚨 *${typeAr}* 🚨%0A` +
+                          `👤 *المُرسل:* ${savedName}%0A` +
+                          `📞 *الجوال:* ${savedPhone}%0A` +
                           `📱 *الجهاز:* ${deviceTypeAr}%0A` +
                           `⏰ *الوقت:* ${timeNow}%0A` +
                           `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
                           `📍 *رابط الموقع:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
                           `⚠️ *أحتاج إلى المساعدة الفورية!*%0A%0A` +
                           `-----------------------------------%0A` +
-                          `🚨 *EMERGENCY SOS ALERT* 🚨%0A` +
+                          `🚨 *${typeEn}* 🚨%0A` +
+                          `👤 *Sender:* ${savedName}%0A` +
+                          `📞 *Phone:* ${savedPhone}%0A` +
                           `📱 *Device:* ${deviceTypeEn}%0A` +
                           `⏰ *Time:* ${timeNow}%0A` +
                           `🔢 *Coordinates:* ${lat}, ${lng}%0A` +
                           `📍 *Location Link:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
                           `⚠️ *I need immediate assistance!*`;
 
-            // فتح الواتساب مباشرة وفوراً بدون مربعات تنبيه تعيق المتصفح
             window.open(`https://wa.me/${myPhoneNumber}?text=${message}`, '_blank');
 
-            // إرسال البيانات لقاعدة البيانات في الخلفية بهدوء
             db.ref('sosAlerts').push({ 
+                emergencyType: typeAr,
+                senderName: savedName,
+                senderPhone: savedPhone,
                 latitude: lat, 
                 longitude: lng, 
                 time: timeNow, 
                 status: "طوارئ نشطة" 
             });
 
-            // محاولة تحديث الإحداثيات بدقة عالية للمرة القادمة
+            hideEmergencyOptions();
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
                     localStorage.setItem("userLat", position.coords.latitude);
