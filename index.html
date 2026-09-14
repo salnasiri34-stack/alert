@@ -3,23 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام الإنذار المبكر الشامل 🛡️</title>
+    <title>نظام الإنذار المبكر 🛡️</title>
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="الإنذار المبكر">
     
-    <!-- ربط ملف المانفست الخارجي عشان يشتغل على الأيفون والشاشة الرئيسية -->
+    <!-- ربط ملف المانفست الخارجي لضمان طلب الصلاحيات بكفاءة على الأيفون -->
     <link rel="manifest" href="manifest.json">
-    
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
 
     <script src="https://cdn.onesignal.com/sdk/web/v16/OneSignalSDK.page.js" defer></script>
-
-    <!-- مكتبات Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
@@ -29,20 +24,14 @@
             --danger-red: #d0021b;
         }
 
-        body { margin: 0; padding: 0; font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; overflow-y: auto; transition: background 0.3s; }
-        
-        body.danger-mode { background-color: #5a0000; }
-        body.danger-mode .container { border: 3px solid var(--danger-red); background-color: #fff5f5; }
-
-        .admin-top-bar { width: 100%; background: #111; color: white; display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; font-size: 13px; box-sizing: border-box; z-index: 1000; }
-        .admin-btn-link { background: #e74c3c; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        body { margin: 0; padding: 0; font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; overflow-y: auto; }
 
         .ticker-bar { width: 100%; background: #b30000; color: white; padding: 10px 0; font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10; }
         .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 20s linear infinite; }
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        .container { text-align: center; width: 85%; max-width: 400px; padding: 25px 20px; background: var(--main-card); border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin: 15px 0; z-index: 2; box-sizing: border-box; }
-        .icon-box { font-size: 50px; margin-bottom: 10px; }
+        .container { text-align: center; width: 85%; max-width: 400px; padding: 25px 20px; background: var(--main-card); border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin: 15px 0; z-index: 2; }
+        .icon-box { font-size: 55px; margin-bottom: 10px; }
         h1, h2 { font-size: 19px; color: #1a1a1a; margin-bottom: 8px; font-weight: 700; }
         p { color: #666; font-size: 13px; margin-bottom: 15px; line-height: 1.5; }
 
@@ -55,19 +44,8 @@
         .btn-fire { background: #c0392b; }
         .btn-cancel { background: #95a5a6; }
 
-        input, textarea, select { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; box-sizing: border-box; font-family: inherit; }
+        input { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; box-sizing: border-box; }
         .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
-        .safety-guide-card img { width: 100%; border-radius: 6px; margin-top: 8px; max-height: 150px; object-fit: cover; }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(5px); }
-        .emergency-modal { background: #fff; width: 85%; max-width: 380px; padding: 25px; border-radius: 20px; text-align: center; border-top: 6px solid #d0021b; box-shadow: 0 15px 35px rgba(208,2,27,0.3); animation: modalAppearing 0.4s ease; box-sizing: border-box; }
-        @keyframes modalAppearing { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .emergency-modal h2 { color: #d0021b; font-size: 20px; margin-bottom: 10px; }
-        .emergency-modal p { font-size: 14px; color: #333; line-height: 1.6; margin-bottom: 20px; }
-
-        .admin-table { width: 100%; font-size: 11px; border-collapse: collapse; margin-top: 10px; text-align: right; }
-        .admin-table th, .admin-table td { border: 1px solid #ddd; padding: 6px; }
-        .admin-table th { background: #0047ab; color: white; }
 
         .hidden { display: none !important; }
         .footer { text-align: center; color: #888; font-size: 11px; line-height: 1.5; margin: 10px 0 20px 0; }
@@ -75,47 +53,25 @@
 </head>
 <body id="pageBody" oncontextmenu="return false;">
 
-    <div class="admin-top-bar">
-        <span>لوحة تحكم النظام الذكي 🛡️</span>
-        <button class="admin-btn-link" onclick="openAdminLogin()">🔒 دخول الأدمن</button>
-    </div>
-
-    <div class="modal-overlay" id="emergencyModal">
-        <div class="emergency-modal">
-            <div class="icon-box" style="font-size: 45px; margin-bottom: 5px;">🚨</div>
-            <h2 id="modalTitle">تنبيه طوارئ وطني</h2>
-            <p id="emergencyText">تتعرض المنطقة لأمطار غزيرة، صواعق رعدية ورياح نشطة قوية، يرجى التصرف بهدوء والبقاء في المنزل أو مكان آمن بعيداً عن النوافذ والأبواب والاستمرار في اتباع تعليمات الدفاع المدني.</p>
-            <button class="btn" onclick="closeEmergencyAlert()" style="background: #27ae60;">تم الاطلاع وفهم التحذير ✅</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay hidden" id="adminLoginModal">
-        <div class="emergency-modal" style="border-top-color: #111;">
-            <h2>تسجيل دخول الأدمن</h2>
-            <p>يرجى إدخال الرمز السري للتحكم الكامل بالنظام:</p>
-            <input type="password" id="adminPinInput" placeholder="أدخل الرمز السري" style="text-align: center; font-size: 18px; letter-spacing: 3px;">
-            <button class="btn" onclick="verifyAdminPin()" style="background: #111; margin-top: 10px;">دخول اللوحة 🚀</button>
-            <button class="btn btn-cancel" onclick="document.getElementById('adminLoginModal').classList.add('hidden')">إلغاء ❌</button>
-        </div>
-    </div>
-
     <div class="ticker-bar">
-        <div class="ticker-text"><span id="tickerText">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</span></div>
+        <div class="ticker-text">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</div>
     </div>
 
+    <!-- 1. شاشة تسجيل البيانات (تظهر للمستخدم أول مرة فقط ولا تتكرر نهائياً) -->
     <div class="container hidden" id="registerUI">
         <div class="icon-box">📝</div>
-        <h1>تسجيل بيانات المستخدم الإجباري</h1>
-        <p>يجب إدخال بياناتك الشخصية الكاملة للمتابعة واستخدام النظام:</p>
-        <input type="text" id="regName" placeholder="الاسم الكامل *">
-        <input type="number" id="regAge" placeholder="العمر *">
-        <input type="text" id="regNationality" placeholder="الجنسية *">
-        <input type="text" id="regIdNumber" placeholder="رقم الهوية *">
-        <input type="tel" id="regPhone" placeholder="رقم الجوال *">
-        <input type="email" id="regEmail" placeholder="البريد الإلكتروني (اختياري)">
-        <button class="btn" onclick="saveUserData()">حفظ البيانات في القاعدة تلقائياً 🚀</button>
+        <h1>تسجيل بيانات المستخدم</h1>
+        <p>يرجى إدخال بياناتك الشخصية للمتابعة (للمرة الأولى فقط):</p>
+        <input type="text" id="regName" placeholder="الاسم الكامل">
+        <input type="number" id="regAge" placeholder="العمر">
+        <input type="text" id="regNationality" placeholder="الجنسية">
+        <input type="text" id="regIdNumber" placeholder="رقم الهوية">
+        <input type="tel" id="regPhone" placeholder="رقم الجوال">
+        <input type="email" id="regEmail" placeholder="البريد الإلكتروني">
+        <button class="btn" onclick="saveUserData()">حفظ ومتابعة 🚀</button>
     </div>
 
+    <!-- 2. شاشة تفعيل صلاحيات التنبيهات والموقع -->
     <div class="container hidden" id="permissionUI">
         <div class="icon-box">⚠️</div>
         <h1>تفعيل صلاحيات الطوارئ</h1>
@@ -123,6 +79,7 @@
         <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
     </div>
 
+    <!-- 3. الشاشة الرئيسية -->
     <div class="container hidden" id="mainMenuUI">
         <div class="icon-box">🚨</div>
         <h2>مركز الاستغاثة الطارئة</h2>
@@ -132,7 +89,7 @@
         <hr style="border:0.5px solid #eee; margin: 20px 0;">
 
         <h2>📘 إرشادات الطوارئ والسلامة</h2>
-        <div style="text-align: right;" id="safetyGuidesContainer">
+        <div style="text-align: right;">
             <div class="safety-guide-card">
                 <strong>🌧️ في حال السيول والأمطار:</strong>
                 <p style="margin:4px 0;">ابتعد عن بطون الأودية ومجاري السيول ولا تقامر بعبور الطرق المغمورة بالمياه.</p>
@@ -141,9 +98,14 @@
                 <strong>⚡ في حال الصواعق الرعدية:</strong>
                 <p style="margin:4px 0;">احرص على البقاء داخل المباني المغلقة وافصل الأجهزة الكهربائية الحساسة.</p>
             </div>
+            <div class="safety-guide-card">
+                <strong>🔥 في حال الحريق:</strong>
+                <p style="margin:4px 0;">اتوجه فوراً لأقرب مخرج طوارئ ولا تستخدم المصاعد الكهربائية أبداً.</p>
+            </div>
         </div>
     </div>
 
+    <!-- 4. شاشة اختيار نوع الطوارئ -->
     <div class="container hidden" id="optionsUI">
         <div class="icon-box">⚠️</div>
         <h2>حدد نوع الحالة الطارئة</h2>
@@ -155,64 +117,11 @@
         <button class="btn btn-cancel" onclick="hideEmergencyOptions()">إلغاء ❌</button>
     </div>
 
-    <div class="container hidden" id="adminDashboardUI" style="max-width: 450px;">
-        <div class="icon-box">⚙️</div>
-        <h2>لوحة تحكم الأدمن المطلقة</h2>
-        <p>التحكم الكامل ببيانات المسجلين، الرسائل، والوضع العام للموقع.</p>
-        
-        <div style="text-align: right; margin-top: 15px;">
-            <h3 style="font-size: 14px; color: #0047ab; border-bottom: 2px solid #0047ab; padding-bottom: 4px;">👥 قاعدة المسجلين في النظام (<span id="usersCount">0</span>)</h3>
-            <div style="max-height: 150px; overflow-y: auto; background: #fafafa; border: 1px solid #ddd; border-radius: 6px; padding: 5px;">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>الاسم</th>
-                            <th>العمر</th>
-                            <th>الهوية</th>
-                            <th>الجوال</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminUsersTableBody">
-                    </tbody>
-                </table>
-            </div>
-
-            <h3 style="font-size: 14px; color: #d0021b; border-bottom: 2px solid #d0021b; padding-bottom: 4px; margin-top: 15px;">🚨 إدارة وضع الطوارئ والإنذار</h3>
-            <button class="btn" onclick="toggleDangerMode()" id="dangerModeBtn" style="background: #2c3e50; font-size: 13px; padding: 9px;">تفعيل/إيقاف الوضع الخطر ⚡</button>
-            
-            <label style="font-size: 12px; font-weight: bold; display: block; margin-top: 8px;">تعديل نص شريط الأخبار والتحذيرات:</label>
-            <input type="text" id="adminTickerInput" placeholder="أدخل نص الشريط العلوي الجديد">
-            <button class="btn" onclick="updateTickerText()" style="background: #27ae60; font-size: 13px; padding: 8px;">تحديث الشريط 🔄</button>
-
-            <label style="font-size: 12px; font-weight: bold; display: block; margin-top: 8px;">إضافة إرشاد مع صورة من المعرض:</label>
-            <input type="text" id="adminGuideTitle" placeholder="عنوان الإرشاد (مثلاً: تنبيه رياح قوية)">
-            <textarea id="adminGuideDesc" placeholder="تفاصيل وإرشادات السلامة..." style="height: 50px; resize: none;"></textarea>
-            <label style="font-size: 11px; color: #555; display: block; text-align: right; margin-top: 4px;">اختر صورة من المعرض لإضافتها:</label>
-            <input type="file" id="adminImageInput" accept="image/*" style="padding: 5px; font-size: 11px;">
-            <button class="btn" onclick="addCustomGuideWithImage()" style="background: var(--primary-blue); font-size: 13px; padding: 8px; margin-top: 5px;">إضافة الإرشاد مع الصورة 🖼️</button>
-        </div>
-
-        <button class="btn btn-cancel" onclick="closeAdminDashboard()" style="margin-top: 15px;">الخروج من لوحة الأدمن 🚪</button>
-    </div>
-
     <div class="footer">
         جميع الحقوق محفوظة للمخترع: سليمان الناصري (سلومي) &copy; 2026
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXKY3MQLbCRAqQjwVHGYmTVT61Dalpb2g",
-            authDomain: "alaret-e8f2a.firebaseapp.com",
-            projectId: "alaret-e8f2a",
-            storageBucket: "alaret-e8f2a.firebasestorage.app",
-            messagingSenderId: "735569802866",
-            appId: "1:735569802866:web:aa9935ede7a44f9a0c34eb",
-            measurementId: "G-SZR2DC21LG"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         window.OneSignalDeferred.push(async function(OneSignal) {
             await OneSignal.init({
@@ -232,46 +141,9 @@
             } else {
                 document.getElementById('mainMenuUI').classList.remove('hidden');
             }
-
-            playSirenSound();
-            loadUsersForAdmin();
         }
 
-        let sirenInterval = null;
-
-        function playSirenSound() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                function beep() {
-                    if (document.getElementById('emergencyModal').classList.contains('hidden')) return;
-                    let osc = audioCtx.createOscillator();
-                    let gainNode = audioCtx.createGain();
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                    osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
-                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-                    osc.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.4);
-                }
-                beep();
-                sirenInterval = setInterval(beep, 600);
-            } catch (e) {
-                console.log("AudioContext restricted", e);
-            }
-        }
-
-        function closeEmergencyAlert() {
-            if (sirenInterval) {
-                clearInterval(sirenInterval);
-                sirenInterval = null;
-            }
-            document.getElementById('emergencyModal').classList.add('hidden');
-        }
-
-        async function saveUserData() {
+        function saveUserData() {
             const name = document.getElementById('regName').value;
             const age = document.getElementById('regAge').value;
             const nationality = document.getElementById('regNationality').value;
@@ -280,35 +152,19 @@
             const email = document.getElementById('regEmail').value;
 
             if(!name || !age || !nationality || !idNumber || !phone) {
-                return alert("⚠️ يجب تعبئة جميع الحقول الإجبارية للمتابعة!");
+                return alert("⚠️ الرجاء تعبئة الحقول الأساسية على الأقل!");
             }
 
-            try {
-                await db.collection("users").add({
-                    fullName: name,
-                    age: age,
-                    nationality: nationality,
-                    idNumber: idNumber,
-                    phone: phone,
-                    email: email || "غير متوفر",
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+            localStorage.setItem("userRegistered", "true");
+            localStorage.setItem("userName", name);
+            localStorage.setItem("userAge", age);
+            localStorage.setItem("userNationality", nationality);
+            localStorage.setItem("userIdNumber", idNumber);
+            localStorage.setItem("userPhone", phone);
+            localStorage.setItem("userEmail", email || "غير متوفر");
 
-                localStorage.setItem("userRegistered", "true");
-                localStorage.setItem("userName", name);
-                localStorage.setItem("userAge", age);
-                localStorage.setItem("userNationality", nationality);
-                localStorage.setItem("userIdNumber", idNumber);
-                localStorage.setItem("userPhone", phone);
-                localStorage.setItem("userEmail", email || "غير متوفر");
-
-                document.getElementById('registerUI').classList.add('hidden');
-                document.getElementById('permissionUI').classList.remove('hidden');
-                loadUsersForAdmin();
-            } catch (error) {
-                console.error("خطأ في حفظ البيانات: ", error);
-                alert("حدث خطأ أثناء الاتصال بقاعدة البيانات.");
-            }
+            document.getElementById('registerUI').classList.add('hidden');
+            document.getElementById('permissionUI').classList.remove('hidden');
         }
 
         function requestPermissions() { 
@@ -341,7 +197,7 @@
             let lng = localStorage.getItem("userLng") || "39.6142";
             const timeNow = new Date().toLocaleTimeString('ar-SA');
             
-            const name = localStorage.getItem("userName") || "مستخدم";
+            const name = localStorage.getItem("userName") || "مهندس";
             const age = localStorage.getItem("userAge") || "-";
             const nationality = localStorage.getItem("userNationality") || "-";
             const idNumber = localStorage.getItem("userIdNumber") || "-";
@@ -349,144 +205,48 @@
             const email = localStorage.getItem("userEmail") || "-";
             
             let userAgent = navigator.userAgent;
-            let deviceTypeAr = "غير معروف";
-            if (/iphone/i.test(userAgent)) { deviceTypeAr = "أيفون (iPhone)"; }
-            else if (/android/i.test(userAgent)) { deviceTypeAr = "أندرويد (Android)"; }
-            else if (/ipad/i.test(userAgent)) { deviceTypeAr = "آيباد (iPad)"; }
-            else if (/windows/i.test(userAgent)) { deviceTypeAr = "كمبيوتر ويندوز (Windows)"; }
+            let deviceTypeEn = "Unknown", deviceTypeAr = "غير معروف";
+            if (/iphone/i.test(userAgent)) { deviceTypeEn = "iPhone"; deviceTypeAr = "أيفون (iPhone)"; }
+            else if (/android/i.test(userAgent)) { deviceTypeEn = "Android"; deviceTypeAr = "أندرويد (Android)"; }
+            else if (/ipad/i.test(userAgent)) { deviceTypeEn = "iPad"; deviceTypeAr = "آيباد (iPad)"; }
+            else if (/windows/i.test(userAgent)) { deviceTypeEn = "Windows PC"; deviceTypeAr = "كمبيوتر ويندوز (Windows)"; }
 
             const myPhoneNumber = "966500919401"; 
 
-            db.collection("emergencies").add({
-                type: typeAr,
-                userName: name,
-                phone: phone,
-                coordinates: `${lat}, ${lng}`,
-                time: timeNow,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch(err => console.log(err));
-
             const message = `🚨 *${typeAr}* 🚨%0A` +
-                        `👤 *الاسم:* ${name}%0A` +
-                        `🎂 *العمر:* ${age} | 🌍 *الجنسية:* ${nationality}%0A` +
-                        `🪪 *رقم الهوية:* ${idNumber}%0A` +
-                        `📞 *الجوال:* ${phone}%0A` +
-                        `📧 *الإيميل:* ${email}%0A` +
-                        `📱 *الجهاز:* ${deviceTypeAr}%0A` +
-                        `⏰ *الوقت:* ${timeNow}%0A` +
-                        `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
-                        `📍 *رابط الموقع:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
-                        `⚠️ *أحتاج إلى المساعدة الفورية!*`;
+                          `👤 *الاسم:* ${name}%0A` +
+                          `🎂 *العمر:* ${age} | 🌍 *الجنسية:* ${nationality}%0A` +
+                          `🪪 *رقم الهوية:* ${idNumber}%0A` +
+                          `📞 *الجوال:* ${phone}%0A` +
+                          `📧 *الإيميل:* ${email}%0A` +
+                          `📱 *الجهاز:* ${deviceTypeAr}%0A` +
+                          `⏰ *الوقت:* ${timeNow}%0A` +
+                          `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
+                          `📍 *رابط الموقع:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
+                          `⚠️ *أحتاج إلى المساعدة الفورية!*%0A%0A` +
+                          `-----------------------------------%0A` +
+                          `🚨 *${typeEn}* 🚨%0A` +
+                          `👤 *Name:* ${name}%0A` +
+                          `🎂 *Age:* ${age} | 🌍 *Nationality:* ${nationality}%0A` +
+                          `🪪 *ID:* ${idNumber}%0A` +
+                          `📞 *Phone:* ${phone}%0A` +
+                          `📧 *Email:* ${email}%0A` +
+                          `📱 *Device:* ${deviceTypeEn}%0A` +
+                          `⏰ *Time:* ${timeNow}%0A` +
+                          `🔢 *Coordinates:* ${lat}, ${lng}%0A` +
+                          `📍 *Location Link:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
+                          `⚠️ *I need immediate assistance!*`;
 
             window.open(`https://wa.me/${myPhoneNumber}?text=${message}`, '_blank');
+
             hideEmergencyOptions();
-        }
 
-        function openAdminLogin() {
-            document.getElementById('adminLoginModal').classList.remove('hidden');
-        }
-
-        function verifyAdminPin() {
-            const pin = document.getElementById('adminPinInput').value;
-            if (pin === "13121312") {
-                document.getElementById('adminLoginModal').classList.add('hidden');
-                document.getElementById('adminPinInput').value = "";
-                
-                document.getElementById('registerUI').classList.add('hidden');
-                document.getElementById('permissionUI').classList.add('hidden');
-                document.getElementById('mainMenuUI').classList.add('hidden');
-                document.getElementById('optionsUI').classList.add('hidden');
-                document.getElementById('adminDashboardUI').classList.remove('hidden');
-                loadUsersForAdmin();
-            } else {
-                alert("❌ الرمز السري غير صحيح!");
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    localStorage.setItem("userLat", position.coords.latitude);
+                    localStorage.setItem("userLng", position.coords.longitude);
+                }, () => {});
             }
-        }
-
-        function closeAdminDashboard() {
-            document.getElementById('adminDashboardUI').classList.add('hidden');
-            const isRegistered = localStorage.getItem("userRegistered");
-            if (!isRegistered) {
-                document.getElementById('registerUI').classList.remove('hidden');
-            } else {
-                document.getElementById('mainMenuUI').classList.remove('hidden');
-            }
-        }
-
-        async function loadUsersForAdmin() {
-            try {
-                const snapshot = await db.collection("users").get();
-                const tbody = document.getElementById('adminUsersTableBody');
-                tbody.innerHTML = "";
-                let count = 0;
-                snapshot.forEach(doc => {
-                    count++;
-                    const data = doc.data();
-                    tbody.innerHTML += `<tr>
-                        <td>${data.fullName || '-'}</td>
-                        <td>${data.age || '-'}</td>
-                        <td>${data.idNumber || '-'}</td>
-                        <td>${data.phone || '-'}</td>
-                    </tr>`;
-                });
-                document.getElementById('usersCount').innerText = count;
-            } catch (e) {
-                console.log("Error loading users", e);
-            }
-        }
-
-        function toggleDangerMode() {
-            document.body.classList.toggle('danger-mode');
-            const isDanger = document.body.classList.contains('danger-mode');
-            alert(isDanger ? "⚠️ تم تفعيل الوضع الخطر بنجاح في النظام!" : "✅ تم العودة للوضع العادي.");
-        }
-
-        function updateTickerText() {
-            const newText = document.getElementById('adminTickerInput').value;
-            if (newText) {
-                document.getElementById('tickerText').innerText = newText;
-                alert("✅ تم تحديث الشريط بنجاح!");
-            }
-        }
-
-        function addCustomGuideWithImage() {
-            const title = document.getElementById('adminGuideTitle').value;
-            const desc = document.getElementById('adminGuideDesc').value;
-            const fileInput = document.getElementById('adminImageInput');
-
-            if (!title || !desc) {
-                return alert("⚠️ يرجى إدخال العنوان ووصف الإرشاد على الأقل!");
-            }
-
-            if (fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const imgSrc = e.target.result;
-                    appendGuideCardToDOM(title, desc, imgSrc);
-                    alert("✅ تمت إضافة الإرشاد مع الصورة من المعرض بنجاح!");
-                    document.getElementById('adminGuideTitle').value = "";
-                    document.getElementById('adminGuideDesc').value = "";
-                    fileInput.value = "";
-                }
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                appendGuideCardToDOM(title, desc, null);
-                alert("✅ تمت إضافة الإرشاد بنجاح بدون صورة!");
-                document.getElementById('adminGuideTitle').value = "";
-                document.getElementById('adminGuideDesc').value = "";
-            }
-        }
-
-        function appendGuideCardToDOM(title, desc, imgSrc) {
-            const container = document.getElementById('safetyGuidesContainer');
-            const card = document.createElement('div');
-            card.className = 'safety-guide-card';
-            let htmlContent = `<strong>📌 ${title}</strong><p style="margin:4px 0;">${desc}</p>`;
-            if (imgSrc) {
-                htmlContent += `<img src="${imgSrc}" alt="صورة إرشادية">`;
-            }
-            card.innerHTML = htmlContent;
-            container.appendChild(card);
         }
     </script>
 </body>
