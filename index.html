@@ -9,15 +9,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="الإنذار المبكر">
     
-    <!-- مابينفست مدمج لمنع أخطاء 404 على جيت هب -->
-    <link rel="manifest" href='data:application/manifest+json,{"name":"نظام الإنذار المبكر","short_name":"الإنذار","start_url":"./index.html","display":"standalone","background_color":"#f4f7f9","theme_color":"#0047ab"}'>
+    <!-- ربط ملف المانفست الخارجي عشان يشتغل على الأيفون والشاشة الرئيسية -->
+    <link rel="manifest" href="manifest.json">
     
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
 
     <script src="https://cdn.onesignal.com/sdk/web/v16/OneSignalSDK.page.js" defer></script>
 
-    <!-- مكتبات Firebase (نسخة الـ CDN) -->
+    <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -100,7 +100,7 @@
     </div>
 
     <div class="ticker-bar">
-        <div class="ticker-text" id="tickerContentContainer"><span id="tickerText">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</span></div>
+        <div class="ticker-text"><span id="tickerText">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</span></div>
     </div>
 
     <div class="container hidden" id="registerUI">
