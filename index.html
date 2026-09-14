@@ -9,7 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="الإنذار المبكر">
     
-    <link rel="manifest" href="manifest.json">
+    <!-- مابينفست مدمج لمنع أخطاء 404 على جيت هب -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"نظام الإنذار المبكر","short_name":"الإنذار","start_url":"./index.html","display":"standalone","background_color":"#f4f7f9","theme_color":"#0047ab"}'>
+    
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
 
@@ -29,11 +31,9 @@
 
         body { margin: 0; padding: 0; font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; overflow-y: auto; transition: background 0.3s; }
         
-        /* وضع الطوارئ الخطر العام */
         body.danger-mode { background-color: #5a0000; }
         body.danger-mode .container { border: 3px solid var(--danger-red); background-color: #fff5f5; }
 
-        /* شريط الأدمن العلوي السريع */
         .admin-top-bar { width: 100%; background: #111; color: white; display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; font-size: 13px; box-sizing: border-box; z-index: 1000; }
         .admin-btn-link { background: #e74c3c; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
 
@@ -59,14 +59,12 @@
         .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
         .safety-guide-card img { width: 100%; border-radius: 6px; margin-top: 8px; max-height: 150px; object-fit: cover; }
 
-        /* نافذة الإنذار المنبثقة التلقائية */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(5px); }
         .emergency-modal { background: #fff; width: 85%; max-width: 380px; padding: 25px; border-radius: 20px; text-align: center; border-top: 6px solid #d0021b; box-shadow: 0 15px 35px rgba(208,2,27,0.3); animation: modalAppearing 0.4s ease; box-sizing: border-box; }
         @keyframes modalAppearing { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .emergency-modal h2 { color: #d0021b; font-size: 20px; margin-bottom: 10px; }
         .emergency-modal p { font-size: 14px; color: #333; line-height: 1.6; margin-bottom: 20px; }
 
-        /* تنسيق جداول لوحة التحكم */
         .admin-table { width: 100%; font-size: 11px; border-collapse: collapse; margin-top: 10px; text-align: right; }
         .admin-table th, .admin-table td { border: 1px solid #ddd; padding: 6px; }
         .admin-table th { background: #0047ab; color: white; }
@@ -77,13 +75,11 @@
 </head>
 <body id="pageBody" oncontextmenu="return false;">
 
-    <!-- شريط الأدمن العلوي -->
     <div class="admin-top-bar">
         <span>لوحة تحكم النظام الذكي 🛡️</span>
         <button class="admin-btn-link" onclick="openAdminLogin()">🔒 دخول الأدمن</button>
     </div>
 
-    <!-- نافذة الإنذار المنبثقة التلقائية -->
     <div class="modal-overlay" id="emergencyModal">
         <div class="emergency-modal">
             <div class="icon-box" style="font-size: 45px; margin-bottom: 5px;">🚨</div>
@@ -93,7 +89,6 @@
         </div>
     </div>
 
-    <!-- نافذة تسجيل دخول الأدمن بالرمز السري -->
     <div class="modal-overlay hidden" id="adminLoginModal">
         <div class="emergency-modal" style="border-top-color: #111;">
             <h2>تسجيل دخول الأدمن</h2>
@@ -105,10 +100,9 @@
     </div>
 
     <div class="ticker-bar">
-        <div class="ticker-text" id="tickerContent">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</div>
+        <div class="ticker-text" id="tickerContentContainer"><span id="tickerText">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</span></div>
     </div>
 
-    <!-- 1. شاشة تسجيل البيانات (إجبارية أولاً) -->
     <div class="container hidden" id="registerUI">
         <div class="icon-box">📝</div>
         <h1>تسجيل بيانات المستخدم الإجباري</h1>
@@ -122,7 +116,6 @@
         <button class="btn" onclick="saveUserData()">حفظ البيانات في القاعدة تلقائياً 🚀</button>
     </div>
 
-    <!-- 2. شاشة تفعيل صلاحيات التنبيهات والموقع -->
     <div class="container hidden" id="permissionUI">
         <div class="icon-box">⚠️</div>
         <h1>تفعيل صلاحيات الطوارئ</h1>
@@ -130,7 +123,6 @@
         <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
     </div>
 
-    <!-- 3. الشاشة الرئيسية -->
     <div class="container hidden" id="mainMenuUI">
         <div class="icon-box">🚨</div>
         <h2>مركز الاستغاثة الطارئة</h2>
@@ -152,7 +144,6 @@
         </div>
     </div>
 
-    <!-- 4. شاشة اختيار نوع الطوارئ -->
     <div class="container hidden" id="optionsUI">
         <div class="icon-box">⚠️</div>
         <h2>حدد نوع الحالة الطارئة</h2>
@@ -164,7 +155,6 @@
         <button class="btn btn-cancel" onclick="hideEmergencyOptions()">إلغاء ❌</button>
     </div>
 
-    <!-- 5. لوحة تحكم الأدمن الشاملة -->
     <div class="container hidden" id="adminDashboardUI" style="max-width: 450px;">
         <div class="icon-box">⚙️</div>
         <h2>لوحة تحكم الأدمن المطلقة</h2>
@@ -183,7 +173,6 @@
                         </tr>
                     </thead>
                     <tbody id="adminUsersTableBody">
-                        <!-- يتم تعبئتها تلقائياً من فايربيس -->
                     </tbody>
                 </table>
             </div>
@@ -211,7 +200,6 @@
     </div>
 
     <script>
-        // إعدادات Firebase الحقيقية الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyDXKY3MQLbCRAqQjwVHGYmTVT61Dalpb2g",
             authDomain: "alaret-e8f2a.firebaseapp.com",
@@ -222,7 +210,6 @@
             measurementId: "G-SZR2DC21LG"
         };
 
-        // تهيئة Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -238,7 +225,6 @@
             const isRegistered = localStorage.getItem("userRegistered");
             const notifAllowed = localStorage.getItem("notifAllowed");
 
-            // إجبار المستخدم على التسجيل أولاً إذا لم تكن بياناته مخزنة
             if (!isRegistered) {
                 document.getElementById('registerUI').classList.remove('hidden');
             } else if (notifAllowed !== "true") {
@@ -253,7 +239,6 @@
 
         let sirenInterval = null;
 
-        // دالة توليد صوت صفارة إنذار الطوارئ برمجياً
         function playSirenSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -286,7 +271,6 @@
             document.getElementById('emergencyModal').classList.add('hidden');
         }
 
-        // حفظ بيانات المستخدم إجبارياً في قاعدة بيانات Firebase Firestore وتخزينها تلقائياً
         async function saveUserData() {
             const name = document.getElementById('regName').value;
             const age = document.getElementById('regAge').value;
@@ -300,7 +284,6 @@
             }
 
             try {
-                // حفظ البيانات تلقائياً في قاعدة البيانات مجموعة (users)
                 await db.collection("users").add({
                     fullName: name,
                     age: age,
@@ -353,7 +336,6 @@
             document.getElementById('mainMenuUI').classList.remove('hidden');
         }
 
-        // إرسال طلب الاستغاثة وحفظه في Firebase
         function sendSOS(typeAr, typeEn) {
             let lat = localStorage.getItem("userLat") || "24.4672";
             let lng = localStorage.getItem("userLng") || "39.6142";
@@ -367,11 +349,11 @@
             const email = localStorage.getItem("userEmail") || "-";
             
             let userAgent = navigator.userAgent;
-            let deviceTypeEn = "Unknown", deviceTypeAr = "غير معروف";
-            if (/iphone/i.test(userAgent)) { deviceTypeEn = "iPhone"; deviceTypeAr = "أيفون (iPhone)"; }
-            else if (/android/i.test(userAgent)) { deviceTypeEn = "Android"; deviceTypeAr = "أندرويد (Android)"; }
-            else if (/ipad/i.test(userAgent)) { deviceTypeEn = "iPad"; deviceTypeAr = "آيباد (iPad)"; }
-            else if (/windows/i.test(userAgent)) { deviceTypeEn = "Windows PC"; deviceTypeAr = "كمبيوتر ويندوز (Windows)"; }
+            let deviceTypeAr = "غير معروف";
+            if (/iphone/i.test(userAgent)) { deviceTypeAr = "أيفون (iPhone)"; }
+            else if (/android/i.test(userAgent)) { deviceTypeAr = "أندرويد (Android)"; }
+            else if (/ipad/i.test(userAgent)) { deviceTypeAr = "آيباد (iPad)"; }
+            else if (/windows/i.test(userAgent)) { deviceTypeAr = "كمبيوتر ويندوز (Windows)"; }
 
             const myPhoneNumber = "966500919401"; 
 
@@ -400,7 +382,6 @@
             hideEmergencyOptions();
         }
 
-        // دوال التحكم الخاصة بالأدمن والرمز السري (13121312)
         function openAdminLogin() {
             document.getElementById('adminLoginModal').classList.remove('hidden');
         }
@@ -411,7 +392,6 @@
                 document.getElementById('adminLoginModal').classList.add('hidden');
                 document.getElementById('adminPinInput').value = "";
                 
-                // اخفاء كل الشاشات واظهار لوحة الأدمن
                 document.getElementById('registerUI').classList.add('hidden');
                 document.getElementById('permissionUI').classList.add('hidden');
                 document.getElementById('mainMenuUI').classList.add('hidden');
@@ -433,7 +413,6 @@
             }
         }
 
-        // جلب قائمة المسجلين بالكامل من قاعدة بيانات فايربيس للأدمن
         async function loadUsersForAdmin() {
             try {
                 const snapshot = await db.collection("users").get();
@@ -456,14 +435,12 @@
             }
         }
 
-        // تحويل الشاشة للوضع الخطر أو العادي من لوحة الأدمن
         function toggleDangerMode() {
             document.body.classList.toggle('danger-mode');
             const isDanger = document.body.classList.contains('danger-mode');
             alert(isDanger ? "⚠️ تم تفعيل الوضع الخطر بنجاح في النظام!" : "✅ تم العودة للوضع العادي.");
         }
 
-        // تحديث نص شريط الأخبار والتحذيرات
         function updateTickerText() {
             const newText = document.getElementById('adminTickerInput').value;
             if (newText) {
@@ -472,7 +449,6 @@
             }
         }
 
-        // إضافة إرشاد جديد مع صورة مباشرة مرفوعة من المعرض
         function addCustomGuideWithImage() {
             const title = document.getElementById('adminGuideTitle').value;
             const desc = document.getElementById('adminGuideDesc').value;
