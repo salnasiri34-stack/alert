@@ -13,7 +13,7 @@
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
 
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script src="https://cdn.onesignal.com/sdk/web/v16/OneSignalSDK.page.js" defer></script>
 
     <style>
         :root {
@@ -42,8 +42,9 @@
         .btn-security { background: #2c3e50; }
         .btn-fire { background: #c0392b; }
         .btn-cancel { background: #95a5a6; }
+        .btn-admin { background: #34495e; font-size: 13px; padding: 8px; margin-top: 15px; }
 
-        input { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; }
+        input { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; box-sizing: border-box; }
         .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
 
         .hidden { display: none !important; }
@@ -56,7 +57,7 @@
         <div class="ticker-text">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</div>
     </div>
 
-    <!-- 1. شاشة تسجيل البيانات (تظهر للمستخدم أول مرة فقط ولا تتكرر نهائياً) -->
+    <!-- 1. شاشة تسجيل البيانات -->
     <div class="container hidden" id="registerUI">
         <div class="icon-box">📝</div>
         <h1>تسجيل بيانات المستخدم</h1>
@@ -70,7 +71,7 @@
         <button class="btn" onclick="saveUserData()">حفظ ومتابعة 🚀</button>
     </div>
 
-    <!-- 2. شاشة تفعيل صلاحيات التنبيهات والموقع -->
+    <!-- 2. شاشة تفعيل الصلاحيات -->
     <div class="container hidden" id="permissionUI">
         <div class="icon-box">⚠️</div>
         <h1>تفعيل صلاحيات الطوارئ</h1>
@@ -102,6 +103,8 @@
                 <p style="margin:4px 0;">اتوجه فوراً لأقرب مخرج طوارئ ولا تستخدم المصاعد الكهربائية أبداً.</p>
             </div>
         </div>
+
+        <button class="btn btn-admin" onclick="openAdminLogin()">🔐 لوحة تحكم الآدمن</button>
     </div>
 
     <!-- 4. شاشة اختيار نوع الطوارئ -->
@@ -116,9 +119,26 @@
         <button class="btn btn-cancel" onclick="hideEmergencyOptions()">إلغاء ❌</button>
     </div>
 
-    <div class="footer">
-        جميع الحقوق محفوظة للمخترع: سليمان الناصري (سلومي) &copy; 2026
+    <!-- 5. لوحة تحكم الآدمن -->
+    <div class="container hidden" id="adminUI">
+        <div class="icon-box">⚙️</div>
+        <h2>لوحة تحكم الآدمن</h2>
+        <p>إدارة بيانات النظام والتحكم الكامل:</p>
+        <div style="text-align: right; background: #fafafa; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px;">
+            <p><strong>حالة النظام:</strong> نشط 🟢</p>
+            <p><strong>المستخدم المسجل:</strong> <span id="adminUserName">-</span></p>
+            <p><strong>رقم جوال الطوارئ:</strong> 966500919401</p>
+        </div>
+        <button class="btn" style="background:#e74c3c;" onclick="resetUserData()">إعادة تعيين بيانات المستخدم 🔄</button>
+        <button class="btn btn-cancel" onclick="closeAdminPanel()">رجوع للقائمة الرئيسية ↩️</button>
     </div>
+
+    <div class="footer">
+        جميع الحقوق محفوظة &copy; 2026 — sulaiman alnasiri
+    </div>
+
+    <!-- عنصر الصوت للإنذار -->
+    <audio id="alarmSound" src="https://www.soundjay.com/buttons/sounds/beep-07.wav" preload="auto"></audio>
 
     <script>
         window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -191,12 +211,62 @@
             document.getElementById('mainMenuUI').classList.remove('hidden');
         }
 
+        function openAdminLogin() {
+            let pass = prompt("الرجاء إدخال كلمة مرور الآدمن:");
+            if (pass === "admin123") {
+                document.getElementById('adminUserName').innerText = localStorage.getItem("userName") || "غير مسجل";
+                document.getElementById('mainMenuUI').classList.add('hidden');
+                document.getElementById('adminUI').classList.remove('hidden');
+            } else if (pass !== null) {
+                alert("❌ كلمة المرور غير صحيحة!");
+            }
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('adminUI').classList.add('hidden');
+            document.getElementById('mainMenuUI').classList.remove('hidden');
+        }
+
+        function resetUserData() {
+            if(confirm("هل أنت متأكد من إعادة تعيين البيانات؟")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
         function sendSOS(typeAr, typeEn) {
+            hideEmergencyOptions();
+
+            // 1. تشغيل صوت الإنذار
+            const audio = document.getElementById('alarmSound');
+            audio.play().catch(e => console.log("Audio play blocked"));
+
+            // 2. بعد انتهاء الإنذار، قراءة التحذير الصوتي
+            audio.onended = function() {
+                speakWarning(typeAr);
+            };
+
+            // احتياطي في حال لم يعمل الحدث
+            setTimeout(() => {
+                executeWhatsAppSend(typeAr, typeEn);
+            }, 3000);
+        }
+
+        function speakWarning(text) {
+            if ('speechSynthesis' in window) {
+                let utterance = new SpeechSynthesisUtterance("تنبيه طارئ! تم إطلاق إشارة استغاثة. Emergency alert! SOS activated.");
+                utterance.lang = 'ar-SA';
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function executeWhatsAppSend(typeAr, typeEn) {
             let lat = localStorage.getItem("userLat") || "24.4672";
             let lng = localStorage.getItem("userLng") || "39.6142";
             const timeNow = new Date().toLocaleTimeString('ar-SA');
             
-            const name = localStorage.getItem("userName") || "مهندس";
+            const name = localStorage.getItem("userName") || "مستخدم";
             const age = localStorage.getItem("userAge") || "-";
             const nationality = localStorage.getItem("userNationality") || "-";
             const idNumber = localStorage.getItem("userIdNumber") || "-";
@@ -237,15 +307,6 @@
                           `⚠️ *I need immediate assistance!*`;
 
             window.open(`https://wa.me/${myPhoneNumber}?text=${message}`, '_blank');
-
-            hideEmergencyOptions();
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    localStorage.setItem("userLat", position.coords.latitude);
-                    localStorage.setItem("userLng", position.coords.longitude);
-                }, () => {});
-            }
         }
     </script>
 </body>
