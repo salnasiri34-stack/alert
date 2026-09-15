@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- منع التخزين المؤقت لضمان تحميل التحديثات فوراً -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>نظام الإنذار المبكر 🛡️</title>
 
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,6 +18,7 @@
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
 
+    <!-- OneSignal SDK -->
     <script src="https://cdn.onesignal.com/sdk/web/v16/OneSignalSDK.page.js" defer></script>
 
     <style>
@@ -137,7 +143,6 @@
         جميع الحقوق محفوظة &copy; 2026 — sulaiman alnasiri
     </div>
 
-    <!-- عنصر الصوت للإنذار -->
     <audio id="alarmSound" src="https://www.soundjay.com/buttons/sounds/beep-07.wav" preload="auto"></audio>
 
     <script>
@@ -188,17 +193,25 @@
 
         function requestPermissions() { 
             window.OneSignalDeferred.push(async function(OneSignal) {
-                await OneSignal.Notifications.requestPermission();
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition((position) => {
-                        localStorage.setItem("userLat", position.coords.latitude);
-                        localStorage.setItem("userLng", position.coords.longitude);
-                    }, () => {});
+                try {
+                    await OneSignal.Notifications.requestPermission();
+                } catch(e) {
+                    console.log("OneSignal permission error:", e);
                 }
-                localStorage.setItem("notifAllowed", "true");
-                document.getElementById('permissionUI').classList.add('hidden');
-                document.getElementById('mainMenuUI').classList.remove('hidden');
             });
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    localStorage.setItem("userLat", position.coords.latitude);
+                    localStorage.setItem("userLng", position.coords.longitude);
+                }, (error) => {
+                    console.log("Geolocation error:", error);
+                }, { timeout: 10000 });
+            }
+
+            localStorage.setItem("notifAllowed", "true");
+            document.getElementById('permissionUI').classList.add('hidden');
+            document.getElementById('mainMenuUI').classList.remove('hidden');
         }
 
         function showEmergencyOptions() {
@@ -237,16 +250,13 @@
         function sendSOS(typeAr, typeEn) {
             hideEmergencyOptions();
 
-            // 1. تشغيل صوت الإنذار
             const audio = document.getElementById('alarmSound');
             audio.play().catch(e => console.log("Audio play blocked"));
 
-            // 2. بعد انتهاء الإنذار، قراءة التحذير الصوتي
             audio.onended = function() {
                 speakWarning(typeAr);
             };
 
-            // احتياطي في حال لم يعمل الحدث
             setTimeout(() => {
                 executeWhatsAppSend(typeAr, typeEn);
             }, 3000);
@@ -266,7 +276,7 @@
             let lng = localStorage.getItem("userLng") || "39.6142";
             const timeNow = new Date().toLocaleTimeString('ar-SA');
             
-            const name = localStorage.getItem("userName") || "مستخدم";
+            const name = localStorage.IconName || localStorage.getItem("userName") || "مستخدم";
             const age = localStorage.getItem("userAge") || "-";
             const nationality = localStorage.getItem("userNationality") || "-";
             const idNumber = localStorage.getItem("userIdNumber") || "-";
