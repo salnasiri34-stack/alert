@@ -1,7 +1,7 @@
 {
   "name": "الإنذار المبكر",
   "short_name": "⚠️الإنذار المبكر",
-  "start_url": "/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#d0021b",
