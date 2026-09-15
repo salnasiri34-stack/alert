@@ -14,8 +14,9 @@
     <meta name="apple-mobile-web-app-title" content="الإنذار المبكر">
     
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/564/564619.png">
+    <!-- صورتك الجديدة المحددة -->
+    <link rel="icon" type="image/webp" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
+    <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
 
     <!-- OneSignal SDK -->
     <script src="https://cdn.onesignal.com/sdk/web/v16/OneSignalSDK.page.js" defer></script>
@@ -35,7 +36,7 @@
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
         .container { text-align: center; width: 85%; max-width: 400px; padding: 25px 20px; background: var(--main-card); border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin: 15px 0; z-index: 2; }
-        .icon-box { font-size: 55px; margin-bottom: 10px; }
+        .custom-icon { width: 60px; height: 60px; object-fit: contain; margin-bottom: 10px; }
         h1, h2 { font-size: 19px; color: #1a1a1a; margin-bottom: 8px; font-weight: 700; }
         p { color: #666; font-size: 13px; margin-bottom: 15px; line-height: 1.5; }
 
@@ -64,7 +65,7 @@
 
     <!-- 1. شاشة تسجيل البيانات -->
     <div class="container hidden" id="registerUI">
-        <div class="icon-box">📝</div>
+        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
         <h1>تسجيل بيانات المستخدم</h1>
         <p>يرجى إدخال بياناتك الشخصية للمتابعة (للمرة الأولى فقط):</p>
         <input type="text" id="regName" placeholder="الاسم الكامل">
@@ -78,7 +79,7 @@
 
     <!-- 2. شاشة تفعيل الصلاحيات -->
     <div class="container hidden" id="permissionUI">
-        <div class="icon-box">⚠️</div>
+        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
         <h1>تفعيل صلاحيات الطوارئ</h1>
         <p>يرجى تفعيل التنبيهات وموقعك الجغرافي لضمان عمل زر الاستغاثة بدقة.</p>
         <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
@@ -86,7 +87,7 @@
 
     <!-- 3. الشاشة الرئيسية -->
     <div class="container hidden" id="mainMenuUI">
-        <div class="icon-box">🚨</div>
+        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
         <h2>مركز الاستغاثة الطارئة</h2>
         <p>اضغط على الزر أدناه عند الحاجة للمساعدة العاجلة</p>
         <button class="btn btn-sos" onclick="showEmergencyOptions()">🚨 طلب استغاثة طارئة (SOS)</button>
@@ -114,7 +115,7 @@
 
     <!-- 4. شاشة اختيار نوع الطوارئ -->
     <div class="container hidden" id="optionsUI">
-        <div class="icon-box">⚠️</div>
+        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
         <h2>حدد نوع الحالة الطارئة</h2>
         <p>اختر القسم المختص لسرعة الاستجابة:</p>
         <button class="btn btn-medical" onclick="sendSOS('حالة طوارئ طبية 🏥', 'Medical Emergency 🏥')">🏥 طارئ طبي (إسعاف)</button>
@@ -126,7 +127,7 @@
 
     <!-- 5. لوحة تحكم الآدمن -->
     <div class="container hidden" id="adminUI">
-        <div class="icon-box">⚙️</div>
+        <div class="custom-icon" style="font-size:45px; text-align:center;">⚙️</div>
         <h2>لوحة تحكم الآدمن</h2>
         <p>إدارة بيانات النظام والتحكم الكامل:</p>
         <div style="text-align: right; background: #fafafa; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px;">
