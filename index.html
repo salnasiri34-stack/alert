@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- منع التخزين المؤقت لضمان تحميل التحديثات فوراً -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -226,7 +225,7 @@
 
         function openAdminLogin() {
             let pass = prompt("الرجاء إدخال كلمة مرور الآدمن:");
-            if (pass === "admin123") {
+            if (pass === "13121312") {
                 document.getElementById('adminUserName').innerText = localStorage.getItem("userName") || "غير مسجل";
                 document.getElementById('mainMenuUI').classList.add('hidden');
                 document.getElementById('adminUI').classList.remove('hidden');
@@ -276,7 +275,7 @@
             let lng = localStorage.getItem("userLng") || "39.6142";
             const timeNow = new Date().toLocaleTimeString('ar-SA');
             
-            const name = localStorage.IconName || localStorage.getItem("userName") || "مستخدم";
+            const name = localStorage.getItem("userName") || "مستخدم";
             const age = localStorage.getItem("userAge") || "-";
             const nationality = localStorage.getItem("userNationality") || "-";
             const idNumber = localStorage.getItem("userIdNumber") || "-";
