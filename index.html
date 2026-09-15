@@ -14,9 +14,9 @@
     <meta name="apple-mobile-web-app-title" content="الإنذار المبكر">
     
     <link rel="manifest" href="manifest.json">
-    <!-- صورتك الجديدة المحددة -->
-    <link rel="icon" type="image/webp" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
-    <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
+    <!-- الأيقونة الجديدة المرفوعة محلياً -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
 
     <!-- OneSignal SDK -->
     <script src="https://cdn.onesignal.com/sdk/web/v16/OneSignalSDK.page.js" defer></script>
@@ -65,7 +65,7 @@
 
     <!-- 1. شاشة تسجيل البيانات -->
     <div class="container hidden" id="registerUI">
-        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
+        <img src="icon.png" class="custom-icon" alt="تحذير">
         <h1>تسجيل بيانات المستخدم</h1>
         <p>يرجى إدخال بياناتك الشخصية للمتابعة (للمرة الأولى فقط):</p>
         <input type="text" id="regName" placeholder="الاسم الكامل">
@@ -79,7 +79,7 @@
 
     <!-- 2. شاشة تفعيل الصلاحيات -->
     <div class="container hidden" id="permissionUI">
-        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
+        <img src="icon.png" class="custom-icon" alt="تحذير">
         <h1>تفعيل صلاحيات الطوارئ</h1>
         <p>يرجى تفعيل التنبيهات وموقعك الجغرافي لضمان عمل زر الاستغاثة بدقة.</p>
         <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
@@ -87,7 +87,7 @@
 
     <!-- 3. الشاشة الرئيسية -->
     <div class="container hidden" id="mainMenuUI">
-        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
+        <img src="icon.png" class="custom-icon" alt="تحذير">
         <h2>مركز الاستغاثة الطارئة</h2>
         <p>اضغط على الزر أدناه عند الحاجة للمساعدة العاجلة</p>
         <button class="btn btn-sos" onclick="showEmergencyOptions()">🚨 طلب استغاثة طارئة (SOS)</button>
@@ -115,7 +115,7 @@
 
     <!-- 4. شاشة اختيار نوع الطوارئ -->
     <div class="container hidden" id="optionsUI">
-        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
+        <img src="icon.png" class="custom-icon" alt="تحذير">
         <h2>حدد نوع الحالة الطارئة</h2>
         <p>اختر القسم المختص لسرعة الاستجابة:</p>
         <button class="btn btn-medical" onclick="sendSOS('حالة طوارئ طبية 🏥', 'Medical Emergency 🏥')">🏥 طارئ طبي (إسعاف)</button>
