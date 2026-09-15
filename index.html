@@ -14,12 +14,15 @@
     <meta name="apple-mobile-web-app-title" content="الإنذار المبكر">
     
     <link rel="manifest" href="manifest.json">
-    <!-- الأيقونة الجديدة المرفوعة محلياً -->
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/webp" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
+    <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
 
     <!-- OneSignal SDK -->
     <script src="https://cdn.onesignal.com/sdk/web/v16/OneSignalSDK.page.js" defer></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
@@ -29,7 +32,14 @@
             --danger-red: #d0021b;
         }
 
-        body { margin: 0; padding: 0; font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; overflow-y: auto; }
+        body { 
+            margin: 0; padding: 0; 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg-color); 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+            min-height: 100vh; overflow-y: auto; 
+            transition: background-color 0.5s ease;
+        }
 
         .ticker-bar { width: 100%; background: #b30000; color: white; padding: 10px 0; font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10; }
         .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 20s linear infinite; }
@@ -50,8 +60,11 @@
         .btn-cancel { background: #95a5a6; }
         .btn-admin { background: #34495e; font-size: 13px; padding: 8px; margin-top: 15px; }
 
-        input { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; box-sizing: border-box; }
+        input, textarea { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; box-sizing: border-box; font-family: inherit; }
+        textarea { resize: vertical; height: 80px; }
+
         .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
+        .alert-banner { background: #fffae6; border: 1px solid #ffe58f; padding: 12px; border-radius: 10px; margin-bottom: 15px; text-align: right; font-size: 13px; color: #d46b08; font-weight: bold; }
 
         .hidden { display: none !important; }
         .footer { text-align: center; color: #888; font-size: 11px; line-height: 1.5; margin: 10px 0 20px 0; }
@@ -65,7 +78,7 @@
 
     <!-- 1. شاشة تسجيل البيانات -->
     <div class="container hidden" id="registerUI">
-        <img src="icon.png" class="custom-icon" alt="تحذير">
+        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
         <h1>تسجيل بيانات المستخدم</h1>
         <p>يرجى إدخال بياناتك الشخصية للمتابعة (للمرة الأولى فقط):</p>
         <input type="text" id="regName" placeholder="الاسم الكامل">
@@ -79,7 +92,7 @@
 
     <!-- 2. شاشة تفعيل الصلاحيات -->
     <div class="container hidden" id="permissionUI">
-        <img src="icon.png" class="custom-icon" alt="تحذير">
+        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
         <h1>تفعيل صلاحيات الطوارئ</h1>
         <p>يرجى تفعيل التنبيهات وموقعك الجغرافي لضمان عمل زر الاستغاثة بدقة.</p>
         <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
@@ -87,7 +100,11 @@
 
     <!-- 3. الشاشة الرئيسية -->
     <div class="container hidden" id="mainMenuUI">
-        <img src="icon.png" class="custom-icon" alt="تحذير">
+        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
+        
+        <!-- مكان ظهور رسالة الآدمن التحذيرية التفاعلية -->
+        <div id="userAlertContainer"></div>
+
         <h2>مركز الاستغاثة الطارئة</h2>
         <p>اضغط على الزر أدناه عند الحاجة للمساعدة العاجلة</p>
         <button class="btn btn-sos" onclick="showEmergencyOptions()">🚨 طلب استغاثة طارئة (SOS)</button>
@@ -115,7 +132,7 @@
 
     <!-- 4. شاشة اختيار نوع الطوارئ -->
     <div class="container hidden" id="optionsUI">
-        <img src="icon.png" class="custom-icon" alt="تحذير">
+        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
         <h2>حدد نوع الحالة الطارئة</h2>
         <p>اختر القسم المختص لسرعة الاستجابة:</p>
         <button class="btn btn-medical" onclick="sendSOS('حالة طوارئ طبية 🏥', 'Medical Emergency 🏥')">🏥 طارئ طبي (إسعاف)</button>
@@ -129,13 +146,32 @@
     <div class="container hidden" id="adminUI">
         <div class="custom-icon" style="font-size:45px; text-align:center;">⚙️</div>
         <h2>لوحة تحكم الآدمن</h2>
-        <p>إدارة بيانات النظام والتحكم الكامل:</p>
+        <p>التحكم الشامل في النظام والإرسال:</p>
+
         <div style="text-align: right; background: #fafafa; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px;">
-            <p><strong>حالة النظام:</strong> نشط 🟢</p>
+            <p><strong>حالة النظام:</strong> نشط ومرتبط بـ Firebase 🟢</p>
             <p><strong>المستخدم المسجل:</strong> <span id="adminUserName">-</span></p>
-            <p><strong>رقم جوال الطوارئ:</strong> 966500919401</p>
         </div>
-        <button class="btn" style="background:#e74c3c;" onclick="resetUserData()">إعادة تعيين بيانات المستخدم 🔄</button>
+
+        <!-- إضافة رسالة تحذيرية جديدة -->
+        <div style="text-align: right; margin-bottom: 12px;">
+            <label style="font-size: 12px; font-weight: bold; color: #333;">📢 نشر رسالة تحذيرية للمستخدمين:</label>
+            <textarea id="adminAlertInput" placeholder="اكتب نص التحذير هنا..."></textarea>
+            <button class="btn" style="padding: 8px; font-size: 13px;" onclick="publishAlert()">نشر وتفعيل التحذير 🚀</button>
+        </div>
+
+        <!-- التحكم بلون الشاشة بالكامل -->
+        <div style="text-align: right; margin-bottom: 12px;">
+            <label style="font-size: 12px; font-weight: bold; color: #333;">🎨 التحكم بلون الشاشة العامة:</label>
+            <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <button class="btn" style="background: #e74c3c; margin:0; font-size:12px;" onclick="setScreenColor('red')">أحمر بالكامل 🚨</button>
+                <button class="btn" style="background: #27ae60; margin:0; font-size:12px;" onclick="setScreenColor('green')">أخضر بالكامل 🟢</button>
+                <button class="btn" style="background: #7f8c8d; margin:0; font-size:12px;" onclick="setScreenColor('normal')">الوضع الافتراضي ⚪</button>
+            </div>
+        </div>
+
+        <!-- حذف وإدارة الإنذارات -->
+        <button class="btn" style="background:#c0392b; font-size: 13px;" onclick="clearActiveAlerts()">🗑️ حذف وإلغاء الإنذارات الحالية</button>
         <button class="btn btn-cancel" onclick="closeAdminPanel()">رجوع للقائمة الرئيسية ↩️</button>
     </div>
 
@@ -146,6 +182,22 @@
     <audio id="alarmSound" src="https://www.soundjay.com/buttons/sounds/beep-07.wav" preload="auto"></audio>
 
     <script>
+        // إعدادات Firebase الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-EXAMPLE-KEY-REPLACE-IF-NEEDED",
+            authDomain: "early-warning-system.firebaseapp.com",
+            projectId: "early-warning-system",
+            storageBucket: "early-warning-system.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+        
+        // منع أخطاء التهيئة لو تم تهيئتها مسبقاً
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         window.OneSignalDeferred.push(async function(OneSignal) {
             await OneSignal.init({
@@ -164,6 +216,70 @@
                 document.getElementById('permissionUI').classList.remove('hidden');
             } else {
                 document.getElementById('mainMenuUI').classList.remove('hidden');
+                listenToFirebaseControl();
+            }
+        }
+
+        // الاستماع الفوري للتحديثات من قاعدة بيانات فايربيس (لون الشاشة + رسائل التحذير)
+        function listenToFirebaseControl() {
+            db.collection("systemControl").doc("status").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // 1. التحكم بلون الشاشة بالكامل
+                    applyScreenColorTheme(data.screenTheme);
+
+                    // 2. فحص وعرض الرسالة التحذيرية إن وجدت
+                    const alertContainer = document.getElementById('userAlertContainer');
+                    if (data.activeAlert && data.activeAlert.trim() !== "") {
+                        alertContainer.innerHTML = `<div class="alert-banner">⚠️ ${data.activeAlert}</div>`;
+                        
+                        // تشغيل صوت الإنذار أولاً ثم البوت الآلي بقراءة الرسالة بالكامل
+                        playAlertSequence(data.activeAlert);
+                    } else {
+                        alertContainer.innerHTML = "";
+                    }
+                }
+            });
+        }
+
+        function applyScreenColorTheme(theme) {
+            const body = document.getElementById('pageBody');
+            if (theme === 'red') {
+                body.style.backgroundColor = '#ffcccc';
+                document.documentElement.style.setProperty('--bg-color', '#ffcccc');
+            } else if (theme === 'green') {
+                body.style.backgroundColor = '#d4edda';
+                document.documentElement.style.setProperty('--bg-color', '#d4edda');
+            } else {
+                body.style.backgroundColor = '#f4f7f9';
+                document.documentElement.style.setProperty('--bg-color', '#f4f7f9');
+            }
+        }
+
+        // تشغيل صوت الإنذار ثم قراءة الرسالة بالبوت الآلي بالكامل
+        let hasPlayedAlertThisSession = false;
+        function playAlertSequence(alertText) {
+            // لمنع تكرار نطق الصوت والإنذار مع كل تحديث بسيط إلا إذا تغيرت الرسالة
+            if (hasPlayedAlertThisSession) return;
+            hasPlayedAlertThisSession = true;
+
+            const audio = document.getElementById('alarmSound');
+            audio.play().catch(e => console.log("Audio play blocked"));
+
+            audio.onended = function() {
+                speakFullMessage(alertText);
+            };
+        }
+
+        function speakFullMessage(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // إيقاف أي قراءة سابقة
+                let utterance = new SpeechSynthesisUtterance("تنبيه هام من الإدارة: " + text);
+                utterance.lang = 'ar-SA';
+                utterance.rate = 0.95; // سرعة واضحة
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
             }
         }
 
@@ -212,6 +328,7 @@
             localStorage.setItem("notifAllowed", "true");
             document.getElementById('permissionUI').classList.add('hidden');
             document.getElementById('mainMenuUI').classList.remove('hidden');
+            listenToFirebaseControl();
         }
 
         function showEmergencyOptions() {
@@ -227,7 +344,7 @@
         function openAdminLogin() {
             let pass = prompt("الرجاء إدخال كلمة مرور الآدمن:");
             if (pass === "13121312") {
-                document.getElementById('adminUserName').innerText = localStorage.getItem("userName") || "غير مسجل";
+                document.getElementById('adminUserName').innerText = localStorage.getItem("userName") || "مشرف النظام";
                 document.getElementById('mainMenuUI').classList.add('hidden');
                 document.getElementById('adminUI').classList.remove('hidden');
             } else if (pass !== null) {
@@ -240,10 +357,38 @@
             document.getElementById('mainMenuUI').classList.remove('hidden');
         }
 
-        function resetUserData() {
-            if(confirm("هل أنت متأكد من إعادة تعيين البيانات؟")) {
-                localStorage.clear();
-                location.reload();
+        // مهام لوحة الآدمن المربوطة بـ Firebase
+        function publishAlert() {
+            const alertText = document.getElementById('adminAlertInput').value;
+            if (!alertText) return alert("الرجاء كتابة نص التحذير أولاً!");
+
+            db.collection("systemControl").doc("status").set({
+                activeAlert: alertText,
+                screenTheme: 'red' // تلقائياً يحولها لأحمر عند إطلاق تحذير
+            }, { merge: true }).then(() => {
+                alert("✅ تم نشر التحذير وتحديث الشاشة بنجاح لدى جميع المستخدمين!");
+                document.getElementById('adminAlertInput').value = "";
+            }).catch((error) => {
+                alert("❌ حدث خطأ أثناء النشر: سجل الاتصال بالإنترنت أو الفايربيس");
+            });
+        }
+
+        function setScreenColor(theme) {
+            db.collection("systemControl").doc("status").set({
+                screenTheme: theme
+            }, { merge: true }).then(() => {
+                alert("🎨 تم تحديث لون الشاشة العامة بنجاح!");
+            });
+        }
+
+        function clearActiveAlerts() {
+            if(confirm("هل أنت متأكد من حذف وإلغاء جميع التحذيرات والإنذارات النشطة؟")) {
+                db.collection("systemControl").doc("status").set({
+                    activeAlert: "",
+                    screenTheme: "normal"
+                }, { merge: true }).then(() => {
+                    alert("🗑️ تم حذف وإيقاف جميع الإنذارات وإعادة الشاشة للوضع الطبيعي.");
+                });
             }
         }
 
