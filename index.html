@@ -64,7 +64,37 @@
         textarea { resize: vertical; height: 80px; }
 
         .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
-        .alert-banner { background: #fffae6; border: 1px solid #ffe58f; padding: 12px; border-radius: 10px; margin-bottom: 15px; text-align: right; font-size: 13px; color: #d46b08; font-weight: bold; }
+
+        /* تصميم النافذة المنبثقة الإجبارية للتحذيرات */
+        .global-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 99999;
+            backdrop-filter: blur(4px);
+        }
+        .global-modal-box {
+            background: #ffffff;
+            width: 85%; max-width: 380px;
+            padding: 25px 20px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            animation: modalPop 0.3s ease-out;
+        }
+        @keyframes modalPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .global-modal-icon { font-size: 45px; margin-bottom: 10px; }
+        .global-modal-title { font-size: 18px; font-weight: bold; color: #d0021b; margin-bottom: 10px; }
+        .global-modal-text { font-size: 14px; color: #444; line-height: 1.6; margin-bottom: 20px; word-break: break-word; }
+        .global-modal-btn {
+            background: #0047ab; color: white; border: none; padding: 12px;
+            width: 100%; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,71,171,0.3);
+        }
 
         .hidden { display: none !important; }
         .footer { text-align: center; color: #888; font-size: 11px; line-height: 1.5; margin: 10px 0 20px 0; }
@@ -75,6 +105,9 @@
     <div class="ticker-bar">
         <div class="ticker-text">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</div>
     </div>
+
+    <!-- الحاوية الخاصة بالنافذة المنبثقة الإجبارية للتحذيرات -->
+    <div id="globalModalContainer"></div>
 
     <!-- 1. شاشة تسجيل البيانات -->
     <div class="container hidden" id="registerUI">
@@ -101,9 +134,6 @@
     <!-- 3. الشاشة الرئيسية -->
     <div class="container hidden" id="mainMenuUI">
         <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
-        
-        <!-- مكان ظهور رسالة الآدمن التحذيرية التفاعلية -->
-        <div id="userAlertContainer"></div>
 
         <h2>مركز الاستغاثة الطارئة</h2>
         <p>اضغط على الزر أدناه عند الحاجة للمساعدة العاجلة</p>
@@ -155,8 +185,8 @@
 
         <!-- إضافة رسالة تحذيرية جديدة -->
         <div style="text-align: right; margin-bottom: 12px;">
-            <label style="font-size: 12px; font-weight: bold; color: #333;">📢 نشر رسالة تحذيرية للمستخدمين:</label>
-            <textarea id="adminAlertInput" placeholder="اكتب نص التحذير هنا..."></textarea>
+            <label style="font-size: 12px; font-weight: bold; color: #333;">📢 نشر رسالة تحذيرية إجبارية:</label>
+            <textarea id="adminAlertInput" placeholder="اكتب نص التحذير هنا ليظهر مباشرة بوجه المستخدمين..."></textarea>
             <button class="btn" style="padding: 8px; font-size: 13px;" onclick="publishAlert()">نشر وتفعيل التحذير 🚀</button>
         </div>
 
@@ -182,17 +212,17 @@
     <audio id="alarmSound" src="https://www.soundjay.com/buttons/sounds/beep-07.wav" preload="auto"></audio>
 
     <script>
-        // إعدادات Firebase الخاصة بك
+        // إعدادات Firebase الخاصة بمشروعك (alaret-e8f2a)
         const firebaseConfig = {
-            apiKey: "AIzaSyD-EXAMPLE-KEY-REPLACE-IF-NEEDED",
-            authDomain: "early-warning-system.firebaseapp.com",
-            projectId: "early-warning-system",
-            storageBucket: "early-warning-system.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
+            apiKey: "AIzaSyDSKYY3MQLbCRAqQjwVHGyMTVT61Dalpb2g",
+            authDomain: "alaret-e8f2a.firebaseapp.com",
+            projectId: "alaret-e8f2a",
+            storageBucket: "alaret-e8f2a.appspot.com",
+            messagingSenderId: "735569802866",
+            appId: "1:735569802866:web:aa9935ede74a4f9a0c34eb",
+            measurementId: "G-SZR2DC21LG"
         };
         
-        // منع أخطاء التهيئة لو تم تهيئتها مسبقاً
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -220,24 +250,27 @@
             }
         }
 
-        // الاستماع الفوري للتحديثات من قاعدة بيانات فايربيس (لون الشاشة + رسائل التحذير)
         function listenToFirebaseControl() {
             db.collection("systemControl").doc("status").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
-                    
-                    // 1. التحكم بلون الشاشة بالكامل
                     applyScreenColorTheme(data.screenTheme);
 
-                    // 2. فحص وعرض الرسالة التحذيرية إن وجدت
-                    const alertContainer = document.getElementById('userAlertContainer');
+                    const modalContainer = document.getElementById('globalModalContainer');
                     if (data.activeAlert && data.activeAlert.trim() !== "") {
-                        alertContainer.innerHTML = `<div class="alert-banner">⚠️ ${data.activeAlert}</div>`;
-                        
-                        // تشغيل صوت الإنذار أولاً ثم البوت الآلي بقراءة الرسالة بالكامل
+                        modalContainer.innerHTML = `
+                            <div class="global-modal-overlay">
+                                <div class="global-modal-box">
+                                    <div class="global-modal-icon">🚨</div>
+                                    <div class="global-modal-title">تنبيه هام جداً من الإدارة</div>
+                                    <div class="global-modal-text">${data.activeAlert}</div>
+                                    <button class="global-modal-btn" onclick="dismissGlobalModal()">حسناً</button>
+                                </div>
+                            </div>
+                        `;
                         playAlertSequence(data.activeAlert);
                     } else {
-                        alertContainer.innerHTML = "";
+                        modalContainer.innerHTML = "";
                     }
                 }
             });
@@ -257,10 +290,8 @@
             }
         }
 
-        // تشغيل صوت الإنذار ثم قراءة الرسالة بالبوت الآلي بالكامل
         let hasPlayedAlertThisSession = false;
         function playAlertSequence(alertText) {
-            // لمنع تكرار نطق الصوت والإنذار مع كل تحديث بسيط إلا إذا تغيرت الرسالة
             if (hasPlayedAlertThisSession) return;
             hasPlayedAlertThisSession = true;
 
@@ -274,13 +305,18 @@
 
         function speakFullMessage(text) {
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // إيقاف أي قراءة سابقة
+                window.speechSynthesis.cancel();
                 let utterance = new SpeechSynthesisUtterance("تنبيه هام من الإدارة: " + text);
                 utterance.lang = 'ar-SA';
-                utterance.rate = 0.95; // سرعة واضحة
-                utterance.pitch = 1.0;
+                utterance.rate = 0.95;
                 window.speechSynthesis.speak(utterance);
             }
+        }
+
+        function dismissGlobalModal() {
+            // تغلق النافذة من وجه المستخدم مؤقتاً حتى يحدث الصفحة أو تأتي رسالة جديدة، لكنها تبقى نشطة في الفايربيس
+            const modalContainer = document.getElementById('globalModalContainer');
+            modalContainer.innerHTML = "";
         }
 
         function saveUserData() {
@@ -357,19 +393,18 @@
             document.getElementById('mainMenuUI').classList.remove('hidden');
         }
 
-        // مهام لوحة الآدمن المربوطة بـ Firebase
         function publishAlert() {
             const alertText = document.getElementById('adminAlertInput').value;
             if (!alertText) return alert("الرجاء كتابة نص التحذير أولاً!");
 
             db.collection("systemControl").doc("status").set({
                 activeAlert: alertText,
-                screenTheme: 'red' // تلقائياً يحولها لأحمر عند إطلاق تحذير
+                screenTheme: 'red'
             }, { merge: true }).then(() => {
-                alert("✅ تم نشر التحذير وتحديث الشاشة بنجاح لدى جميع المستخدمين!");
+                alert("✅ تم نشر التحذير الإجباري بوجه جميع المستخدمين بنجاح!");
                 document.getElementById('adminAlertInput').value = "";
             }).catch((error) => {
-                alert("❌ حدث خطأ أثناء النشر: سجل الاتصال بالإنترنت أو الفايربيس");
+                alert("❌ حدث خطأ أثناء النشر: تأكد من الاتصال بالإنترنت والفايربيس");
             });
         }
 
@@ -382,12 +417,12 @@
         }
 
         function clearActiveAlerts() {
-            if(confirm("هل أنت متأكد من حذف وإلغاء جميع التحذيرات والإنذارات النشطة؟")) {
+            if(confirm("هل أنت متأكد من حذف وإلغاء جميع التحذيرات والإنذارات النشطة نهائياً؟")) {
                 db.collection("systemControl").doc("status").set({
                     activeAlert: "",
                     screenTheme: "normal"
                 }, { merge: true }).then(() => {
-                    alert("🗑️ تم حذف وإيقاف جميع الإنذارات وإعادة الشاشة للوضع الطبيعي.");
+                    alert("🗑️ تم حذف وإيقاف جميع الإنذارات وإعادة الشاشة للوضع الطبيعي لدى الجميع.");
                 });
             }
         }
