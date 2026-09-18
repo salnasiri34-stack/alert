@@ -2,502 +2,97 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الإنذار المبكر</title>
 
-    <title>نظام الإنذار المبكر 🛡️</title>
-
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="الإنذار المبكر">
-    
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/webp" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
-    <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
-
-    <!-- OneSignal SDK -->
-    <script src="https://cdn.onesignal.com/sdk/web/v16/OneSignalSDK.page.js" defer></script>
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <!-- الكود الرسمي المحدث لـ OneSignal v16 بالمفتاح الجديد -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
+        });
+      });
+    </script>
 
     <style>
-        :root {
-            --bg-color: #f4f7f9;
-            --main-card: #ffffff;
-            --primary-blue: #0047ab;
-            --danger-red: #d0021b;
-        }
-
-        body { 
-            margin: 0; padding: 0; 
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg-color); 
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
-            min-height: 100vh; overflow-y: auto; 
-            transition: background-color 0.5s ease;
-        }
-
-        .ticker-bar { width: 100%; background: #b30000; color: white; padding: 10px 0; font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10; }
-        .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 20s linear infinite; }
-        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-
-        .container { text-align: center; width: 85%; max-width: 400px; padding: 25px 20px; background: var(--main-card); border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin: 15px 0; z-index: 2; }
-        .custom-icon { width: 60px; height: 60px; object-fit: contain; margin-bottom: 10px; }
-        h1, h2 { font-size: 19px; color: #1a1a1a; margin-bottom: 8px; font-weight: 700; }
-        p { color: #666; font-size: 13px; margin-bottom: 15px; line-height: 1.5; }
-
-        .btn { background: var(--primary-blue); color: white; border: none; padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; box-shadow: 0 4px 12px rgba(0,71,171,0.2); margin: 6px 0; }
-        .btn-sos { background: #e74c3c; font-size: 17px; animation: pulse-sos 1.5s infinite; }
-        @keyframes pulse-sos { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); } 100% { transform: scale(1); } }
-
-        .btn-medical { background: #e67e22; }
-        .btn-security { background: #2c3e50; }
-        .btn-fire { background: #c0392b; }
-        .btn-cancel { background: #95a5a6; }
-        .btn-admin { background: #34495e; font-size: 13px; padding: 8px; margin-top: 15px; }
-
-        input, textarea { width: 90%; padding: 11px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; font-size: 14px; text-align: right; box-sizing: border-box; font-family: inherit; }
-        textarea { resize: vertical; height: 80px; }
-
-        .safety-guide-card { background: #fdfefe; border: 1px solid #e1e8ed; border-right: 4px solid var(--primary-blue); padding: 10px; margin: 8px 0; text-align: right; border-radius: 6px; font-size: 12px; }
-
-        /* تصميم النافذة المنبثقة الإجبارية للتحذيرات */
-        .global-modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 99999;
-            backdrop-filter: blur(4px);
-        }
-        .global-modal-box {
-            background: #ffffff;
-            width: 85%; max-width: 380px;
-            padding: 25px 20px;
-            border-radius: 20px;
+        body {
+            font-family: Tahoma, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
             text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            animation: modalPop 0.3s ease-out;
         }
-        @keyframes modalPop {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        .card {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 100%;
         }
-        .global-modal-icon { font-size: 45px; margin-bottom: 10px; }
-        .global-modal-title { font-size: 18px; font-weight: bold; color: #d0021b; margin-bottom: 10px; }
-        .global-modal-text { font-size: 14px; color: #444; line-height: 1.6; margin-bottom: 20px; word-break: break-word; }
-        .global-modal-btn {
-            background: #0047ab; color: white; border: none; padding: 12px;
-            width: 100%; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,71,171,0.3);
+        .warning-icon {
+            font-size: 50px;
+            color: #eab308; /* أيقونة التعجب الصفراء المطلوبة */
+            margin-bottom: 15px;
         }
-
-        .hidden { display: none !important; }
-        .footer { text-align: center; color: #888; font-size: 11px; line-height: 1.5; margin: 10px 0 20px 0; }
+        h2 {
+            margin-top: 0;
+            color: #f8fafc;
+        }
+        p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
     </style>
 </head>
-<body id="pageBody" oncontextmenu="return false;">
+<body>
 
-    <div class="ticker-bar">
-        <div class="ticker-text">🚨 نظام الطوارئ الذكي وإرشادات السلامة 🛡️</div>
+    <div class="card">
+        <!-- أيقونة التعجب الصفراء -->
+        <div class="warning-icon">&#9888;</div>
+        <h2>نظام الإنذار المبكر</h2>
+        <p>الرجاء تفعيل الإشعارات لضمان ربط جهازك واستلام التنبيهات الفورية بدقة.</p>
+        
+        <button onclick="subscribeUser()">تفعيل الإشعارات الآن</button>
     </div>
-
-    <!-- الحاوية الخاصة بالنافذة المنبثقة الإجبارية للتحذيرات -->
-    <div id="globalModalContainer"></div>
-
-    <!-- 1. شاشة تسجيل البيانات -->
-    <div class="container hidden" id="registerUI">
-        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
-        <h1>تسجيل بيانات المستخدم</h1>
-        <p>يرجى إدخال بياناتك الشخصية للمتابعة (للمرة الأولى فقط):</p>
-        <input type="text" id="regName" placeholder="الاسم الكامل">
-        <input type="number" id="regAge" placeholder="العمر">
-        <input type="text" id="regNationality" placeholder="الجنسية">
-        <input type="text" id="regIdNumber" placeholder="رقم الهوية">
-        <input type="tel" id="regPhone" placeholder="رقم الجوال">
-        <input type="email" id="regEmail" placeholder="البريد الإلكتروني">
-        <button class="btn" onclick="saveUserData()">حفظ ومتابعة 🚀</button>
-    </div>
-
-    <!-- 2. شاشة تفعيل الصلاحيات -->
-    <div class="container hidden" id="permissionUI">
-        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
-        <h1>تفعيل صلاحيات الطوارئ</h1>
-        <p>يرجى تفعيل التنبيهات وموقعك الجغرافي لضمان عمل زر الاستغاثة بدقة.</p>
-        <button class="btn" onclick="requestPermissions()">سماح بالتنبيهات والموقع 🔔📍</button>
-    </div>
-
-    <!-- 3. الشاشة الرئيسية -->
-    <div class="container hidden" id="mainMenuUI">
-        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
-
-        <h2>مركز الاستغاثة الطارئة</h2>
-        <p>اضغط على الزر أدناه عند الحاجة للمساعدة العاجلة</p>
-        <button class="btn btn-sos" onclick="showEmergencyOptions()">🚨 طلب استغاثة طارئة (SOS)</button>
-
-        <hr style="border:0.5px solid #eee; margin: 20px 0;">
-
-        <h2>📘 إرشادات الطوارئ والسلامة</h2>
-        <div style="text-align: right;">
-            <div class="safety-guide-card">
-                <strong>🌧️ في حال السيول والأمطار:</strong>
-                <p style="margin:4px 0;">ابتعد عن بطون الأودية ومجاري السيول ولا تقامر بعبور الطرق المغمورة بالمياه.</p>
-            </div>
-            <div class="safety-guide-card">
-                <strong>⚡ في حال الصواعق الرعدية:</strong>
-                <p style="margin:4px 0;">احرص على البقاء داخل المباني المغلقة وافصل الأجهزة الكهربائية الحساسة.</p>
-            </div>
-            <div class="safety-guide-card">
-                <strong>🔥 في حال الحريق:</strong>
-                <p style="margin:4px 0;">اتوجه فوراً لأقرب مخرج طوارئ ولا تستخدم المصاعد الكهربائية أبداً.</p>
-            </div>
-        </div>
-
-        <button class="btn btn-admin" onclick="openAdminLogin()">🔐 لوحة تحكم الآدمن</button>
-    </div>
-
-    <!-- 4. شاشة اختيار نوع الطوارئ -->
-    <div class="container hidden" id="optionsUI">
-        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" class="custom-icon" alt="تحذير">
-        <h2>حدد نوع الحالة الطارئة</h2>
-        <p>اختر القسم المختص لسرعة الاستجابة:</p>
-        <button class="btn btn-medical" onclick="sendSOS('حالة طوارئ طبية 🏥', 'Medical Emergency 🏥')">🏥 طارئ طبي (إسعاف)</button>
-        <button class="btn btn-security" onclick="sendSOS('حالة طوارئ أمنية 🛡️', 'Security Emergency 🛡️')">🛡️ طارئ أمني (شرطة/أمن)</button>
-        <button class="btn btn-fire" onclick="sendSOS('حالة حريق / إنقاذ 🔥', 'Fire / Rescue Emergency 🔥')">🔥 حريق أو إنقاذ</button>
-        <button class="btn btn-sos" onclick="sendSOS('استغاثة طارئة عامة 🚨', 'General SOS Alert 🚨')">🚨 استغاثة عامة</button>
-        <button class="btn btn-cancel" onclick="hideEmergencyOptions()">إلغاء ❌</button>
-    </div>
-
-    <!-- 5. لوحة تحكم الآدمن -->
-    <div class="container hidden" id="adminUI">
-        <div class="custom-icon" style="font-size:45px; text-align:center;">⚙️</div>
-        <h2>لوحة تحكم الآدمن</h2>
-        <p>التحكم الشامل في النظام والإرسال:</p>
-
-        <div style="text-align: right; background: #fafafa; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px;">
-            <p><strong>حالة النظام:</strong> نشط ومرتبط بـ Firebase 🟢</p>
-            <p><strong>المستخدم المسجل:</strong> <span id="adminUserName">-</span></p>
-        </div>
-
-        <!-- إضافة رسالة تحذيرية جديدة -->
-        <div style="text-align: right; margin-bottom: 12px;">
-            <label style="font-size: 12px; font-weight: bold; color: #333;">📢 نشر رسالة تحذيرية إجبارية:</label>
-            <textarea id="adminAlertInput" placeholder="اكتب نص التحذير هنا ليظهر مباشرة بوجه المستخدمين..."></textarea>
-            <button class="btn" style="padding: 8px; font-size: 13px;" onclick="publishAlert()">نشر وتفعيل التحذير 🚀</button>
-        </div>
-
-        <!-- التحكم بلون الشاشة بالكامل -->
-        <div style="text-align: right; margin-bottom: 12px;">
-            <label style="font-size: 12px; font-weight: bold; color: #333;">🎨 التحكم بلون الشاشة العامة:</label>
-            <div style="display: flex; gap: 5px; margin-top: 5px;">
-                <button class="btn" style="background: #e74c3c; margin:0; font-size:12px;" onclick="setScreenColor('red')">أحمر بالكامل 🚨</button>
-                <button class="btn" style="background: #27ae60; margin:0; font-size:12px;" onclick="setScreenColor('green')">أخضر بالكامل 🟢</button>
-                <button class="btn" style="background: #7f8c8d; margin:0; font-size:12px;" onclick="setScreenColor('normal')">الوضع الافتراضي ⚪</button>
-            </div>
-        </div>
-
-        <!-- حذف وإدارة الإنذارات -->
-        <button class="btn" style="background:#c0392b; font-size: 13px;" onclick="clearActiveAlerts()">🗑️ حذف وإلغاء الإنذارات الحالية</button>
-        <button class="btn btn-cancel" onclick="closeAdminPanel()">رجوع للقائمة الرئيسية ↩️</button>
-    </div>
-
-    <div class="footer">
-        جميع الحقوق محفوظة &copy; 2026 — sulaiman alnasiri
-    </div>
-
-    <audio id="alarmSound" src="https://www.soundjay.com/buttons/sounds/beep-07.wav" preload="auto"></audio>
 
     <script>
-        // إعدادات Firebase الخاصة بمشروعك (alaret-e8f2a)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDSKYY3MQLbCRAqQjwVHGyMTVT61Dalpb2g",
-            authDomain: "alaret-e8f2a.firebaseapp.com",
-            projectId: "alaret-e8f2a",
-            storageBucket: "alaret-e8f2a.appspot.com",
-            messagingSenderId: "735569802866",
-            appId: "1:735569802866:web:aa9935ede74a4f9a0c34eb",
-            measurementId: "G-SZR2DC21LG"
-        };
-        
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
-
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        window.OneSignalDeferred.push(async function(OneSignal) {
-            await OneSignal.init({
-                appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
-                safari_web_id: "web.onesignal.auto.064f7b60-c650-4841-8608-202958428587",
-            });
-        });
-
-        window.onload = function() {
-            const isRegistered = localStorage.getItem("userRegistered");
-            const notifAllowed = localStorage.getItem("notifAllowed");
-
-            if (!isRegistered) {
-                document.getElementById('registerUI').classList.remove('hidden');
-            } else if (notifAllowed !== "true") {
-                document.getElementById('permissionUI').classList.remove('hidden');
-            } else {
-                document.getElementById('mainMenuUI').classList.remove('hidden');
-                listenToFirebaseControl();
-            }
-        }
-
-        function listenToFirebaseControl() {
-            db.collection("systemControl").doc("status").onSnapshot((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    applyScreenColorTheme(data.screenTheme);
-
-                    const modalContainer = document.getElementById('globalModalContainer');
-                    if (data.activeAlert && data.activeAlert.trim() !== "") {
-                        modalContainer.innerHTML = `
-                            <div class="global-modal-overlay">
-                                <div class="global-modal-box">
-                                    <div class="global-modal-icon">🚨</div>
-                                    <div class="global-modal-title">تنبيه هام جداً من الإدارة</div>
-                                    <div class="global-modal-text">${data.activeAlert}</div>
-                                    <button class="global-modal-btn" onclick="dismissGlobalModal()">حسناً</button>
-                                </div>
-                            </div>
-                        `;
-                        playAlertSequence(data.activeAlert);
-                    } else {
-                        modalContainer.innerHTML = "";
-                    }
-                }
-            });
-        }
-
-        function applyScreenColorTheme(theme) {
-            const body = document.getElementById('pageBody');
-            if (theme === 'red') {
-                body.style.backgroundColor = '#ffcccc';
-                document.documentElement.style.setProperty('--bg-color', '#ffcccc');
-            } else if (theme === 'green') {
-                body.style.backgroundColor = '#d4edda';
-                document.documentElement.style.setProperty('--bg-color', '#d4edda');
-            } else {
-                body.style.backgroundColor = '#f4f7f9';
-                document.documentElement.style.setProperty('--bg-color', '#f4f7f9');
-            }
-        }
-
-        let hasPlayedAlertThisSession = false;
-        function playAlertSequence(alertText) {
-            if (hasPlayedAlertThisSession) return;
-            hasPlayedAlertThisSession = true;
-
-            const audio = document.getElementById('alarmSound');
-            audio.play().catch(e => console.log("Audio play blocked"));
-
-            audio.onended = function() {
-                speakFullMessage(alertText);
-            };
-        }
-
-        function speakFullMessage(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                let utterance = new SpeechSynthesisUtterance("تنبيه هام من الإدارة: " + text);
-                utterance.lang = 'ar-SA';
-                utterance.rate = 0.95;
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        function dismissGlobalModal() {
-            // تغلق النافذة من وجه المستخدم مؤقتاً حتى يحدث الصفحة أو تأتي رسالة جديدة، لكنها تبقى نشطة في الفايربيس
-            const modalContainer = document.getElementById('globalModalContainer');
-            modalContainer.innerHTML = "";
-        }
-
-        function saveUserData() {
-            const name = document.getElementById('regName').value;
-            const age = document.getElementById('regAge').value;
-            const nationality = document.getElementById('regNationality').value;
-            const idNumber = document.getElementById('regIdNumber').value;
-            const phone = document.getElementById('regPhone').value;
-            const email = document.getElementById('regEmail').value;
-
-            if(!name || !age || !nationality || !idNumber || !phone) {
-                return alert("⚠️ الرجاء تعبئة الحقول الأساسية على الأقل!");
-            }
-
-            localStorage.setItem("userRegistered", "true");
-            localStorage.setItem("userName", name);
-            localStorage.setItem("userAge", age);
-            localStorage.setItem("userNationality", nationality);
-            localStorage.setItem("userIdNumber", idNumber);
-            localStorage.setItem("userPhone", phone);
-            localStorage.setItem("userEmail", email || "غير متوفر");
-
-            document.getElementById('registerUI').classList.add('hidden');
-            document.getElementById('permissionUI').classList.remove('hidden');
-        }
-
-        function requestPermissions() { 
+        function subscribeUser() {
             window.OneSignalDeferred.push(async function(OneSignal) {
                 try {
-                    await OneSignal.Notifications.requestPermission();
-                } catch(e) {
-                    console.log("OneSignal permission error:", e);
+                    await OneSignal.Slidedown.promptPush();
+                } catch (e) {
+                    console.error("خطأ في الطلب:", e);
                 }
             });
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    localStorage.setItem("userLat", position.coords.latitude);
-                    localStorage.setItem("userLng", position.coords.longitude);
-                }, (error) => {
-                    console.log("Geolocation error:", error);
-                }, { timeout: 10000 });
-            }
-
-            localStorage.setItem("notifAllowed", "true");
-            document.getElementById('permissionUI').classList.add('hidden');
-            document.getElementById('mainMenuUI').classList.remove('hidden');
-            listenToFirebaseControl();
-        }
-
-        function showEmergencyOptions() {
-            document.getElementById('mainMenuUI').classList.add('hidden');
-            document.getElementById('optionsUI').classList.remove('hidden');
-        }
-
-        function hideEmergencyOptions() {
-            document.getElementById('optionsUI').classList.add('hidden');
-            document.getElementById('mainMenuUI').classList.remove('hidden');
-        }
-
-        function openAdminLogin() {
-            let pass = prompt("الرجاء إدخال كلمة مرور الآدمن:");
-            if (pass === "13121312") {
-                document.getElementById('adminUserName').innerText = localStorage.getItem("userName") || "مشرف النظام";
-                document.getElementById('mainMenuUI').classList.add('hidden');
-                document.getElementById('adminUI').classList.remove('hidden');
-            } else if (pass !== null) {
-                alert("❌ كلمة المرور غير صحيحة!");
-            }
-        }
-
-        function closeAdminPanel() {
-            document.getElementById('adminUI').classList.add('hidden');
-            document.getElementById('mainMenuUI').classList.remove('hidden');
-        }
-
-        function publishAlert() {
-            const alertText = document.getElementById('adminAlertInput').value;
-            if (!alertText) return alert("الرجاء كتابة نص التحذير أولاً!");
-
-            db.collection("systemControl").doc("status").set({
-                activeAlert: alertText,
-                screenTheme: 'red'
-            }, { merge: true }).then(() => {
-                alert("✅ تم نشر التحذير الإجباري بوجه جميع المستخدمين بنجاح!");
-                document.getElementById('adminAlertInput').value = "";
-            }).catch((error) => {
-                alert("❌ حدث خطأ أثناء النشر: تأكد من الاتصال بالإنترنت والفايربيس");
-            });
-        }
-
-        function setScreenColor(theme) {
-            db.collection("systemControl").doc("status").set({
-                screenTheme: theme
-            }, { merge: true }).then(() => {
-                alert("🎨 تم تحديث لون الشاشة العامة بنجاح!");
-            });
-        }
-
-        function clearActiveAlerts() {
-            if(confirm("هل أنت متأكد من حذف وإلغاء جميع التحذيرات والإنذارات النشطة نهائياً؟")) {
-                db.collection("systemControl").doc("status").set({
-                    activeAlert: "",
-                    screenTheme: "normal"
-                }, { merge: true }).then(() => {
-                    alert("🗑️ تم حذف وإيقاف جميع الإنذارات وإعادة الشاشة للوضع الطبيعي لدى الجميع.");
-                });
-            }
-        }
-
-        function sendSOS(typeAr, typeEn) {
-            hideEmergencyOptions();
-
-            const audio = document.getElementById('alarmSound');
-            audio.play().catch(e => console.log("Audio play blocked"));
-
-            audio.onended = function() {
-                speakWarning(typeAr);
-            };
-
-            setTimeout(() => {
-                executeWhatsAppSend(typeAr, typeEn);
-            }, 3000);
-        }
-
-        function speakWarning(text) {
-            if ('speechSynthesis' in window) {
-                let utterance = new SpeechSynthesisUtterance("تنبيه طارئ! تم إطلاق إشارة استغاثة. Emergency alert! SOS activated.");
-                utterance.lang = 'ar-SA';
-                utterance.rate = 1.0;
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        function executeWhatsAppSend(typeAr, typeEn) {
-            let lat = localStorage.getItem("userLat") || "24.4672";
-            let lng = localStorage.getItem("userLng") || "39.6142";
-            const timeNow = new Date().toLocaleTimeString('ar-SA');
-            
-            const name = localStorage.getItem("userName") || "مستخدم";
-            const age = localStorage.getItem("userAge") || "-";
-            const nationality = localStorage.getItem("userNationality") || "-";
-            const idNumber = localStorage.getItem("userIdNumber") || "-";
-            const phone = localStorage.getItem("userPhone") || "-";
-            const email = localStorage.getItem("userEmail") || "-";
-            
-            let userAgent = navigator.userAgent;
-            let deviceTypeEn = "Unknown", deviceTypeAr = "غير معروف";
-            if (/iphone/i.test(userAgent)) { deviceTypeEn = "iPhone"; deviceTypeAr = "أيفون (iPhone)"; }
-            else if (/android/i.test(userAgent)) { deviceTypeEn = "Android"; deviceTypeAr = "أندرويد (Android)"; }
-            else if (/ipad/i.test(userAgent)) { deviceTypeEn = "iPad"; deviceTypeAr = "آيباد (iPad)"; }
-            else if (/windows/i.test(userAgent)) { deviceTypeEn = "Windows PC"; deviceTypeAr = "كمبيوتر ويندوز (Windows)"; }
-
-            const myPhoneNumber = "966500919401"; 
-
-            const message = `🚨 *${typeAr}* 🚨%0A` +
-                          `👤 *الاسم:* ${name}%0A` +
-                          `🎂 *العمر:* ${age} | 🌍 *الجنسية:* ${nationality}%0A` +
-                          `🪪 *رقم الهوية:* ${idNumber}%0A` +
-                          `📞 *الجوال:* ${phone}%0A` +
-                          `📧 *الإيميل:* ${email}%0A` +
-                          `📱 *الجهاز:* ${deviceTypeAr}%0A` +
-                          `⏰ *الوقت:* ${timeNow}%0A` +
-                          `🔢 *الإحداثيات:* ${lat}, ${lng}%0A` +
-                          `📍 *رابط الموقع:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
-                          `⚠️ *أحتاج إلى المساعدة الفورية!*%0A%0A` +
-                          `-----------------------------------%0A` +
-                          `🚨 *${typeEn}* 🚨%0A` +
-                          `👤 *Name:* ${name}%0A` +
-                          `🎂 *Age:* ${age} | 🌍 *Nationality:* ${nationality}%0A` +
-                          `🪪 *ID:* ${idNumber}%0A` +
-                          `📞 *Phone:* ${phone}%0A` +
-                          `📧 *Email:* ${email}%0A` +
-                          `📱 *Device:* ${deviceTypeEn}%0A` +
-                          `⏰ *Time:* ${timeNow}%0A` +
-                          `🔢 *Coordinates:* ${lat}, ${lng}%0A` +
-                          `📍 *Location Link:*%0Ahttps://maps.google.com/?q=${lat},${lng}%0A` +
-                          `⚠️ *I need immediate assistance!*`;
-
-            window.open(`https://wa.me/${myPhoneNumber}?text=${message}`, '_blank');
         }
     </script>
+
+    <footer style="position: fixed; bottom: 10px; width: 100%; text-align: center; font-size: 12px; color: #64748b;">
+        Rights Reserved &copy; sulaiman alnasiri
+    </footer>
 </body>
 </html>
