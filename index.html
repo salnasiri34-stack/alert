@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الانذار المبكر ⚠️ - لوحة العمليات</title>
 
-    <!-- الأيقونة الرئيسية (مثلث تحذير أصفر مدمج Base64 SVG) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><polygon points='256,32 496,480 16,480' fill='%23FFCC00' stroke='%23000000' stroke-width='32' stroke-linejoin='round'/><path d='M256,160 v140 m0,60 v30' fill='none' stroke='%23000000' stroke-width='36' stroke-linecap='round'/></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><polygon points='256,32 496,480 16,480' fill='%23FFCC00' stroke='%23000000' stroke-width='32' stroke-linejoin='round'/><path d='M256,160 v140 m0,60 v30' fill='none' stroke='%23000000' stroke-width='36' stroke-linecap='round'/></svg>">
+    <!-- الأيقونة الرئيسية المحدثة والمثبتة للآيفون والمتصفحات -->
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/96/attention.png">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/attention.png">
 
     <!-- OneSignal v16 SDK للإشعارات -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -416,10 +416,8 @@
                 
                 <div class="ksa-map-container">
                     <p style="font-size: 11px; color: #64748b; margin: 0 0 5px 0;">خريطة المملكة التفاعلية (تلوين المنطقة المحددة فقط):</p>
-                    <!-- رسم تخطيطي مبسط لخريطة مناطق المملكة العربية السعودية -->
                     <svg class="ksa-svg" viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
                         <rect width="400" height="350" fill="#f8fafc" rx="8"/>
-                        <!-- الحدود الوهمية لمناطق المملكة -->
                         <!-- 1. منطقة المدينة المنورة -->
                         <path id="map_madinah" class="region-shape" d="M120,130 L160,120 L170,160 L130,170 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
                         <text x="145" y="150" font-size="9" fill="#0f172a" font-weight="bold">المدينة</text>
@@ -436,11 +434,11 @@
                         <path id="map_sharqiyah" class="region-shape" d="M250,110 L320,95 L345,210 L260,205 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
                         <text x="290" y="155" font-size="9" fill="#0f172a" font-weight="bold">الشرقية</text>
 
-                        <!-- 5. المنطقة الشمالية / تبوك وجسد الشمال -->
+                        <!-- 5. المنطقة الشمالية / تبوك -->
                         <path id="map_north" class="region-shape" d="M90,70 L220,50 L235,120 L110,120 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
                         <text x="150" y="90" font-size="9" fill="#0f172a" font-weight="bold">الشمالية / تبوك</text>
 
-                        <!-- 6. المنطقة الجنوبية / عسير وجازان -->
+                        <!-- 6. المنطقة الجنوبية -->
                         <path id="map_south" class="region-shape" d="M125,225 L210,220 L200,280 L140,270 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
                         <text x="160" y="250" font-size="9" fill="#0f172a" font-weight="bold">الجنوبية</text>
                     </svg>
@@ -592,7 +590,6 @@
             }
         }
 
-        // اكتشاف نوع الهاتف/الجهاز للاحتياط
         function detectDeviceType() {
             const ua = navigator.userAgent;
             if (/android/i.test(ua)) return "Android Phone";
@@ -634,7 +631,6 @@
 
             currentUser = { name, email, phone, device };
 
-            // حفظ بيانات المستخدم في قاعدة بيانات فايربيس في مجموعة 'users' لتتمكن من استعراضها من لوحة الأدمن
             try {
                 if(window.db) {
                     const userDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
@@ -736,7 +732,6 @@
             window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, '_blank');
         }
 
-        // تحديث خريطة المدن المناخية في شاشة المستخدمين بناءً على إعدادات الأدمن
         function updateClimateMapUI(data) {
             const statusDisplay = document.getElementById("climateStatusDisplay");
             const regionNames = {
@@ -754,7 +749,6 @@
 
             statusDisplay.innerHTML = `📍 <b>المنطقة النشطة:</b> ${regionNames[regionKey]} <br> ⚠️ <b>الحالة المناخية:</b> ${climateType} (تصنيف الإنذار: <span style="text-transform:uppercase; font-weight:bold;">${colorCode}</span>)`;
 
-            // إعادة تعيين جميع مناطق الخريطة إلى اللون الرمادي الافتراضي
             const allRegions = ['map_madinah', 'map_makkah', 'map_riyadh', 'map_sharqiyah', 'map_north', 'map_south'];
             allRegions.forEach(id => {
                 const el = document.getElementById(id);
@@ -763,11 +757,10 @@
                 }
             });
 
-            // تلوين المنطقة المحددة فقط باللون الذي اختاره الأدمن
             const targetElementId = "map_" + regionKey;
             const targetElement = document.getElementById(targetElementId);
             if(targetElement) {
-                let hexColor = "#facc15"; // أصفر افتراضي
+                let hexColor = "#facc15";
                 if (colorCode === "orange") hexColor = "#fb923c";
                 else if (colorCode === "red") hexColor = "#ef4444";
                 else if (colorCode === "green") hexColor = "#22c55e";
@@ -776,7 +769,6 @@
             }
         }
 
-        // حفظ إعدادات خريطة المدن من لوحة الأدمن
         async function saveClimateMapSettings() {
             const region = document.getElementById("climateRegionSelect").value;
             const color = document.getElementById("climateColorSelect").value;
@@ -798,7 +790,6 @@
             }
         }
 
-        // تحميل وعرض قائمة المستخدمين المسجلين في لوحة الأدمن
         async function loadRegisteredUsersList() {
             const container = document.getElementById("usersListContainer");
             container.innerHTML = "<p style='font-size:12px; color:#1d4ed8;'>جاري جلب البيانات من السيرفر...</p>";
@@ -850,7 +841,6 @@
             }
         }
 
-        // تحويل الأدمن مباشرة إلى Gmail مع إيميل الشخص ورسالته المخصصة والصورة
         function sendCustomGmailMessage() {
             const recipientEmail = document.getElementById("targetEmailInput").value.trim();
             const messageBody = document.getElementById("adminCustomEmailText").value.trim();
