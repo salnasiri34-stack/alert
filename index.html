@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الإنذار المبكر</title>
+    <title>نظام الإنذار المبكر - لوحة العمليات</title>
 
-    <!-- الكود الرسمي المحدث لـ OneSignal v16 بالمفتاح الجديد -->
+    <!-- OneSignal v16 SDK -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -16,6 +16,34 @@
       });
     </script>
 
+    <!-- Firebase SDK (v9 Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // إعدادات فايربيس (استبدلها بالمعلومات الخاصة بمشروعك إذا لزم الأمر)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-Your-Firebase-ApiKey-Here",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456:web:abcdef"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // جعل الدوال متاحة عالمياً في الصفحة
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.serverTimestamp = serverTimestamp;
+    </script>
+
     <style>
         body {
             font-family: Tahoma, sans-serif;
@@ -24,22 +52,24 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .card {
             background: #1e293b;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            max-width: 480px;
             width: 100%;
+            text-align: center;
         }
         .warning-icon {
             font-size: 50px;
             color: #eab308; /* أيقونة التعجب الصفراء المطلوبة */
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         h2 {
             margin-top: 0;
@@ -50,21 +80,58 @@
             font-size: 14px;
             line-height: 1.6;
         }
+        .input-group {
+            margin-bottom: 15px;
+            text-align: right;
+        }
+        label {
+            display: block;
+            font-size: 13px;
+            color: #cbd5e1;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
         button {
             background: #2563eb;
             color: white;
             border: none;
             padding: 12px 20px;
-            font-size: 16px;
+            font-size: 15px;
             border-radius: 8px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 10px;
             width: 100%;
             font-weight: bold;
             transition: background 0.2s;
         }
         button:hover {
             background: #1d4ed8;
+        }
+        .emergency-btn {
+            background: #dc2626 !important;
+        }
+        .emergency-btn:hover {
+            background: #b91c1c !important;
+        }
+        .hidden {
+            display: none;
+        }
+        .section-box {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #334155;
+            text-align: right;
         }
     </style>
 </head>
@@ -74,20 +141,107 @@
         <!-- أيقونة التعجب الصفراء -->
         <div class="warning-icon">&#9888;</div>
         <h2>نظام الإنذار المبكر</h2>
-        <p>الرجاء تفعيل الإشعارات لضمان ربط جهازك واستلام التنبيهات الفورية بدقة.</p>
-        
-        <button onclick="subscribeUser()">تفعيل الإشعارات الآن</button>
+
+        <!-- خطوة 1: تسجيل الدخول برقم الهوية -->
+        <div id="loginSection">
+            <p>الرجاء تسجيل الدخول برقم الهوية للوصول إلى النظام وإشعارات الطوارئ.</p>
+            <div class="input-group">
+                <label>رقم الهوية الوطنية:</label>
+                <input type="text" id="nationalId" placeholder="أدخل رقم الهوية هنا..." />
+            </div>
+            <button onclick="handleLogin()">دخول النظام</button>
+        </div>
+
+        <!-- خطوة 2: لوحة التحكم والعمليات الرئيسية -->
+        <div id="dashboardSection" class="hidden">
+            <p id="welcomeMsg" style="color: #38bdf8; font-weight: bold;"></p>
+            
+            <div class="section-box">
+                <label>تفعيل إشعارات OneSignal:</label>
+                <button onclick="subscribeUser()">اشتراك في الإشعارات الفورية</button>
+            </div>
+
+            <div class="section-box">
+                <label style="color: #ef4444; font-weight: bold;">منطقة الطوارئ القصوى:</label>
+                <p style="font-size: 12px; color: #94a3b8;">في حال وجود حالة طارئة، اضغط للتحويل الفوري وإرسال البلاغ عبر واتساب:</p>
+                <button class="emergency-btn" onclick="triggerEmergencyWhatsApp()">🚨 إرسال بلاغ طوارئ عبر WhatsApp</button>
+            </div>
+
+            <!-- لوحة تحكم الإدارة (خاصة بالمسؤول) -->
+            <div id="adminPanel" class="section-box hidden" style="border-color: #eab308;">
+                <label style="color: #eab308; font-weight: bold;">👑 لوحة التحكم الإدارية (Admin)</label>
+                <div class="input-group" style="margin-top: 10px;">
+                    <label>نشر تنبيه عاجل للموقع:</label>
+                    <input type="text" id="alertText" placeholder="اكتب نص الإنذار..." />
+                </div>
+                <button style="background: #eab308; color: #0f172a;" onclick="publishAlert()">نشر الإنذار في قاعدة البيانات</button>
+            </div>
+        </div>
     </div>
 
     <script>
+        // دالة تسجيل الدخول والتحقق من الهوية
+        function handleLogin() {
+            const idInput = document.getElementById("nationalId").value.trim();
+            if (idInput.length < 5) {
+                alert("الرجاء إدخال رقم هوية صحيح وموثق!");
+                return;
+            }
+
+            // إخفاء خانة الدخول وإظهار لوحة التحكم
+            document.getElementById("loginSection").classList.add("hidden");
+            document.getElementById("dashboardSection").classList.remove("hidden");
+            document.getElementById("welcomeMsg").innerText = `مرحباً بك، تم التحقق من الهوية: ${idInput}`;
+
+            // صلاحيات المشرف (إذا كان رقم هويته هو حساب الآدمي الرئيسي مثلاً، أو فتحه للتحكم)
+            if (idInput === "1234567890" || idInput.startsWith("9")) { // استبدلها برقم هويتك الخاص للإشراف
+                document.getElementById("adminPanel").classList.remove("hidden");
+            }
+        }
+
+        // دالة تفعيل اشتراك OneSignal
         function subscribeUser() {
             window.OneSignalDeferred.push(async function(OneSignal) {
                 try {
                     await OneSignal.Slidedown.promptPush();
+                    alert("تم طلب تفعيل الإشعارات بنجاح!");
                 } catch (e) {
-                    console.error("خطأ في الطلب:", e);
+                    console.error("خطأ في الاشتراك:", e);
                 }
             });
+        }
+
+        // نظام الطوارئ والتحويل التلقائي لـ WhatsApp
+        function triggerEmergencyWhatsApp() {
+            const phoneNumber = "966500000000"; // حط رقم جوال الطوارئ هنا مع مفتاح الدولة
+            const message = "🚨 تنبيه طارئ وعاجل من نظام الإنذار المبكر! أطلب التدخل الفوري والمساعدة.";
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // دالة نشر التنبيهات وحفظها في فايربيس (للآدمي/المشرف)
+        async function publishAlert() {
+            const alertText = document.getElementById("alertText").value.trim();
+            if (!alertText) {
+                alert("الرجاء كتابة نص التنبيه أولاً!");
+                return;
+            }
+
+            try {
+                if (window.db) {
+                    await window.addDoc(window.collection(window.db, "alerts"), {
+                        text: alertText,
+                        timestamp: window.serverTimestamp()
+                    });
+                    alert("تم نشر الإنذار وحفظه في قاعدة البيانات (Firebase) بنجاح!");
+                    document.getElementById("alertText").value = "";
+                } else {
+                    alert("قاعدة البيانات لم تهيأ بعد، تأكد من الاتصال.");
+                }
+            } catch (e) {
+                console.error("خطأ أثناء الحفظ:", e);
+                alert("حدث خطأ أثناء حفظ التنبيه في قاعدة البيانات.");
+            }
         }
     </script>
 
