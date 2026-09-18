@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الانذار المبكر ⚠️ - لوحة العمليات</title>
+    <title>الانذار المبكر ⚠️</title>
 
     <!-- الأيقونة الرئيسية المحدثة والمثبتة للآيفون والمتصفحات -->
     <link rel="icon" type="image/png" href="https://img.icons8.com/color/96/attention.png">
@@ -720,7 +720,7 @@
                 ? `📍 *الموقع الدقيق (خرائط جوجل):*\n${locationInfo}` 
                 : `📍 *حالة الموقع:* ${locationInfo}`;
 
-            const message = `🚨 *تنبيه طارئ وعاجل من نظام الانذار المبكر ⚠️* 🚨\n\n` +
+            const message = `🚨 *تنبيه طارئ وعاجل من الانذار المبكر ⚠️* 🚨\n\n` +
                             `👤 *اسم المستخدم:* ${currentUser.name}\n` +
                             `📧 *البريد الإلكتروني:* ${currentUser.email}\n` +
                             `📱 *رقم الجوال:* ${currentUser.phone}\n` +
@@ -850,7 +850,7 @@
                 return;
             }
 
-            const subject = encodeURIComponent("تنبيه عاجل من نظام الإنذار المبكر الوطني");
+            const subject = encodeURIComponent("تنبيه عاجل من الانذار المبكر ⚠️");
             let bodyText = messageBody;
             if(base64ImageString) {
                 bodyText += "\n\n[تم إرفاق صورة مع هذا البلاغ في لوحة العمليات]";
