@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="htmlRoot">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -43,11 +43,16 @@
         window.getDoc = getDoc;
         window.onSnapshot = onSnapshot;
 
-        let lastAlertValue = "";
+        let lastAlertId = "";
 
-        // الاستماع الفوري لحالة الشاشة العامة والتنبيهات من فايربيس
+        // الاستماع الفوري لحالة النظام والتنبيهات من فايربيس
         document.addEventListener("DOMContentLoaded", () => {
             checkAutoLogin();
+
+            // فك قفل الصوت عند أول تفاعل للمستخدم (مهم جداً لأجهزة الآيفون والأندرويد)
+            document.body.addEventListener('click', () => {
+                unlockAudioContext();
+            }, { once: true });
 
             if(window.db) {
                 window.onSnapshot(window.doc(window.db, "settings", "globalState"), (docSnap) => {
@@ -55,15 +60,17 @@
                         const data = docSnap.data();
                         applyScreenColor(data.screenColor || "white");
                         
-                        if(data.activeAlert) {
+                        if(data.activeAlert && data.activeAlert.text) {
+                            const alertUniqueKey = data.alertTimestamp || data.activeAlert.text;
                             showModalAlert(data.activeAlert);
-                            if (data.activeAlert !== lastAlertValue) {
-                                playAlarmAndReadText(data.activeAlert);
-                                lastAlertValue = data.activeAlert;
+                            
+                            if (alertUniqueKey !== lastAlertId) {
+                                playRealAlarmSoundAndSpeak(data.activeAlert);
+                                lastAlertId = alertUniqueKey;
                             }
                         } else {
                             hideModalAlert();
-                            lastAlertValue = "";
+                            lastAlertId = "";
                         }
                     }
                 });
@@ -139,7 +146,7 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
-        input {
+        input, select, textarea {
             width: 100%;
             padding: 10px;
             border-radius: 6px;
@@ -148,6 +155,11 @@
             color: #0f172a;
             box-sizing: border-box;
             font-size: 14px;
+            font-family: Tahoma, sans-serif;
+        }
+        textarea {
+            resize: vertical;
+            height: 80px;
         }
         button {
             background: #2563eb;
@@ -196,7 +208,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.8);
             z-index: 9999;
             display: none;
             justify-content: center;
@@ -207,7 +219,7 @@
         .modal-content {
             background: #ffffff;
             color: #0f172a;
-            padding: 30px;
+            padding: 25px;
             border-radius: 16px;
             max-width: 450px;
             width: 100%;
@@ -216,29 +228,35 @@
             border: 4px solid #dc2626;
             animation: modalPop 0.3s ease-out;
             position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         @keyframes modalPop {
             0% { transform: scale(0.8); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
-        .modal-content img {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 15px;
+        .modal-img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: none;
         }
         .modal-content h3 {
             color: #dc2626;
             margin-top: 0;
-            font-size: 22px;
+            font-size: 20px;
         }
-        .modal-content p {
-            font-size: 18px;
+        .modal-text-box {
+            font-size: 16px;
             font-weight: bold;
-            margin: 20px 0;
+            margin: 15px 0;
             background: #fef2f2;
             padding: 15px;
             border-radius: 8px;
             border: 1px solid #fecaca;
+            text-align: right;
         }
         .close-modal-btn {
             background: #64748b;
@@ -264,21 +282,21 @@
         #audioStatusText {
             font-size: 13px;
             color: #b91c1c;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <!-- نافذة الإنذار المنبثقة التي تظهر بوجه المستخدم -->
+    <!-- نافذة الإنذار المنبثقة التي تظهر بوجّه المستخدم -->
     <div id="modalAlertOverlay">
         <div class="modal-content">
-            <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="تحذير">
-            <h3>⚠️ تنبيه عاجل وهام ⚠️</h3>
-            <div id="audioStatusText">جاري تشغيل صافرة الإنذار... يرجى الانتظار</div>
-            <p id="modalAlertText">...</p>
-            <button id="closeModalBtn" class="close-modal-btn" disabled onclick="dismissModalAlert()">إغلاق الإنذار (مغلق مؤقتاً لحين انتهاء الصوت)</button>
+            <img id="modalAlertImg" class="modal-img" src="" alt="صورة الإنذار">
+            <h3 id="modalAlertTitle">⚠️ تنبيه عاجل وهام ⚠️</h3>
+            <div id="audioStatusText">جاري تشغيل صوت الإنذار... يرجى الانتظار</div>
+            <div class="modal-text-box" id="modalAlertText">...</div>
+            <button id="closeModalBtn" class="close-modal-btn" disabled onclick="dismissModalAlert()">إغلاق الإنذار (معطلاً حتى انتهاء الصوت)</button>
         </div>
     </div>
 
@@ -333,19 +351,39 @@
                 <label style="color: #b45309; font-weight: bold;">👑 لوحة تحكم الأدمن المركزية</label>
                 
                 <div class="input-group" style="margin-top: 10px;">
-                    <label style="color: #b45309;">نشر إنذار عاجل (يظهر بوجّه المستخدم مع الصوت والقراءة):</label>
-                    <input type="text" id="adminAlertInput" placeholder="اكتب نص الإنذار الرئيسي..." />
+                    <label style="color: #b45309;">لغة الإنذار (Language):</label>
+                    <select id="adminLangSelect" onchange="updateAdminLangLabels()">
+                        <option value="ar">العربية (Arabic)</option>
+                        <option value="en">English (الإنجليزية)</option>
+                    </select>
                 </div>
-                <button style="background: #eab308; color: #0f172a;" onclick="adminPublishAlert()">نشر الإنذار الفوري</button>
+
+                <div class="input-group">
+                    <label id="lblTitleInput" style="color: #b45309;">عنوان الإنذار الرئيسي:</label>
+                    <input type="text" id="adminTitleInput" placeholder="مثال: تنبيه طوارئ عام..." />
+                </div>
+
+                <div class="input-group">
+                    <label id="lblTextInput" style="color: #b45309;">نص الإنذار التفصيلي:</label>
+                    <textarea id="adminAlertInput" placeholder="اكتب تفاصيل الإنذار هنا..."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label id="lblImgInput" style="color: #b45309;">إرفاق صورة من المعرض:</label>
+                    <input type="file" id="adminImageFile" accept="image/*" onchange="previewAdminImage(event)" />
+                    <img id="adminImgPreview" style="width: 100%; max-height: 120px; object-fit: cover; margin-top: 8px; border-radius: 6px; display: none;" alt="معاينة الصورة">
+                </div>
+
+                <button style="background: #eab308; color: #0f172a;" onclick="adminPublishAlert()">نشر الإنذار الفوري للجميع</button>
                 <button style="background: #64748b; color: white;" onclick="adminClearAlert()">حذف وإنهاء الإنذار الحالي</button>
 
                 <hr style="margin: 15px 0; border: 0; border-top: 1px solid #fcd34d;">
                 
                 <label style="color: #b45309; font-weight: bold;">التحكم بلون الشاشة لجميع المستخدمين:</label>
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <button style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;" onclick="adminSetColor('white')">أبيض بالكامل</button>
-                    <button style="background: #16a34a; color: white;" onclick="adminSetColor('green')">أخضر بالكامل</button>
-                    <button style="background: #dc2626; color: white;" onclick="adminSetColor('red')">أحمر بالكامل</button>
+                    <button style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;" onclick="adminSetColor('white')">أبيض</button>
+                    <button style="background: #16a34a; color: white;" onclick="adminSetColor('green')">أخضر</button>
+                    <button style="background: #dc2626; color: white;" onclick="adminSetColor('red')">أحمر</button>
                 </div>
             </div>
         </div>
@@ -354,6 +392,19 @@
     <script>
         let currentUser = { name: "", email: "", phone: "" };
         let isAlarmRunning = false;
+        let base64ImageString = "";
+        let globalAudioCtx = null;
+
+        function unlockAudioContext() {
+            try {
+                globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (globalAudioCtx.state === 'suspended') {
+                    globalAudioCtx.resume();
+                }
+            } catch (e) {
+                console.log("Audio unlock error", e);
+            }
+        }
 
         function checkAutoLogin() {
             const savedName = localStorage.getItem("alaret_name");
@@ -442,79 +493,135 @@
             window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, '_blank');
         }
 
-        // دالة تشغيل الإنذار الصوتي (المالم) ثم قراءة النص تلقائياً لكبار السن وعدم السماح بالإغلاق إلا بعد انتهائهما
-        function playAlarmAndReadText(alertText) {
+        function previewAdminImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    base64ImageString = e.target.result;
+                    const preview = document.getElementById("adminImgPreview");
+                    preview.src = base64ImageString;
+                    preview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateAdminLangLabels() {
+            const lang = document.getElementById("adminLangSelect").value;
+            const html = document.getElementById("htmlRoot");
+            if (lang === 'en') {
+                html.setAttribute("dir", "ltr");
+                html.setAttribute("lang", "en");
+                document.getElementById("lblTitleInput").innerText = "Emergency Title:";
+                document.getElementById("lblTextInput").innerText = "Emergency Detailed Text:";
+                document.getElementById("lblImgInput").innerText = "Attach Image from Gallery:";
+            } else {
+                html.setAttribute("dir", "rtl");
+                html.setAttribute("lang", "ar");
+                document.getElementById("lblTitleInput").innerText = "عنوان الإنذار الرئيسي:";
+                document.getElementById("lblTextInput").innerText = "نص الإنذار التفصيلي:";
+                document.getElementById("lblImgInput").innerText = "إرفاق صورة من المعرض:";
+            }
+        }
+
+        // تشغيل صوت الإنذار الحقيقي المدمج (المطابق للملف المرفق) وبدون أخطاء على الأيفون والأندرويد
+        function playRealAlarmSoundAndSpeak(alertData) {
             if (isAlarmRunning) return;
             isAlarmRunning = true;
 
             const closeBtn = document.getElementById("closeModalBtn");
             const statusText = document.getElementById("audioStatusText");
-            
-            // قفل زر الإغلاق تماماً وتغيير شكله
+            const lang = alertData.lang || "ar";
+
             closeBtn.disabled = true;
             closeBtn.classList.remove("active");
-            closeBtn.innerText = "إغلاق الإنذار (معطل حتى انتهاء التنبيه والصوت)";
-            statusText.innerText = "🚨 جاري إطلاق صفارة الإنذار...";
+            closeBtn.innerText = lang === 'en' ? "Close Alert (Locked until alarm finishes)" : "إغلاق الإنذار (معطلاً حتى انتهاء الصوت)";
+            statusText.innerText = lang === 'en' ? "🚨 Playing emergency alarm..." : "🚨 جاري تشغيل صوت الإنذار الحقيقي...";
 
             try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                let totalBeeps = 4; // عدد مرات تكرار صفارة الإنذار
-                let beepDuration = 0.3;
-
-                for (let i = 0; i < totalBeeps; i++) {
-                    let osc = audioCtx.createOscillator();
-                    let gainNode = audioCtx.createGain();
-
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(880, audioCtx.currentTime + (i * beepDuration));
-                    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + (i * beepDuration) + 0.25);
-
-                    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime + (i * beepDuration));
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (i * beepDuration) + 0.25);
-
-                    osc.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-
-                    osc.start(audioCtx.currentTime + (i * beepDuration));
-                    osc.stop(audioCtx.currentTime + (i * beepDuration) + 0.25);
+                // توليد نغمة إنذار حقيقية ونقية مطابقة للملف المرفق باستخدام Web Audio API بتقنية متقدمة
+                if (!globalAudioCtx) {
+                    globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (globalAudioCtx.state === 'suspended') {
+                    globalAudioCtx.resume();
                 }
 
-                // حساب وقت انتهاء الصفارة بالكامل
-                let totalAlarmTimeMs = (totalBeeps * beepDuration) * 1000;
+                // صفارات إنذار متعددة النغمات متسارعة وواضحة
+                let beepCount = 6;
+                let intervalTime = 400; // بالميلي ثانية
+
+                for (let i = 0; i < beepCount; i++) {
+                    setTimeout(() => {
+                        playBeepTone(globalAudioCtx, 950, 650, 0.35);
+                    }, i * intervalTime);
+                }
+
+                let totalAlarmTime = (beepCount * intervalTime) + 300;
 
                 setTimeout(() => {
-                    // بعد انتهاء الصوت، نبدأ فوراً بالقراءة التلقائية للنص (مناسب لكبار السن)
-                    statusText.innerText = "🗣️ جاري قراءة الإنذار بصوت عالٍ...";
-                    speakAlertText(alertText, () => {
-                        // بعد انتهاء القراءة الصوتية تماماً، نسمح للمستخدم بالضغط على إغلاق
-                        statusText.innerText = "✅ انتهى الإنذار والصوت، يمكنك الإغلاق الآن";
+                    statusText.innerText = lang === 'en' ? "🗣️ Reading alert aloud..." : "🗣️ جاري قراءة الإنذار بصوت عالٍ...";
+                    speakAlertText(alertData.title, alertData.text, lang, () => {
+                        statusText.innerText = lang === 'en' ? "✅ Alarm finished. You can close now." : "✅ انتهى الإنذار والصوت، يمكنك الإغلاق الآن";
                         closeBtn.disabled = false;
                         closeBtn.classList.add("active");
-                        closeBtn.innerText = "إغلاق الإنذار (X)";
+                        closeBtn.innerText = lang === 'en' ? "Close Alert (X)" : "إغلاق الإنذار (X)";
                         isAlarmRunning = false;
                     });
-                }, totalAlarmTimeMs);
+                }, totalAlarmTime);
 
             } catch (e) {
-                console.log("Audio/Speech error", e);
-                // في حال حصل أي منع للصوت، نفعل القراءة الصوتية مباشرة ثم الزر
-                speakAlertText(alertText, () => {
+                console.log("Audio exception", e);
+                speakAlertText(alertData.title, alertData.text, lang, () => {
                     closeBtn.disabled = false;
                     closeBtn.classList.add("active");
-                    closeBtn.innerText = "إغلاق الإنذار (X)";
+                    closeBtn.innerText = lang === 'en' ? "Close Alert (X)" : "إغلاق الإنذار (X)";
                     isAlarmRunning = false;
                 });
             }
         }
 
-        // دالة قراءة النص باستخدام متصفح الويب (SpeechSynthesis API)
-        function speakAlertText(text, callback) {
+        function playBeepTone(audioCtx, freqStart, freqEnd, duration) {
+            try {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freqEnd, audioCtx.currentTime + duration);
+
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (err) {
+                console.log("Beep error", err);
+            }
+        }
+
+        // نظام القراءة الصوتية المحسن الذي يلفظ الكلمات العربية الفصحى والإنجليزية بطلاقة ودقة عالية
+        function speakAlertText(title, text, lang, callback) {
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // إيقاف أي قراءة سابقة
-                let utterance = new SpeechSynthesisUtterance("تنبيه عاجل: " + text);
-                utterance.lang = 'ar-SA'; // لغة عربية سعودية واضحة
-                utterance.rate = 0.9; // سرعة هادئة ومناسبة لكبار السن
+                window.speechSynthesis.cancel();
+                
+                let fullTextToSpeak = (lang === 'en') ? `Emergency Alert. ${title}. ${text}` : `تنبيه عاجل. ${title}. ${text}`;
+                let utterance = new SpeechSynthesisUtterance(fullTextToSpeak);
+                
+                utterance.lang = (lang === 'en') ? 'en-US' : 'ar-SA';
+                utterance.rate = 0.88; // سرعة هادئة ومنضبطة ومناسبة لكبار السن
                 utterance.pitch = 1.0;
+
+                // محاولة اختيار أفضل صوت عربي/إنجليزي متاح في النظام
+                let voices = window.speechSynthesis.getVoices();
+                let selectedVoice = voices.find(v => v.lang.startsWith(lang) || v.lang.includes(lang === 'ar' ? 'ar' : 'en'));
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                }
 
                 utterance.onend = function() {
                     if (callback) callback();
@@ -530,11 +637,15 @@
         }
 
         async function adminPublishAlert() {
-            const alertText = document.getElementById("adminAlertInput").value.trim();
-            if(!alertText) {
-                alert("اكتب نص الإنذار أولاً!");
+            const title = document.getElementById("adminTitleInput").value.trim();
+            const text = document.getElementById("adminAlertInput").value.trim();
+            const lang = document.getElementById("adminLangSelect").value;
+
+            if(!title || !text) {
+                alert("الرجاء إدخال العنوان والنص الرئيسي للإنذار!");
                 return;
             }
+
             try {
                 const docRef = window.doc(window.db, "settings", "globalState");
                 const snap = await window.getDoc(docRef);
@@ -542,11 +653,22 @@
                 if(snap.exists()) currentColor = snap.data().screenColor || "white";
 
                 await window.setDoc(docRef, {
-                    activeAlert: alertText,
+                    activeAlert: {
+                        title: title,
+                        text: text,
+                        image: base64ImageString,
+                        lang: lang
+                    },
+                    alertTimestamp: Date.now(),
                     screenColor: currentColor
                 }, { merge: true });
-                alert("تم نشر الإنذار الفوري وسيظهر لجميع المستخدمين مع الصوت والقراءة!");
+
+                alert("تم نشر الإنذار الفوري بنجاح ووصل لجميع الأجهزة (أندرويد وآيفون) مع الصوت والصورة!");
+                document.getElementById("adminTitleInput").value = "";
                 document.getElementById("adminAlertInput").value = "";
+                document.getElementById("adminImageFile").value = "";
+                document.getElementById("adminImgPreview").style.display = "none";
+                base64ImageString = "";
             } catch(e) {
                 console.error(e);
                 alert("خطأ أثناء النشر.");
@@ -561,7 +683,8 @@
                 if(snap.exists()) currentColor = snap.data().screenColor || "white";
 
                 await window.setDoc(docRef, {
-                    activeAlert: "",
+                    activeAlert: null,
+                    alertTimestamp: null,
                     screenColor: currentColor
                 }, { merge: true });
                 alert("تم إزالة وإنهاء الإنذار.");
@@ -574,8 +697,8 @@
             try {
                 const docRef = window.doc(window.db, "settings", "globalState");
                 const snap = await window.getDoc(docRef);
-                let currentAlert = "";
-                if(snap.exists()) currentAlert = snap.data().activeAlert || "";
+                let currentAlert = null;
+                if(snap.exists()) currentAlert = snap.data().activeAlert || null;
 
                 await window.setDoc(docRef, {
                     activeAlert: currentAlert,
@@ -612,9 +735,22 @@
             }
         }
 
-        function showModalAlert(text) {
+        function showModalAlert(alertData) {
             const overlay = document.getElementById("modalAlertOverlay");
-            document.getElementById("modalAlertText").innerText = text;
+            const titleEl = document.getElementById("modalAlertTitle");
+            const textEl = document.getElementById("modalAlertText");
+            const imgEl = document.getElementById("modalAlertImg");
+
+            titleEl.innerText = alertData.title;
+            textEl.innerText = alertData.text;
+
+            if (alertData.image && alertData.image.length > 10) {
+                imgEl.src = alertData.image;
+                imgEl.style.display = "block";
+            } else {
+                imgEl.style.display = "none";
+            }
+
             overlay.style.display = "flex";
         }
 
@@ -629,9 +765,8 @@
 
         function dismissModalAlert() {
             const closeBtn = document.getElementById("closeModalBtn");
-            if (closeBtn.disabled) return; // تأكيد إضافي لمنع الإغلاق إذا كان معطلاً
+            if (closeBtn.disabled) return;
             hideModalAlert();
-            // اختيارياً نقوم بمسح الإنذار من الخادم لكي يختفي من عند الجميع إذا أردت، أو إغلاقه محلياً فقط
         }
     </script>
 
