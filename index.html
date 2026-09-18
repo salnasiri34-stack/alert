@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام الإنذار المبكر - لوحة العمليات</title>
 
+    <!-- شعار الشاشة الرئيسية: علامة التعجب الصفراء المصممة خصيصاً -->
+    <link rel="apple-touch-icon" href="https://placehold.co/512x512/0f172a/eab308/png?text=%E2%9A%88&font=roboto">
+    <link rel="icon" type="image/png" href="https://placehold.co/512x512/0f172a/eab308/png?text=%E2%9A%88&font=roboto">
+
     <!-- OneSignal v16 SDK -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -21,7 +25,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // إعدادات فايربيس (استبدلها بالمعلومات الخاصة بمشروعك إذا لزم الأمر)
+        // إعدادات فايربيس
         const firebaseConfig = {
             apiKey: "AIzaSyD-Your-Firebase-ApiKey-Here",
             authDomain: "your-project.firebaseapp.com",
@@ -34,7 +38,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // جعل الدوال متاحة عالمياً في الصفحة
         window.db = db;
         window.collection = collection;
         window.addDoc = addDoc;
@@ -68,7 +71,7 @@
         }
         .warning-icon {
             font-size: 50px;
-            color: #eab308; /* أيقونة التعجب الصفراء المطلوبة */
+            color: #eab308; /* علامة التعجب الصفراء الأصلية داخل الموقع */
             margin-bottom: 10px;
         }
         h2 {
@@ -138,7 +141,7 @@
 <body>
 
     <div class="card">
-        <!-- أيقونة التعجب الصفراء -->
+        <!-- علامة التعجب الصفراء الأصلية -->
         <div class="warning-icon">&#9888;</div>
         <h2>نظام الإنذار المبكر</h2>
 
@@ -167,7 +170,7 @@
                 <button class="emergency-btn" onclick="triggerEmergencyWhatsApp()">🚨 إرسال بلاغ طوارئ عبر WhatsApp</button>
             </div>
 
-            <!-- لوحة تحكم الإدارة (خاصة بالمسؤول) -->
+            <!-- لوحة تحكم الإدارة -->
             <div id="adminPanel" class="section-box hidden" style="border-color: #eab308;">
                 <label style="color: #eab308; font-weight: bold;">👑 لوحة التحكم الإدارية (Admin)</label>
                 <div class="input-group" style="margin-top: 10px;">
@@ -180,7 +183,6 @@
     </div>
 
     <script>
-        // دالة تسجيل الدخول والتحقق من الهوية
         function handleLogin() {
             const idInput = document.getElementById("nationalId").value.trim();
             if (idInput.length < 5) {
@@ -188,18 +190,15 @@
                 return;
             }
 
-            // إخفاء خانة الدخول وإظهار لوحة التحكم
             document.getElementById("loginSection").classList.add("hidden");
             document.getElementById("dashboardSection").classList.remove("hidden");
             document.getElementById("welcomeMsg").innerText = `مرحباً بك، تم التحقق من الهوية: ${idInput}`;
 
-            // صلاحيات المشرف (إذا كان رقم هويته هو حساب الآدمي الرئيسي مثلاً، أو فتحه للتحكم)
-            if (idInput === "1234567890" || idInput.startsWith("9")) { // استبدلها برقم هويتك الخاص للإشراف
+            if (idInput === "1234567890" || idInput.startsWith("9")) {
                 document.getElementById("adminPanel").classList.remove("hidden");
             }
         }
 
-        // دالة تفعيل اشتراك OneSignal
         function subscribeUser() {
             window.OneSignalDeferred.push(async function(OneSignal) {
                 try {
@@ -211,15 +210,13 @@
             });
         }
 
-        // نظام الطوارئ والتحويل التلقائي لـ WhatsApp
         function triggerEmergencyWhatsApp() {
-            const phoneNumber = "966500000000"; // حط رقم جوال الطوارئ هنا مع مفتاح الدولة
+            const phoneNumber = "966500000000"; 
             const message = "🚨 تنبيه طارئ وعاجل من نظام الإنذار المبكر! أطلب التدخل الفوري والمساعدة.";
             const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
 
-        // دالة نشر التنبيهات وحفظها في فايربيس (للآدمي/المشرف)
         async function publishAlert() {
             const alertText = document.getElementById("alertText").value.trim();
             if (!alertText) {
@@ -240,7 +237,7 @@
                 }
             } catch (e) {
                 console.error("خطأ أثناء الحفظ:", e);
-                alert("حدث خطأ أثناء حفظ التنبيه في قاعدة البيانات.");
+                alert("حدث خطأ أثناء حفظ التنبيه.");
             }
         }
     </script>
