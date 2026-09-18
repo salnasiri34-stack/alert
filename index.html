@@ -5,20 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الانذار المبكر ⚠️</title>
 
-    <!-- أيقونة التطبيق (الشعار الأحمر القديم) -->
+    <!-- شعار التطبيق الأحمر الكلاسيكي -->
     <link rel="icon" type="image/png" href="https://img.icons8.com/color/96/attention.png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/attention.png">
-
-    <!-- OneSignal SDK للتنبيهات الفورية -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      window.OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "ضع_معرف_أب_ون_سيغنال_هنا",
-        });
-      });
-    </script>
 
     <style>
         :root {
@@ -73,35 +62,6 @@
             border-radius: 3px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             object-fit: cover;
-        }
-
-        /* نافذة طلب الإشعارات عند الدخول فقط */
-        #welcomeModal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .welcome-box {
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            width: 85%;
-            max-width: 350px;
-            border: 1px solid #333;
-        }
-
-        .welcome-box h3 {
-            color: var(--accent-yellow);
-            margin-top: 0;
         }
 
         /* المحتوى والصفحات */
@@ -196,7 +156,7 @@
             font-weight: bold;
         }
 
-        /* منطقة الخريطة التفصيلية المماثلة للصورة */
+        /* منطقة الخريطة التفصيلية */
         .map-container {
             position: relative;
             background: #090d16;
@@ -227,13 +187,12 @@
             stroke-width: 1.5;
         }
 
-        /* حالات الإنذار للمناطق بشكل منفصل */
         .status-safe { fill: #27ae60; }
         .status-yellow { fill: #f1c40f; }
         .status-orange { fill: #e67e22; }
         .status-red { fill: #e74c3c; }
 
-        /* نافذة المعلومات الفورية (Popup) مع زر إغلاق (X) */
+        /* نافذة المعلومات الفورية مع زر إغلاق (X) */
         .alert-popup {
             position: absolute;
             bottom: 10px;
@@ -346,15 +305,6 @@
 </head>
 <body>
 
-    <!-- نافذة طلب الإشعارات عند الدخول للمرة الأولى فقط -->
-    <div id="welcomeModal">
-        <div class="welcome-box">
-            <h3>تنبيهات الإنذار المبكر</h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">هل ترغب في تفعيل الإشعارات الفورية لحالة الطقس والإنذارات الخطرة؟</p>
-            <button class="action-btn" onclick="closeWelcomeModal()" style="margin-top: 15px;">تفعيل والمتابعة</button>
-        </div>
-    </div>
-
     <header>
         <!-- علم السعودية المصغر -->
         <img class="saudi-flag" src="https://upload.wikimedia.org/wikipedia/commons/4/43/Flag_of_Saudi_Arabia.svg" alt="علم السعودية">
@@ -365,7 +315,7 @@
     <div id="page-home" class="page-content active">
         <div class="home-card">
             <h2>مرحباً بك في نظام الإنذار المبكر</h2>
-            <p style="color: var(--text-secondary); font-size: 0.85rem;">متوافق مع رؤية السعودية 2030 - متابعة فورية لحالات الطقس والإنذارات لكل مدينة.</p>
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">متابعة فورية لحالات الطقس والإنذارات لكل مدينة.</p>
             <button class="action-btn" onclick="triggerEmergencyAlert()">إرسال إنذار تجريبي فوري</button>
         </div>
 
@@ -379,7 +329,7 @@
         </div>
     </div>
 
-    <!-- صفحة الإنذار المبكر (الخريطة المماثلة للصورة مع تفصيل كل مدينة) -->
+    <!-- صفحة الإنذار المبكر -->
     <div id="page-alerts" class="page-content">
         <div class="view-switcher">
             <button class="switch-btn">قائمة الإنذارات</button>
@@ -387,23 +337,16 @@
         </div>
 
         <div class="map-container">
-            <!-- خريطة SVG تفصيلية مقسمة لمدن ومناطق المملكة بشكل دقيق -->
             <svg class="svg-map" viewBox="0 0 500 500">
-                <!-- منطقة المدينة المنورة -->
-                <path id="medina" class="region status-yellow" d="M180,180 L220,175 L230,210 L190,215 Z" onclick="showAlert('المدينة المنورة', 'إنذار مبكر: نشاط في الرياح السطحية وعوالق ترابية تؤدي إلى تدني الرؤية.')"></path>
-                <!-- منطقة مكة المكرمة -->
-                <path id="makkah" class="region status-orange" d="M160,225 L200,220 L210,265 L170,270 Z" onclick="showAlert('مكة المكرمة', 'تنبيه متقدم: أمطار متوسطة إلى غزيرة ورياح نشطة على المشاعر المقدسة.')"></path>
-                <!-- منطقة الرياض -->
+                <path id="medina" class="region status-yellow" d="M180,180 L220,175 L230,210 L190,215 Z" onclick="showAlert('المدينة المنورة', 'إنذار مبكر: نشاط في الرياح السطحية وعوالق ترابية.')"></path>
+                <path id="makkah" class="region status-orange" d="M160,225 L200,220 L210,265 L170,270 Z" onclick="showAlert('مكة المكرمة', 'تنبيه متقدم: أمطار متوسطة إلى غزيرة ورياح نشطة.')"></path>
                 <path id="riyadh" class="region status-yellow" d="M240,200 L290,195 L310,245 L250,250 Z" onclick="showAlert('الرياض', 'تنبيه: ارتفاع درجات الحرارة مع نشاط للأتربة المثارة.')"></path>
-                <!-- المنطقة الشرقية -->
                 <path id="sharqiyah" class="region status-safe" d="M320,170 L390,180 L370,270 L310,250 Z" onclick="showAlert('المنطقة الشرقية', 'الحالة استقرار جوي، لا توجد تنبيهات خطرة حالياً.')"></path>
-                <!-- منطقة عسير -->
-                <path id="aseer" class="region status-red" d="M165,280 L195,275 L190,320 L155,310 Z" onclick="showAlert('عسير (حالة طارئة)', 'إنذار أحمر: أمطار غزيرة جداً وسيول، يرجى توخي الحذر الشديد.')"></path>
-                <!-- المنطقة الشمالية -->
+                <path id="aseer" class="region status-red" d="M165,280 L195,275 L190,320 L155,310 Z" onclick="showAlert('عسير (حالة طارئة)', 'إنذار أحمر: أمطار غزيرة جداً وسيول.')"></path>
                 <path id="north" class="region status-yellow" d="M140,110 L250,90 L270,165 L160,170 Z" onclick="showAlert('المنطقة الشمالية', 'تنبيه: سحب رعدية ممطرة ونشاط رياح سطحية.')"></path>
             </svg>
 
-            <!-- نافذة منبثقة تفاعلية مع زر إغلاق (X) -->
+            <!-- نافذة منبثقة مع زر إغلاق (X) -->
             <div id="alertPopup" class="alert-popup">
                 <button class="close-popup" onclick="closePopup()">✕</button>
                 <h3 id="popupTitle">اسم المنطقة</h3>
@@ -416,7 +359,6 @@
     <div id="page-users" class="page-content">
         <div class="home-card">
             <h2>إدارة المستخدمين المسجلين</h2>
-            <p style="color: var(--text-secondary); font-size: 0.8rem;">هنا تظهر المعلومات الكاملة لكل من قام بالتسجيل أو التفاعل مع الموقع:</p>
             <table class="users-table">
                 <thead>
                     <tr>
@@ -426,9 +368,9 @@
                         <th>الحالة</th>
                     </tr>
                 </thead>
-                <tbody id="usersTableBody">
+                <tbody>
                     <tr>
-                        <td>سلومي (تجريبي)</td>
+                        <td>سلومي (مسؤول)</td>
                         <td>المدينة المنورة</td>
                         <td>الآن</td>
                         <td style="color: var(--accent-green);">متصل</td>
@@ -438,18 +380,16 @@
         </div>
     </div>
 
-    <!-- صفحات إضافية للتنقل -->
     <div id="page-maps" class="page-content">
-        <div class="home-card"><h2>الخرائط العامة</h2><p style="color: var(--text-secondary);">خرائط التضاريس والطقس المباشرة...</p></div>
+        <div class="home-card"><h2>الخرائط العامة</h2></div>
     </div>
     <div id="page-radar" class="page-content">
-        <div class="home-card"><h2>رادار الطقس الحي</h2><p style="color: var(--text-secondary);">تتبع حركة السحب والأمطار رادارياً.</p></div>
+        <div class="home-card"><h2>رادار الطقس الحي</h2></div>
     </div>
     <div id="page-settings" class="page-content">
         <div class="home-card">
-            <h2>المستخدمون والإعدادات</h2>
-            <p style="color: var(--text-secondary);">إدارة إعدادات النظام ولوحة التحكم الخاصة بك.</p>
-            <button class="action-btn" onclick="switchPage('users', 'لوحة المستخدمين', document.querySelectorAll('.nav-item')[4])">عرض سجل المستخدمين الكامل</button>
+            <h2>الإعدادات</h2>
+            <button class="action-btn" onclick="switchPage('users', 'لوحة المستخدمين', document.querySelectorAll('.nav-item')[4])">عرض سجل المستخدمين</button>
         </div>
     </div>
 
@@ -483,34 +423,26 @@
     </footer>
 
     <script>
-        // رقم الواتساب المباشر المطلوب
         const targetPhoneNumber = "966500919401";
 
-        // إغلاق نافذة الترحيب عند الدخول الأولى
-        function closeWelcomeModal() {
-            document.getElementById('welcomeModal').style.display = 'none';
-        }
-
-        // إعداد الموقع الجغرافي الدقيق ورابط الواتساب التلقائي
         window.onload = function() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
-                    updateWhatsAppMessage(lat, lon, mapLink, "النظام مستقر - بيانات تسجيل الدخول الافتراضية");
+                    updateWhatsAppMessage(lat, lon, mapLink, "النظام مستقر");
                 }, function(error) {
-                    updateWhatsAppMessage(24.4672, 39.6142, "غير متاح (تم استخدام المدينة المنورة افتراضياً)", "تنبيه عام");
+                    updateWhatsAppMessage(24.4672, 39.6142, "المدينة المنورة", "تنبيه عام");
                 });
             }
         };
 
         function updateWhatsAppMessage(lat, lon, mapLink, details) {
-            const msg = `مرحباً، هذه معلومات التسجيل ونظام الإنذار المبكر:\n- التفاصيل: ${details}\n- الإحداثيات الدقيقة: خط عرض ${lat}, خط طول ${lon}\n- الموقع على الخريطة: ${mapLink}`;
+            const msg = `مرحباً، هذه معلومات التسجيل والإنذار المبكر:\n- التفاصيل: ${details}\n- الإحداثيات: ${lat}, ${lon}\n- الموقع: ${mapLink}`;
             document.getElementById('whatsappDirectBtn').href = `https://wa.me/${targetPhoneNumber}?text=${encodeURIComponent(msg)}`;
         }
 
-        // التنقل بين الصفحات
         function switchPage(pageId, titleText, btnElement) {
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
@@ -521,32 +453,21 @@
             document.getElementById('headerTitle').innerText = titleText;
         }
 
-        // عرض تنبيهات المناطق بشكل منفصل ودقيق
         function showAlert(regionName, description) {
             const popup = document.getElementById('alertPopup');
             document.getElementById('popupTitle').innerText = "منطقة: " + regionName;
             document.getElementById('popupDesc').innerText = description;
             popup.classList.add('active');
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
-                    const customMsg = `تنبيه منطقة [${regionName}]:\n- الوصف: ${description}\n- الإحداثيات: ${lat}, ${lon}\n- الرابط: ${mapLink}`;
-                    document.getElementById('whatsappDirectBtn').href = `https://wa.me/${targetPhoneNumber}?text=${encodeURIComponent(customMsg)}`;
-                });
-            }
         }
 
-        // دالة إغلاق النافذة المنبثقة للإنذار بواسطة زر الإغلاق (X)
         function closePopup() {
             document.getElementById('alertPopup').classList.remove('active');
         }
 
         function triggerEmergencyAlert() {
-            alert("تم إرسال إشعار الإنذار الفوري بنجاح إلى النظام والمستخدمين!");
+            alert("تم إرسال إشعار الإنذار الفوري بنجاح!");
         }
     </script>
 </body>
-</html>
+    </html>
+    
