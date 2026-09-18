@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الإنذار المبكر - لوحة العمليات</title>
+    <title>الانذار المبكر ⚠️ - لوحة العمليات</title>
 
     <!-- شعار الشاشة الرئيسية والأيقونة المخصصة -->
     <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
@@ -15,7 +15,7 @@
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
-          appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da", // استبدل بـ AppId الخاص بك في OneSignal إذا أردت
+          appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
         });
       });
     </script>
@@ -43,19 +43,27 @@
         window.getDoc = getDoc;
         window.onSnapshot = onSnapshot;
 
-        // الاستماع الفوري لحالة الشاشة العامة (اللون والتنبيهات) من فايربيس لكل المستخدمين
+        let lastAlertValue = "";
+
+        // الاستماع الفوري لحالة الشاشة العامة والتنبيهات من فايربيس
         document.addEventListener("DOMContentLoaded", () => {
-            checkAutoLogin(); // التحقق هل المستخدم مسجل من قبل
+            checkAutoLogin();
 
             if(window.db) {
                 window.onSnapshot(window.doc(window.db, "settings", "globalState"), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         applyScreenColor(data.screenColor || "white");
+                        
                         if(data.activeAlert) {
-                            showGlobalAlertBanner(data.activeAlert);
+                            showModalAlert(data.activeAlert);
+                            if (data.activeAlert !== lastAlertValue) {
+                                playAlarmAndReadText(data.activeAlert);
+                                lastAlertValue = data.activeAlert;
+                            }
                         } else {
-                            hideGlobalAlertBanner();
+                            hideModalAlert();
+                            lastAlertValue = "";
                         }
                     }
                 });
@@ -66,7 +74,7 @@
     <style>
         body {
             font-family: Tahoma, sans-serif;
-            background: #f8fafc; /* خلفية بيضاء افتراضية للشاشة الرئيسية */
+            background: #f8fafc;
             color: #0f172a;
             display: flex;
             flex-direction: column;
@@ -180,41 +188,98 @@
             border: 1px solid #e2e8f0;
             text-align: right;
         }
-        /* بانر الإنذار العاجل العلوي */
-        #globalAlertBanner {
+
+        /* نافذة الإنذار المنبثقة بمنتصف الشاشة (Modal Overlay) */
+        #modalAlertOverlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            background: #dc2626;
-            color: white;
-            padding: 12px 20px;
-            text-align: center;
-            font-weight: bold;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
             z-index: 9999;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
             box-sizing: border-box;
         }
-        #globalAlertBanner button {
-            background: transparent;
-            border: 1px solid white;
+        .modal-content {
+            background: #ffffff;
+            color: #0f172a;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 4px solid #dc2626;
+            animation: modalPop 0.3s ease-out;
+            position: relative;
+        }
+        @keyframes modalPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-content img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+        }
+        .modal-content h3 {
+            color: #dc2626;
+            margin-top: 0;
+            font-size: 22px;
+        }
+        .modal-content p {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            background: #fef2f2;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+        }
+        .close-modal-btn {
+            background: #64748b;
             color: white;
-            padding: 2px 8px;
-            margin-right: 15px;
-            border-radius: 4px;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: not-allowed;
+            opacity: 0.6;
+            transition: all 0.3s;
+        }
+        .close-modal-btn.active {
+            background: #dc2626;
             cursor: pointer;
-            width: auto;
-            font-size: 12px;
+            opacity: 1;
+        }
+        .close-modal-btn.active:hover {
+            background: #b91c1c;
+        }
+        #audioStatusText {
+            font-size: 13px;
+            color: #b91c1c;
+            margin-bottom: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <!-- بانر الإنذار العام من الأدمن مع زر إغلاق X -->
-    <div id="globalAlertBanner">
-        <span id="alertBannerText">تنبيه عاجل: ...</span>
-        <button onclick="dismissGlobalAlert()">إغلاق (X)</button>
+    <!-- نافذة الإنذار المنبثقة التي تظهر بوجه المستخدم -->
+    <div id="modalAlertOverlay">
+        <div class="modal-content">
+            <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="تحذير">
+            <h3>⚠️ تنبيه عاجل وهام ⚠️</h3>
+            <div id="audioStatusText">جاري تشغيل صافرة الإنذار... يرجى الانتظار</div>
+            <p id="modalAlertText">...</p>
+            <button id="closeModalBtn" class="close-modal-btn" disabled onclick="dismissModalAlert()">إغلاق الإنذار (مغلق مؤقتاً لحين انتهاء الصوت)</button>
+        </div>
     </div>
 
     <!-- زر الأدمن في الأعلى -->
@@ -223,11 +288,10 @@
     </div>
 
     <div class="card">
-        <!-- الصورة المخصصة للتحذير -->
         <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="تحذير" class="warning-img">
-        <h2>نظام الإنذار المبكر</h2>
+        <h2>الانذار المبكر ⚠️</h2>
 
-        <!-- خطوة 1: تسجيل الدخول (يظهر فقط في المرة الأولى) -->
+        <!-- تسجيل الدخول للمرة الأولى فقط -->
         <div id="loginSection">
             <p style="color: #64748b;">الرجاء إدخال بياناتك الشخصية للوصول إلى النظام وإرسال بلاغات الطوارئ بدقة (ستتم مطالبتك بهذه البيانات لمرة واحدة فقط).</p>
             <div class="input-group">
@@ -245,7 +309,7 @@
             <button onclick="handleLogin()">دخول النظام وحفظ البيانات</button>
         </div>
 
-        <!-- خطوة 2: لوحة العمليات الرئيسية -->
+        <!-- لوحة العمليات الرئيسية -->
         <div id="dashboardSection" class="hidden">
             <p id="welcomeMsg" style="color: #0284c7; font-weight: bold;"></p>
             
@@ -258,23 +322,22 @@
 
             <div class="section-box">
                 <label style="color: #dc2626; font-weight: bold;">منطقة الطوارئ القصوى:</label>
-                <p style="font-size: 12px; color: #475569;">بالضغط أدناه سيتم تحويلك فوراً إلى الواتساب مع إرسال كافة بياناتك الشخصية وموقعك:</p>
+                <p style="font-size: 12px; color: #475569;">بالضغط أدناه سيتم تحويلك فوراً إلى الواتساب مع إرسال كافة بياناتك وموقعك:</p>
                 <button class="emergency-btn" onclick="triggerEmergencyWhatsApp()">🚨 إرسال بلاغ طوارئ عبر WhatsApp</button>
             </div>
 
-            <!-- زر تسجيل الخروج لتغيير البيانات لو لزم الأمر -->
             <button style="background: #64748b; font-size: 12px; padding: 6px; margin-top: 15px;" onclick="logoutUser()">إعادة تعيين وتسجيل الخروج</button>
 
-            <!-- لوحة تحكم الأدمن (تظهر بعد إدخال رمز 13121312) -->
+            <!-- لوحة تحكم الأدمن -->
             <div id="adminPanel" class="section-box hidden" style="border-color: #eab308; background: #fffbeb; color: #0f172a;">
                 <label style="color: #b45309; font-weight: bold;">👑 لوحة تحكم الأدمن المركزية</label>
                 
                 <div class="input-group" style="margin-top: 10px;">
-                    <label style="color: #b45309;">نشر إنذار عاجل لجميع المستخدمين:</label>
+                    <label style="color: #b45309;">نشر إنذار عاجل (يظهر بوجّه المستخدم مع الصوت والقراءة):</label>
                     <input type="text" id="adminAlertInput" placeholder="اكتب نص الإنذار الرئيسي..." />
                 </div>
-                <button style="background: #eab308; color: #0f172a;" onclick="adminPublishAlert()">نشر الإنذار على الشاشة الرئيسية</button>
-                <button style="background: #64748b; color: white;" onclick="adminClearAlert()">حذف الإنذار الحالي</button>
+                <button style="background: #eab308; color: #0f172a;" onclick="adminPublishAlert()">نشر الإنذار الفوري</button>
+                <button style="background: #64748b; color: white;" onclick="adminClearAlert()">حذف وإنهاء الإنذار الحالي</button>
 
                 <hr style="margin: 15px 0; border: 0; border-top: 1px solid #fcd34d;">
                 
@@ -290,8 +353,8 @@
 
     <script>
         let currentUser = { name: "", email: "", phone: "" };
+        let isAlarmRunning = false;
 
-        // التحقق من وجود بيانات مخزنة مسبقاً (تسجيل الدخول للمرة الأولى فقط)
         function checkAutoLogin() {
             const savedName = localStorage.getItem("alaret_name");
             const savedEmail = localStorage.getItem("alaret_email");
@@ -311,11 +374,10 @@
             const phone = document.getElementById("userPhone").value.trim();
 
             if (!name || !email || !phone) {
-                alert("الرجاء تعبئة جميع الحقول (الاسم، البريد، ورقم الجوال) للمتابعة!");
+                alert("الرجاء تعبئة جميع الحقول للمتابعة!");
                 return;
             }
 
-            // حفظ البيانات في localStorage لكي لا يطلبها الموقع مرة أخرى
             localStorage.setItem("alaret_name", name);
             localStorage.setItem("alaret_email", email);
             localStorage.setItem("alaret_phone", phone);
@@ -334,25 +396,19 @@
             location.reload();
         }
 
-        // طلب إذن السماح بالإشعارات
         function requestNotificationPermission() {
             window.OneSignalDeferred.push(async function(OneSignal) {
                 try {
                     await OneSignal.Slidedown.promptPush();
-                    alert("تم إرسال طلب السماح بالإشعارات. يرجى الموافقة من متصفحك.");
+                    alert("تم إرسال طلب السماح بالإشعارات.");
                 } catch (e) {
-                    console.error("خطأ في تفعيل الإشعارات:", e);
-                    // الطريقة الاحتياطية لطلب السماح عبر متصفح الجوال
                     if (Notification && Notification.permission !== "granted") {
                         Notification.requestPermission().then(permission => {
-                            if (permission === "granted") {
-                                alert("تم تفعيل الإشعارات بنجاح!");
-                            } else {
-                                alert("تم رفض إذن الإشعارات من المتصفح.");
-                            }
+                            if (permission === "granted") alert("تم تفعيل الإشعارات بنجاح!");
+                            else alert("تم رفض إذن الإشعارات.");
                         });
                     } else {
-                        alert("الإشعارات مفعلة مسبقاً أو غير مدعومة بهذا الإصدار.");
+                        alert("الإشعارات مفعلة مسبقاً.");
                     }
                 }
             });
@@ -363,32 +419,116 @@
             if (pass === "13121312") {
                 document.getElementById("dashboardSection").classList.remove("hidden");
                 document.getElementById("adminPanel").classList.remove("hidden");
-                alert("تم التحقق بنجاح! أهلاً بك في لوحة تحكم الأدمن.");
+                alert("تم الدخول للوحة الأدمن بنجاح.");
             } else if (pass !== null) {
                 alert("رمز الدخول غير صحيح!");
             }
         }
 
-        // إرسال البلاغ عبر الواتساب برقمك والمعلومات الكاملة
         function triggerEmergencyWhatsApp() {
             if (!currentUser.name) {
-                alert("الرجاء تسجيل الدخول أولاً لتضمين البيانات في البلاغ.");
+                alert("الرجاء تسجيل الدخول أولاً.");
                 return;
             }
 
-            const targetPhone = "966500919401"; // رقمك المطلوب
-            const message = `🚨 *تنبيه طارئ وعاجل من نظام الإنذار المبكر* 🚨\n\n` +
+            const targetPhone = "966500919401";
+            const message = `🚨 *تنبيه طارئ وعاجل من نظام الانذار المبكر ⚠️* 🚨\n\n` +
                             `👤 *اسم المستخدم:* ${currentUser.name}\n` +
                             `📧 *البريد الإلكتروني:* ${currentUser.email}\n` +
                             `📱 *رقم الجوال:* ${currentUser.phone}\n` +
                             `🔗 *رابط الموقع:* ${window.location.href}\n\n` +
                             `أطلب التدخل الفوري والمساعدة العاجلة!`;
 
-            const whatsappUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
+            window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, '_blank');
         }
 
-        // وظائف الأدمن لحفظ الحالات في Firebase لجميع المستخدمين
+        // دالة تشغيل الإنذار الصوتي (المالم) ثم قراءة النص تلقائياً لكبار السن وعدم السماح بالإغلاق إلا بعد انتهائهما
+        function playAlarmAndReadText(alertText) {
+            if (isAlarmRunning) return;
+            isAlarmRunning = true;
+
+            const closeBtn = document.getElementById("closeModalBtn");
+            const statusText = document.getElementById("audioStatusText");
+            
+            // قفل زر الإغلاق تماماً وتغيير شكله
+            closeBtn.disabled = true;
+            closeBtn.classList.remove("active");
+            closeBtn.innerText = "إغلاق الإنذار (معطل حتى انتهاء التنبيه والصوت)";
+            statusText.innerText = "🚨 جاري إطلاق صفارة الإنذار...";
+
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                let totalBeeps = 4; // عدد مرات تكرار صفارة الإنذار
+                let beepDuration = 0.3;
+
+                for (let i = 0; i < totalBeeps; i++) {
+                    let osc = audioCtx.createOscillator();
+                    let gainNode = audioCtx.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime + (i * beepDuration));
+                    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + (i * beepDuration) + 0.25);
+
+                    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime + (i * beepDuration));
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (i * beepDuration) + 0.25);
+
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+
+                    osc.start(audioCtx.currentTime + (i * beepDuration));
+                    osc.stop(audioCtx.currentTime + (i * beepDuration) + 0.25);
+                }
+
+                // حساب وقت انتهاء الصفارة بالكامل
+                let totalAlarmTimeMs = (totalBeeps * beepDuration) * 1000;
+
+                setTimeout(() => {
+                    // بعد انتهاء الصوت، نبدأ فوراً بالقراءة التلقائية للنص (مناسب لكبار السن)
+                    statusText.innerText = "🗣️ جاري قراءة الإنذار بصوت عالٍ...";
+                    speakAlertText(alertText, () => {
+                        // بعد انتهاء القراءة الصوتية تماماً، نسمح للمستخدم بالضغط على إغلاق
+                        statusText.innerText = "✅ انتهى الإنذار والصوت، يمكنك الإغلاق الآن";
+                        closeBtn.disabled = false;
+                        closeBtn.classList.add("active");
+                        closeBtn.innerText = "إغلاق الإنذار (X)";
+                        isAlarmRunning = false;
+                    });
+                }, totalAlarmTimeMs);
+
+            } catch (e) {
+                console.log("Audio/Speech error", e);
+                // في حال حصل أي منع للصوت، نفعل القراءة الصوتية مباشرة ثم الزر
+                speakAlertText(alertText, () => {
+                    closeBtn.disabled = false;
+                    closeBtn.classList.add("active");
+                    closeBtn.innerText = "إغلاق الإنذار (X)";
+                    isAlarmRunning = false;
+                });
+            }
+        }
+
+        // دالة قراءة النص باستخدام متصفح الويب (SpeechSynthesis API)
+        function speakAlertText(text, callback) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // إيقاف أي قراءة سابقة
+                let utterance = new SpeechSynthesisUtterance("تنبيه عاجل: " + text);
+                utterance.lang = 'ar-SA'; // لغة عربية سعودية واضحة
+                utterance.rate = 0.9; // سرعة هادئة ومناسبة لكبار السن
+                utterance.pitch = 1.0;
+
+                utterance.onend = function() {
+                    if (callback) callback();
+                };
+                utterance.onerror = function() {
+                    if (callback) callback();
+                };
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                if (callback) callback();
+            }
+        }
+
         async function adminPublishAlert() {
             const alertText = document.getElementById("adminAlertInput").value.trim();
             if(!alertText) {
@@ -405,11 +545,11 @@
                     activeAlert: alertText,
                     screenColor: currentColor
                 }, { merge: true });
-                alert("تم نشر الإنذار للشاشة الرئيسية لجميع المستخدمين بنجاح!");
+                alert("تم نشر الإنذار الفوري وسيظهر لجميع المستخدمين مع الصوت والقراءة!");
                 document.getElementById("adminAlertInput").value = "";
             } catch(e) {
                 console.error(e);
-                alert("خطأ أثناء النشر في قاعدة البيانات.");
+                alert("خطأ أثناء النشر.");
             }
         }
 
@@ -424,7 +564,7 @@
                     activeAlert: "",
                     screenColor: currentColor
                 }, { merge: true });
-                alert("تم إزالة الإنذار.");
+                alert("تم إزالة وإنهاء الإنذار.");
             } catch(e) {
                 console.error(e);
             }
@@ -441,14 +581,12 @@
                     activeAlert: currentAlert,
                     screenColor: colorType
                 }, { merge: true });
-                alert(`تم تغيير لون الشاشة لجميع المستخدمين إلى (${colorType}) بنجاح!`);
+                alert(`تم تغيير لون الشاشة إلى (${colorType}) بنجاح!`);
             } catch(e) {
                 console.error(e);
-                alert("حدث خطأ أثناء تحديث لون الشاشة.");
             }
         }
 
-        // تطبيق لون الشاشة محلياً لكل مستخدم
         function applyScreenColor(colorType) {
             const body = document.body;
             const card = document.querySelector(".card");
@@ -466,7 +604,6 @@
                 card.style.color = "#ffffff";
                 card.style.borderColor = "#ef4444";
             } else {
-                // الوضع الافتراضي الأبيض
                 body.style.background = "#f8fafc";
                 body.style.color = "#0f172a";
                 card.style.background = "#ffffff";
@@ -475,19 +612,26 @@
             }
         }
 
-        function showGlobalAlertBanner(text) {
-            const banner = document.getElementById("globalAlertBanner");
-            document.getElementById("alertBannerText").innerText = "⚠️ تنبيه عاجل: " + text;
-            banner.style.display = "block";
+        function showModalAlert(text) {
+            const overlay = document.getElementById("modalAlertOverlay");
+            document.getElementById("modalAlertText").innerText = text;
+            overlay.style.display = "flex";
         }
 
-        function hideGlobalAlertBanner() {
-            const banner = document.getElementById("globalAlertBanner");
-            banner.style.display = "none";
+        function hideModalAlert() {
+            const overlay = document.getElementById("modalAlertOverlay");
+            overlay.style.display = "none";
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            isAlarmRunning = false;
         }
 
-        function dismissGlobalAlert() {
-            hideGlobalAlertBanner();
+        function dismissModalAlert() {
+            const closeBtn = document.getElementById("closeModalBtn");
+            if (closeBtn.disabled) return; // تأكيد إضافي لمنع الإغلاق إذا كان معطلاً
+            hideModalAlert();
+            // اختيارياً نقوم بمسح الإنذار من الخادم لكي يختفي من عند الجميع إذا أردت، أو إغلاقه محلياً فقط
         }
     </script>
 
