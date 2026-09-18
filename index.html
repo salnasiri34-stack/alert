@@ -9,31 +9,35 @@
     <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
     <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
 
-    <!-- Firebase SDK (v9 Modular) -->
+    <!-- OneSignal v16 SDK للإشعارات -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da", // استبدل بـ AppId الخاص بك في OneSignal إذا أردت
+        });
+      });
+    </script>
+
+    <!-- Firebase SDK (v9 Modular) مع بيانات مشروعك alaret-e8f2a -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // إعدادات فايربيس (تأكد من مطابقتها لمشروعك)
         const firebaseConfig = {
-            apiKey: "AIzaSyD-Your-Firebase-ApiKey-Here",
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456:web:abcdef"
+            apiKey: "AIzaSyDXKY3MQLbCRAqJwVHGymTVT61Dalpb2g",
+            authDomain: "alaret-e8f2a.firebaseapp.com",
+            projectId: "alaret-e8f2a",
+            storageBucket: "alaret-e8f2a.appspot.com",
+            messagingSenderId: "735569802866",
+            appId: "1:735569802866:web:aa9935ede7a44f9a0c34eb"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
         window.db = db;
-        window.collection = collection;
-        window.addDoc = addDoc;
-        window.getDocs = getDocs;
-        window.query = query;
-        window.orderBy = orderBy;
-        window.serverTimestamp = serverTimestamp;
         window.doc = doc;
         window.setDoc = setDoc;
         window.getDoc = getDoc;
@@ -41,8 +45,9 @@
 
         // الاستماع الفوري لحالة الشاشة العامة (اللون والتنبيهات) من فايربيس لكل المستخدمين
         document.addEventListener("DOMContentLoaded", () => {
+            checkAutoLogin(); // التحقق هل المستخدم مسجل من قبل
+
             if(window.db) {
-                // مراقبة لون الشاشة العام
                 window.onSnapshot(window.doc(window.db, "settings", "globalState"), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -61,7 +66,7 @@
     <style>
         body {
             font-family: Tahoma, sans-serif;
-            background: #f8fafc; /* خلفية الشاشة الرئيسية بيضاء / رمادي فاتح جداً */
+            background: #f8fafc; /* خلفية بيضاء افتراضية للشاشة الرئيسية */
             color: #0f172a;
             display: flex;
             flex-direction: column;
@@ -101,6 +106,7 @@
             width: 100%;
             text-align: center;
             border: 1px solid #e2e8f0;
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
         .warning-img {
             width: 70px;
@@ -110,10 +116,8 @@
         }
         h2 {
             margin-top: 0;
-            color: #0f172a;
         }
         p {
-            color: #64748b;
             font-size: 14px;
             line-height: 1.6;
         }
@@ -124,7 +128,6 @@
         label {
             display: block;
             font-size: 13px;
-            color: #334155;
             margin-bottom: 5px;
             font-weight: bold;
         }
@@ -160,6 +163,12 @@
         .emergency-btn:hover {
             background: #b91c1c !important;
         }
+        .notif-btn {
+            background: #0d9488 !important;
+        }
+        .notif-btn:hover {
+            background: #0f766e !important;
+        }
         .hidden {
             display: none;
         }
@@ -171,7 +180,7 @@
             border: 1px solid #e2e8f0;
             text-align: right;
         }
-        /* بانر التنبيه العاجل العلوي */
+        /* بانر الإنذار العاجل العلوي */
         #globalAlertBanner {
             position: fixed;
             top: 0;
@@ -202,7 +211,7 @@
 </head>
 <body>
 
-    <!-- بانر الإنذار العام من الأدمن -->
+    <!-- بانر الإنذار العام من الأدمن مع زر إغلاق X -->
     <div id="globalAlertBanner">
         <span id="alertBannerText">تنبيه عاجل: ...</span>
         <button onclick="dismissGlobalAlert()">إغلاق (X)</button>
@@ -214,13 +223,13 @@
     </div>
 
     <div class="card">
-        <!-- الصورة المطلوبة لأيقونة التحذير -->
+        <!-- الصورة المخصصة للتحذير -->
         <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="تحذير" class="warning-img">
         <h2>نظام الإنذار المبكر</h2>
 
-        <!-- خطوة 1: تسجيل الدخول (الاسم، البريد، الجوال) -->
+        <!-- خطوة 1: تسجيل الدخول (يظهر فقط في المرة الأولى) -->
         <div id="loginSection">
-            <p>الرجاء إدخال بياناتك الشخصية للوصول إلى النظام وإرسال بلاغات الطوارئ بدقة.</p>
+            <p style="color: #64748b;">الرجاء إدخال بياناتك الشخصية للوصول إلى النظام وإرسال بلاغات الطوارئ بدقة (ستتم مطالبتك بهذه البيانات لمرة واحدة فقط).</p>
             <div class="input-group">
                 <label>الاسم الكامل:</label>
                 <input type="text" id="userName" placeholder="أدخل اسمك..." />
@@ -233,29 +242,39 @@
                 <label>رقم الجوال:</label>
                 <input type="text" id="userPhone" placeholder="05xxxxxxxx" />
             </div>
-            <button onclick="handleLogin()">دخول النظام</button>
+            <button onclick="handleLogin()">دخول النظام وحفظ البيانات</button>
         </div>
 
         <!-- خطوة 2: لوحة العمليات الرئيسية -->
         <div id="dashboardSection" class="hidden">
             <p id="welcomeMsg" style="color: #0284c7; font-weight: bold;"></p>
             
+            <!-- زر طلب تفعيل الإشعارات -->
+            <div class="section-box">
+                <label style="color: #0f766e; font-weight: bold;">تنبيهات الإشعارات الفورية:</label>
+                <p style="font-size: 12px; color: #475569;">اضغط أدناه للسماح باستقبال الإشعارات والإنذارات الحية:</p>
+                <button class="notif-btn" onclick="requestNotificationPermission()">🔔 تفعيل والسماح بالإشعارات</button>
+            </div>
+
             <div class="section-box">
                 <label style="color: #dc2626; font-weight: bold;">منطقة الطوارئ القصوى:</label>
                 <p style="font-size: 12px; color: #475569;">بالضغط أدناه سيتم تحويلك فوراً إلى الواتساب مع إرسال كافة بياناتك الشخصية وموقعك:</p>
                 <button class="emergency-btn" onclick="triggerEmergencyWhatsApp()">🚨 إرسال بلاغ طوارئ عبر WhatsApp</button>
             </div>
 
+            <!-- زر تسجيل الخروج لتغيير البيانات لو لزم الأمر -->
+            <button style="background: #64748b; font-size: 12px; padding: 6px; margin-top: 15px;" onclick="logoutUser()">إعادة تعيين وتسجيل الخروج</button>
+
             <!-- لوحة تحكم الأدمن (تظهر بعد إدخال رمز 13121312) -->
-            <div id="adminPanel" class="section-box hidden" style="border-color: #eab308; background: #fffbeb;">
+            <div id="adminPanel" class="section-box hidden" style="border-color: #eab308; background: #fffbeb; color: #0f172a;">
                 <label style="color: #b45309; font-weight: bold;">👑 لوحة تحكم الأدمن المركزية</label>
                 
                 <div class="input-group" style="margin-top: 10px;">
-                    <label>نشر إنذار عاجل لجميع المستخدمين:</label>
+                    <label style="color: #b45309;">نشر إنذار عاجل لجميع المستخدمين:</label>
                     <input type="text" id="adminAlertInput" placeholder="اكتب نص الإنذار الرئيسي..." />
                 </div>
                 <button style="background: #eab308; color: #0f172a;" onclick="adminPublishAlert()">نشر الإنذار على الشاشة الرئيسية</button>
-                <button style="background: #64748b; color: white;" onclick="adminClearAlert()">حذف ونفي الإنذار الحالي</button>
+                <button style="background: #64748b; color: white;" onclick="adminClearAlert()">حذف الإنذار الحالي</button>
 
                 <hr style="margin: 15px 0; border: 0; border-top: 1px solid #fcd34d;">
                 
@@ -272,6 +291,20 @@
     <script>
         let currentUser = { name: "", email: "", phone: "" };
 
+        // التحقق من وجود بيانات مخزنة مسبقاً (تسجيل الدخول للمرة الأولى فقط)
+        function checkAutoLogin() {
+            const savedName = localStorage.getItem("alaret_name");
+            const savedEmail = localStorage.getItem("alaret_email");
+            const savedPhone = localStorage.getItem("alaret_phone");
+
+            if (savedName && savedEmail && savedPhone) {
+                currentUser = { name: savedName, email: savedEmail, phone: savedPhone };
+                document.getElementById("loginSection").classList.add("hidden");
+                document.getElementById("dashboardSection").classList.remove("hidden");
+                document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${savedName}`;
+            }
+        }
+
         function handleLogin() {
             const name = document.getElementById("userName").value.trim();
             const email = document.getElementById("userEmail").value.trim();
@@ -282,11 +315,47 @@
                 return;
             }
 
+            // حفظ البيانات في localStorage لكي لا يطلبها الموقع مرة أخرى
+            localStorage.setItem("alaret_name", name);
+            localStorage.setItem("alaret_email", email);
+            localStorage.setItem("alaret_phone", phone);
+
             currentUser = { name, email, phone };
 
             document.getElementById("loginSection").classList.add("hidden");
             document.getElementById("dashboardSection").classList.remove("hidden");
             document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${name}`;
+        }
+
+        function logoutUser() {
+            localStorage.removeItem("alaret_name");
+            localStorage.removeItem("alaret_email");
+            localStorage.removeItem("alaret_phone");
+            location.reload();
+        }
+
+        // طلب إذن السماح بالإشعارات
+        function requestNotificationPermission() {
+            window.OneSignalDeferred.push(async function(OneSignal) {
+                try {
+                    await OneSignal.Slidedown.promptPush();
+                    alert("تم إرسال طلب السماح بالإشعارات. يرجى الموافقة من متصفحك.");
+                } catch (e) {
+                    console.error("خطأ في تفعيل الإشعارات:", e);
+                    // الطريقة الاحتياطية لطلب السماح عبر متصفح الجوال
+                    if (Notification && Notification.permission !== "granted") {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === "granted") {
+                                alert("تم تفعيل الإشعارات بنجاح!");
+                            } else {
+                                alert("تم رفض إذن الإشعارات من المتصفح.");
+                            }
+                        });
+                    } else {
+                        alert("الإشعارات مفعلة مسبقاً أو غير مدعومة بهذا الإصدار.");
+                    }
+                }
+            });
         }
 
         function openAdminPortal() {
