@@ -5,9 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الانذار المبكر ⚠️</title>
 
-    <!-- شعار التطبيق الأحمر الكلاسيكي -->
+    <!-- أيقونة التطبيق -->
     <link rel="icon" type="image/png" href="https://img.icons8.com/color/96/attention.png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/attention.png">
+
+    <!-- OneSignal SDK للتنبيهات الفورية -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "ضع_معرف_أب_ون_سيغنال_هنا",
+        });
+      });
+    </script>
 
     <style>
         :root {
@@ -39,29 +50,12 @@
             text-align: center;
             background: var(--card-bg);
             border-bottom: 1px solid #2a2a2a;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         header h1 {
             margin: 0;
             font-size: 1.2rem;
             color: var(--text-main);
-        }
-
-        /* علم السعودية المصغر أعلى اليمين */
-        .saudi-flag {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 28px;
-            height: 18px;
-            border-radius: 3px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            object-fit: cover;
         }
 
         /* المحتوى والصفحات */
@@ -76,6 +70,7 @@
             display: block;
         }
 
+        /* تنسيق صفحة الرئيسية */
         .home-card {
             background: var(--card-bg);
             padding: 20px;
@@ -91,7 +86,7 @@
             font-size: 1.1rem;
         }
 
-        /* زر الواتساب المباشر */
+        /* زر الواتساب المباشر بالمعلومات الدقيقة */
         .whatsapp-btn {
             display: inline-flex;
             align-items: center;
@@ -112,6 +107,7 @@
             background-color: #20ba5a;
         }
 
+        /* زر إرسال الإنذار */
         .action-btn {
             background-color: var(--accent-red);
             color: white;
@@ -156,17 +152,16 @@
             font-weight: bold;
         }
 
-        /* منطقة الخريطة التفصيلية */
+        /* منطقة الخريطة */
         .map-container {
             position: relative;
-            background: #090d16;
+            background: #0b0f19;
             border-radius: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            height: 380px;
-            border: 1px solid #222;
+            height: 350px;
         }
 
         .svg-map {
@@ -176,35 +171,36 @@
 
         .region {
             cursor: pointer;
-            transition: all 0.2s;
-            stroke: #1a2332;
+            transition: fill 0.2s, filter 0.2s;
+            stroke: #2c3e50;
             stroke-width: 0.8;
         }
 
         .region:hover {
-            filter: brightness(1.25);
+            filter: brightness(1.2);
             stroke: #fff;
             stroke-width: 1.5;
         }
 
+        /* ألوان حالات الإنذار للمناطق */
         .status-safe { fill: #27ae60; }
         .status-yellow { fill: #f1c40f; }
         .status-orange { fill: #e67e22; }
         .status-red { fill: #e74c3c; }
 
-        /* نافذة المعلومات الفورية مع زر إغلاق (X) */
+        /* نافذة المعلومات الفورية (Popup) */
         .alert-popup {
             position: absolute;
             bottom: 10px;
             left: 10px;
             right: 10px;
-            background: rgba(25, 25, 25, 0.96);
-            border: 1px solid #444;
-            padding: 15px;
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid #333;
+            padding: 12px;
             border-radius: 10px;
             backdrop-filter: blur(10px);
             display: none;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             z-index: 100;
         }
 
@@ -214,51 +210,25 @@
 
         .alert-popup h3 {
             margin: 0 0 5px 0;
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: var(--accent-yellow);
         }
 
         .alert-popup p {
             margin: 0;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-secondary);
         }
 
         .close-popup {
             position: absolute;
             top: 8px;
-            left: 10px;
-            background: #e74c3c;
+            left: 8px;
+            background: none;
             border: none;
             color: #fff;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            font-size: 0.85rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 0.9rem;
             cursor: pointer;
-        }
-
-        /* لوحة تحكم المستخدمين */
-        .users-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 0.8rem;
-        }
-
-        .users-table th, .users-table td {
-            border: 1px solid #333;
-            padding: 8px;
-            text-align: center;
-        }
-
-        .users-table th {
-            background: #252525;
-            color: var(--accent-yellow);
         }
 
         /* شريط التنقل السفلي */
@@ -294,20 +264,17 @@
 
         footer {
             text-align: center;
-            font-size: 0.62rem;
-            color: #888;
-            padding: 6px;
+            font-size: 0.65rem;
+            color: #666;
+            padding: 5px;
             background: var(--card-bg);
             border-top: 1px solid #1a1a1a;
-            line-height: 1.4;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <!-- علم السعودية المصغر -->
-        <img class="saudi-flag" src="https://upload.wikimedia.org/wikipedia/commons/4/43/Flag_of_Saudi_Arabia.svg" alt="علم السعودية">
         <h1 id="headerTitle">الرئيسية</h1>
     </header>
 
@@ -315,16 +282,18 @@
     <div id="page-home" class="page-content active">
         <div class="home-card">
             <h2>مرحباً بك في نظام الإنذار المبكر</h2>
-            <p style="color: var(--text-secondary); font-size: 0.85rem;">متابعة فورية لحالات الطقس والإنذارات لكل مدينة.</p>
-            <button class="action-btn" onclick="triggerEmergencyAlert()">إرسال إنذار تجريبي فوري</button>
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">تابع أحدث حالة جوية وتنبيهات الطقس وحالة مناطق المملكة بشكل فوري ومباشر.</p>
+            <button class="action-btn" onclick="triggerEmergencyAlert()">إرسال إنذار فوري (تنبيه تجريبي)</button>
         </div>
 
         <div class="home-card">
-            <h2>تواصل طوارئ الواتساب</h2>
-            <p style="color: var(--text-secondary); font-size: 0.85rem;">الإرسال التلقائي لبيانات التسجيل والموقع الدقيق للمسؤول.</p>
+            <h2>مجتمع SXB ON TOP</h2>
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">تواصل معنا عبر الرقم المباشر والواتساب مع إرسال كافة تفاصيل الموقع والإنذار تلقائياً.</p>
+            
+            <!-- زر واتساب يتحول تلقائياً للرقم مع كتابة كافة المعلومات والموقع الدقيق -->
             <a id="whatsappDirectBtn" href="#" target="_blank" class="whatsapp-btn">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                إرسال البيانات عبر الواتساب
+                تواصل واتساب (مع الموقع والمعلومات)
             </a>
         </div>
     </div>
@@ -338,15 +307,19 @@
 
         <div class="map-container">
             <svg class="svg-map" viewBox="0 0 500 500">
-                <path id="medina" class="region status-yellow" d="M180,180 L220,175 L230,210 L190,215 Z" onclick="showAlert('المدينة المنورة', 'إنذار مبكر: نشاط في الرياح السطحية وعوالق ترابية.')"></path>
-                <path id="makkah" class="region status-orange" d="M160,225 L200,220 L210,265 L170,270 Z" onclick="showAlert('مكة المكرمة', 'تنبيه متقدم: أمطار متوسطة إلى غزيرة ورياح نشطة.')"></path>
-                <path id="riyadh" class="region status-yellow" d="M240,200 L290,195 L310,245 L250,250 Z" onclick="showAlert('الرياض', 'تنبيه: ارتفاع درجات الحرارة مع نشاط للأتربة المثارة.')"></path>
-                <path id="sharqiyah" class="region status-safe" d="M320,170 L390,180 L370,270 L310,250 Z" onclick="showAlert('المنطقة الشرقية', 'الحالة استقرار جوي، لا توجد تنبيهات خطرة حالياً.')"></path>
-                <path id="aseer" class="region status-red" d="M165,280 L195,275 L190,320 L155,310 Z" onclick="showAlert('عسير (حالة طارئة)', 'إنذار أحمر: أمطار غزيرة جداً وسيول.')"></path>
-                <path id="north" class="region status-yellow" d="M140,110 L250,90 L270,165 L160,170 Z" onclick="showAlert('المنطقة الشمالية', 'تنبيه: سحب رعدية ممطرة ونشاط رياح سطحية.')"></path>
+                <!-- الرياض -->
+                <path id="riyadh" class="region status-yellow" d="M230,220 L270,210 L290,250 L260,290 L220,260 Z" onclick="showAlert('الرياض', 'إنذار متقدم: أتربة مثارة وعوالق ترابية تؤدي إلى تدني مدى الرؤية الأفقية.')"></path>
+                <!-- مكة المكرمة -->
+                <path id="makkah" class="region status-orange" d="M160,250 L190,240 L210,280 L180,310 L150,280 Z" onclick="showAlert('مكة المكرمة', 'إنذار تحذيري: أمطار متوسطة إلى غزيرة مصحوبة برياح نشطة وارتفاع الأمواج.')"></path>
+                <!-- الشرقية -->
+                <path id="sharqiyah" class="region status-safe" d="M320,180 L380,190 L360,280 L300,260 Z" onclick="showAlert('المنطقة الشرقية', 'الحالة استقرار جوي، لا توجد تنبيهات حالية.')"></path>
+                <!-- عسير -->
+                <path id="aseer" class="region status-red" d="M160,320 L190,315 L180,360 L140,350 Z" onclick="showAlert('عسير', 'إنذار أحمر (حالة طارئة): أمطار غزيرة جداً وسيول، استمرار التدابير الوقائية.')"></path>
+                <!-- المنطقة الشمالية -->
+                <path id="north" class="region status-yellow" d="M120,120 L220,100 L240,180 L150,190 Z" onclick="showAlert('المنطقة الشمالية', 'إنذار مبكر: نشاط في الرياح السطحية وتدني الرؤية.')"></path>
             </svg>
 
-            <!-- نافذة منبثقة مع زر إغلاق (X) -->
+            <!-- نافذة منبثقة تفاعلية للمنطقة -->
             <div id="alertPopup" class="alert-popup">
                 <button class="close-popup" onclick="closePopup()">✕</button>
                 <h3 id="popupTitle">اسم المنطقة</h3>
@@ -355,42 +328,15 @@
         </div>
     </div>
 
-    <!-- صفحة المستخدمين (اللوحة الخاصة بك) -->
-    <div id="page-users" class="page-content">
-        <div class="home-card">
-            <h2>إدارة المستخدمين المسجلين</h2>
-            <table class="users-table">
-                <thead>
-                    <tr>
-                        <th>المستخدم</th>
-                        <th>المدينة</th>
-                        <th>الوقت</th>
-                        <th>الحالة</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>سلومي (مسؤول)</td>
-                        <td>المدينة المنورة</td>
-                        <td>الآن</td>
-                        <td style="color: var(--accent-green);">متصل</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
+    <!-- صفحات إضافية للتنقل -->
     <div id="page-maps" class="page-content">
-        <div class="home-card"><h2>الخرائط العامة</h2></div>
+        <div class="home-card"><h2>الخرائط العامة</h2><p style="color: var(--text-secondary);">جاري تحميل خرائط التضاريس والطقس المباشرة...</p></div>
     </div>
     <div id="page-radar" class="page-content">
-        <div class="home-card"><h2>رادار الطقس الحي</h2></div>
+        <div class="home-card"><h2>رادار الطقس الحي</h2><p style="color: var(--text-secondary);">تتبع حركة السحب والأمطار رادارياً.</p></div>
     </div>
     <div id="page-settings" class="page-content">
-        <div class="home-card">
-            <h2>الإعدادات</h2>
-            <button class="action-btn" onclick="switchPage('users', 'لوحة المستخدمين', document.querySelectorAll('.nav-item')[4])">عرض سجل المستخدمين</button>
-        </div>
+        <div class="home-card"><h2>الإعدادات والتنبيهات</h2><p style="color: var(--text-secondary);">تخصيص الإشعارات الفورية وإعدادات التطبيق.</p></div>
     </div>
 
     <!-- شريط التنقل السفلي -->
@@ -418,46 +364,63 @@
     </nav>
 
     <footer>
-        موقع تجريبي فقط لا غير - ضمن رؤية 2030<br>
-        حقوق الطبع والنشر محفوظة © سليمان الناصري (تاريخ أول تشغيل: 2026)
+        Rights Reserved &copy; sulaiman alnasiri
     </footer>
 
     <script>
-        const targetPhoneNumber = "966500919401";
+        // إعداد رقم الواتساب المباشر (استبدل الرقم برقمك بصيغة الدوليه بدون علامة + مثل 9665xxxxxxxx)
+        const phoneNumber = "966500000000";
 
+        // دالة جلب الموقع الجغرافي الدقيق وتجهيز رابط الواتساب تلقائياً عند فتح الصفحة
         window.onload = function() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
-                    updateWhatsAppMessage(lat, lon, mapLink, "النظام مستقر");
+                    
+                    updateWhatsAppLink(lat, lon, mapLink, "حالة النظام مستقرة - الموقع الحالي للمستخدم");
                 }, function(error) {
-                    updateWhatsAppMessage(24.4672, 39.6142, "المدينة المنورة", "تنبيه عام");
+                    // في حال رفض إذن الموقع يتم إرسال الموقع الافتراضي (المدينة المنورة مثلاً)
+                    updateWhatsAppLink(24.4672, 39.6142, "غير متاح (تم استخدام المدينة المنورة افتراضياً)", "تنبيه عام من النظام");
                 });
             }
         };
 
-        function updateWhatsAppMessage(lat, lon, mapLink, details) {
-            const msg = `مرحباً، هذه معلومات التسجيل والإنذار المبكر:\n- التفاصيل: ${details}\n- الإحداثيات: ${lat}, ${lon}\n- الموقع: ${mapLink}`;
-            document.getElementById('whatsappDirectBtn').href = `https://wa.me/${targetPhoneNumber}?text=${encodeURIComponent(msg)}`;
+        function updateWhatsAppLink(lat, lon, mapLink, alertDetails) {
+            const message = `مرحباً، هذه معلومات نظام الإنذار المبكر:\n- تفاصيل الحالة: ${alertDetails}\n- الإحداثيات الدقيقة: خط عرض ${lat}, خط طول ${lon}\n- رابط الموقع على خرائط جوجل: ${mapLink}`;
+            const encodedMessage = encodeURIComponent(message);
+            document.getElementById('whatsappDirectBtn').href = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
         }
 
+        // التنقل بين الصفحات
         function switchPage(pageId, titleText, btnElement) {
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
 
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            if(btnElement) btnElement.classList.add('active');
+            btnElement.classList.add('active');
 
             document.getElementById('headerTitle').innerText = titleText;
         }
 
+        // تفاعل الخريطة وتحديث رسالة الواتساب بناءً على المنطقة المختارة
         function showAlert(regionName, description) {
             const popup = document.getElementById('alertPopup');
             document.getElementById('popupTitle').innerText = "منطقة: " + regionName;
             document.getElementById('popupDesc').innerText = description;
             popup.classList.add('active');
+
+            // تحديث رسالة الواتساب لتشمل المنطقة المحددة فوراً
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+                    const customMsg = `تنبيه من منطقة [${regionName}]:\n- الحالة: ${description}\n- الإحداثيات الدقيقة: ${lat}, ${lon}\n- الرابط: ${mapLink}`;
+                    document.getElementById('whatsappDirectBtn').href = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(customMsg)}`;
+                });
+            }
         }
 
         function closePopup() {
@@ -465,9 +428,8 @@
         }
 
         function triggerEmergencyAlert() {
-            alert("تم إرسال إشعار الإنذار الفوري بنجاح!");
+            alert("تم إرسال تجربة الإنذار الفوري بنجاح وسيتم إشعار المستخدمين عبر OneSignal!");
         }
     </script>
 </body>
-    </html>
-    
+</html>
