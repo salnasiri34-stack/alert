@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الانذار المبكر ⚠️</title>
+    <title>الانذار المبكر ⚠️ - لوحة العمليات</title>
 
-    <!-- الأيقونة الرئيسية المحدثة والمثبتة للآيفون والمتصفحات -->
-    <link rel="icon" type="image/png" href="https://img.icons8.com/color/96/attention.png">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/attention.png">
+    <!-- شعار الشاشة الرئيسية والأيقونة المخصصة -->
+    <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
+    <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
 
     <!-- OneSignal v16 SDK للإشعارات -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -23,7 +23,7 @@
     <!-- Firebase SDK (v9 Modular) مع بيانات مشروعك alaret-e8f2a -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDXKY3MQLbCRAqJwVHGymTVT61Dalpb2g",
@@ -42,20 +42,19 @@
         window.setDoc = setDoc;
         window.getDoc = getDoc;
         window.onSnapshot = onSnapshot;
-        window.collection = collection;
-        window.getDocs = getDocs;
 
         let lastAlertId = "";
 
+        // الاستماع الفوري لحالة النظام والتنبيهات من فايربيس
         document.addEventListener("DOMContentLoaded", () => {
             checkAutoLogin();
 
+            // فك قفل الصوت عند أول تفاعل للمستخدم (مهم جداً لأجهزة الآيفون والأندرويد)
             document.body.addEventListener('click', () => {
                 unlockAudioContext();
             }, { once: true });
 
             if(window.db) {
-                // مراقبة حالة الإنذارات العامة والشاشة
                 window.onSnapshot(window.doc(window.db, "settings", "globalState"), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -73,13 +72,6 @@
                             hideModalAlert();
                             lastAlertId = "";
                         }
-                    }
-                });
-
-                // مراقبة حالة خريطة التحذيرات المناخية للمدن
-                window.onSnapshot(window.doc(window.db, "settings", "climateMapState"), (docSnap) => {
-                    if (docSnap.exists()) {
-                        updateClimateMapUI(docSnap.data());
                     }
                 });
             }
@@ -122,18 +114,19 @@
         }
         .card {
             background: #ffffff;
-            padding: 25px;
+            padding: 30px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 520px;
+            max-width: 480px;
             width: 100%;
             text-align: center;
             border: 1px solid #e2e8f0;
             transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
+        /* تكبير الشعار ليملأ المربع بالكامل وبشكل بارز */
         .warning-img-container {
-            width: 110px;
-            height: 110px;
+            width: 140px;
+            height: 140px;
             margin: 0 auto 15px auto;
             display: flex;
             justify-content: center;
@@ -142,13 +135,11 @@
             border-radius: 20px;
             box-shadow: 0 8px 20px rgba(234, 179, 8, 0.3);
             border: 3px solid #eab308;
-            overflow: hidden;
-            padding: 12px;
-            box-sizing: border-box;
         }
-        .warning-svg {
-            width: 100%;
-            height: 100%;
+        .warning-img {
+            width: 115px;
+            height: 115px;
+            object-fit: contain;
         }
         h2 {
             margin-top: 0;
@@ -158,13 +149,13 @@
             line-height: 1.6;
         }
         .input-group {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             text-align: right;
         }
         label {
             display: block;
             font-size: 13px;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
             font-weight: bold;
         }
         input, select, textarea {
@@ -180,17 +171,17 @@
         }
         textarea {
             resize: vertical;
-            height: 90px;
+            height: 80px;
         }
         button {
             background: #2563eb;
             color: white;
             border: none;
-            padding: 11px 20px;
-            font-size: 14px;
+            padding: 12px 20px;
+            font-size: 15px;
             border-radius: 8px;
             cursor: pointer;
-            margin-top: 8px;
+            margin-top: 10px;
             width: 100%;
             font-weight: bold;
             transition: background 0.2s;
@@ -215,52 +206,14 @@
         }
         .section-box {
             background: #f1f5f9;
-            padding: 12px;
+            padding: 15px;
             border-radius: 8px;
-            margin-top: 12px;
+            margin-top: 15px;
             border: 1px solid #e2e8f0;
             text-align: right;
         }
 
-        /* حاوية قسم المدن والتحذيرات المناخية والخريطة */
-        .climate-section {
-            background: #eff6ff;
-            border: 2px solid #3b82f6;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-            text-align: right;
-        }
-        .climate-title {
-            font-weight: bold;
-            color: #1d4ed8;
-            font-size: 16px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .ksa-map-container {
-            width: 100%;
-            background: #ffffff;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            padding: 10px;
-            margin-top: 10px;
-            box-sizing: border-box;
-            text-align: center;
-        }
-        .ksa-svg {
-            width: 100%;
-            max-height: 220px;
-            height: auto;
-        }
-        .region-shape {
-            transition: fill 0.3s ease;
-            cursor: pointer;
-        }
-
-        /* نافذة الإنذار المنبثقة */
+        /* نافذة الإنذار المنبثقة بمنتصف الشاشة (Modal Overlay) */
         #modalAlertOverlay {
             position: fixed;
             top: 0;
@@ -295,38 +248,46 @@
             100% { transform: scale(1); opacity: 1; }
         }
         .modal-img-container {
-            width: 100%;
-            max-height: 180px;
-            object-fit: cover;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 12px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #fee2e2;
+            border-radius: 50%;
+            border: 3px solid #dc2626;
+        }
+        .modal-img {
+            width: 105px;
+            height: 105px;
+            object-fit: contain;
             border-radius: 8px;
-            margin-bottom: 12px;
             display: none;
         }
         .modal-content h3 {
             color: #dc2626;
             margin-top: 0;
-            font-size: 20px;
+            font-size: 22px;
         }
         .modal-text-box {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
-            margin: 12px 0;
+            margin: 15px 0;
             background: #fef2f2;
-            padding: 12px;
+            padding: 15px;
             border-radius: 8px;
             border: 1px solid #fecaca;
             text-align: right;
-            white-space: pre-line;
-            line-height: 1.6;
         }
         .close-modal-btn {
             background: #64748b;
             color: white;
             border: none;
-            padding: 10px;
+            padding: 12px;
             width: 100%;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: bold;
             cursor: not-allowed;
             opacity: 0.6;
@@ -341,28 +302,21 @@
             background: #b91c1c;
         }
         #audioStatusText {
-            font-size: 12px;
-            color: #b91c1c;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
-        .user-row-card {
-            background: #fff;
-            border: 1px solid #cbd5e1;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            text-align: right;
             font-size: 13px;
+            color: #b91c1c;
+            margin-bottom: 8px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <!-- نافذة الإنذار المنبثقة -->
+    <!-- نافذة الإنذار المنبثقة التي تظهر بوجّه المستخدم -->
     <div id="modalAlertOverlay">
         <div class="modal-content">
-            <img id="modalAlertImg" class="modal-img-container" src="" alt="صورة الإنذار">
+            <div id="modalImgWrapper" class="modal-img-container hidden">
+                <img id="modalAlertImg" class="modal-img" src="" alt="صورة الإنذار">
+            </div>
             <h3 id="modalAlertTitle">⚠️ تنبيه عاجل وهام ⚠️</h3>
             <div id="audioStatusText">جاري تشغيل صوت الإنذار... يرجى الانتظار</div>
             <div class="modal-text-box" id="modalAlertText">...</div>
@@ -372,22 +326,18 @@
 
     <!-- زر الأدمن في الأعلى -->
     <div class="top-admin-bar">
-        <button class="admin-trigger-btn" onclick="openAdminPortal()">👑 لوحة الأدمن</button>
+        <button class="admin-trigger-btn" onclick="openAdminPortal()">👑 الإدارة (Admin)</button>
     </div>
 
     <div class="card">
         <div class="warning-img-container">
-            <!-- المثلث الأصفر الصحيح داخل النظام -->
-            <svg class="warning-svg" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-                <polygon points="256,32 496,480 16,480" fill="#FFCC00" stroke="#000000" stroke-width="32" stroke-linejoin="round"/>
-                <path d="M256,160 v140 m0,60 v30" fill="none" stroke="#000000" stroke-width="36" stroke-linecap="round"/>
-            </svg>
+            <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="تحذير" class="warning-img">
         </div>
         <h2>الانذار المبكر ⚠️</h2>
 
-        <!-- تسجيل الدخول -->
+        <!-- تسجيل الدخول للمرة الأولى فقط -->
         <div id="loginSection">
-            <p style="color: #64748b;">الرجاء إدخال بياناتك الشخصية للوصول إلى النظام وإرسال بلاغات الطوارئ (تتم المطالبة لمرة واحدة فقط).</p>
+            <p style="color: #64748b;">الرجاء إدخال بياناتك الشخصية للوصول إلى النظام وإرسال بلاغات الطوارئ بدقة (ستتم مطالبتك بهذه البيانات لمرة واحدة فقط).</p>
             <div class="input-group">
                 <label>الاسم الكامل:</label>
                 <input type="text" id="userName" placeholder="أدخل اسمك..." />
@@ -407,44 +357,7 @@
         <div id="dashboardSection" class="hidden">
             <p id="welcomeMsg" style="color: #0284c7; font-weight: bold;"></p>
             
-            <!-- قسم المدن والتحذيرات المناخية والخريطة التفاعلية للمملكة -->
-            <div class="climate-section">
-                <div class="climate-title">
-                    <span>🌦️ المدن والتحذيرات المناخية</span>
-                </div>
-                <p id="climateStatusDisplay" style="font-size: 13px; color: #1e3a8a; margin: 4px 0;">جاري تحميل حالة الطقس للمدن...</p>
-                
-                <div class="ksa-map-container">
-                    <p style="font-size: 11px; color: #64748b; margin: 0 0 5px 0;">خريطة المملكة التفاعلية (تلوين المنطقة المحددة فقط):</p>
-                    <svg class="ksa-svg" viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="400" height="350" fill="#f8fafc" rx="8"/>
-                        <!-- 1. منطقة المدينة المنورة -->
-                        <path id="map_madinah" class="region-shape" d="M120,130 L160,120 L170,160 L130,170 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
-                        <text x="145" y="150" font-size="9" fill="#0f172a" font-weight="bold">المدينة</text>
-
-                        <!-- 2. منطقة مكة المكرمة -->
-                        <path id="map_makkah" class="region-shape" d="M110,175 L155,170 L165,210 L115,215 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
-                        <text x="135" y="197" font-size="9" fill="#0f172a" font-weight="bold">مكة</text>
-
-                        <!-- 3. منطقة الرياض -->
-                        <path id="map_riyadh" class="region-shape" d="M180,140 L240,130 L255,200 L195,210 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
-                        <text x="215" y="175" font-size="9" fill="#0f172a" font-weight="bold">الرياض</text>
-
-                        <!-- 4. المنطقة الشرقية -->
-                        <path id="map_sharqiyah" class="region-shape" d="M250,110 L320,95 L345,210 L260,205 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
-                        <text x="290" y="155" font-size="9" fill="#0f172a" font-weight="bold">الشرقية</text>
-
-                        <!-- 5. المنطقة الشمالية / تبوك -->
-                        <path id="map_north" class="region-shape" d="M90,70 L220,50 L235,120 L110,120 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
-                        <text x="150" y="90" font-size="9" fill="#0f172a" font-weight="bold">الشمالية / تبوك</text>
-
-                        <!-- 6. المنطقة الجنوبية -->
-                        <path id="map_south" class="region-shape" d="M125,225 L210,220 L200,280 L140,270 Z" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
-                        <text x="160" y="250" font-size="9" fill="#0f172a" font-weight="bold">الجنوبية</text>
-                    </svg>
-                </div>
-            </div>
-
+            <!-- زر طلب تفعيل الإشعارات -->
             <div class="section-box">
                 <label style="color: #0f766e; font-weight: bold;">تنبيهات الإشعارات الفورية:</label>
                 <p style="font-size: 12px; color: #475569;">اضغط أدناه للسماح باستقبال الإشعارات والإنذارات الحية:</p>
@@ -453,15 +366,15 @@
 
             <div class="section-box">
                 <label style="color: #dc2626; font-weight: bold;">منطقة الطوارئ القصوى:</label>
-                <p style="font-size: 12px; color: #475569;">بالضغط أدناه سيتم جلب موقعك بدقة وإرسال بلاغك عبر الواتساب:</p>
-                <button class="emergency-btn" onclick="triggerEmergencyWhatsApp()">🚨 إرسال بلاغ طوارئ مع الموقع عبر WhatsApp</button>
+                <p style="font-size: 12px; color: #475569;">بالضغط أدناه سيتم تحويلك فوراً إلى الواتساب مع إرسال كافة بياناتك وموقعك:</p>
+                <button class="emergency-btn" onclick="triggerEmergencyWhatsApp()">🚨 إرسال بلاغ طوارئ عبر WhatsApp</button>
             </div>
 
             <button style="background: #64748b; font-size: 12px; padding: 6px; margin-top: 15px;" onclick="logoutUser()">إعادة تعيين وتسجيل الخروج</button>
 
-            <!-- لوحة تحكم الأدمن الخاصة بك -->
+            <!-- لوحة تحكم الأدمن -->
             <div id="adminPanel" class="section-box hidden" style="border-color: #eab308; background: #fffbeb; color: #0f172a;">
-                <label style="color: #b45309; font-weight: bold;">👑 لوحة تحكم الأدمن والتحكم المناخي</label>
+                <label style="color: #b45309; font-weight: bold;">👑 لوحة تحكم الأدمن المركزية</label>
                 
                 <div class="input-group" style="margin-top: 10px;">
                     <label style="color: #b45309;">لغة الإنذار (Language):</label>
@@ -471,100 +384,29 @@
                     </select>
                 </div>
 
-                <!-- إعدادات التحذيرات المناخية للمدن -->
-                <div style="background: #fef3c7; padding: 10px; border-radius: 6px; border: 1px solid #f59e0b; margin-top: 10px;">
-                    <label style="color: #92400e; font-weight: bold;">تحكم خريطة المدن المناخية:</label>
-                    
-                    <div class="input-group">
-                        <label style="color: #92400e;">اختر المنطقة المستهدفة:</label>
-                        <select id="climateRegionSelect">
-                            <option value="madinah">المدينة المنورة</option>
-                            <option value="makkah">مكة المكرمة</option>
-                            <option value="riyadh">الرياض</option>
-                            <option value="sharqiyah">المنطقة الشرقية</option>
-                            <option value="north">الشمالية / تبوك</option>
-                            <option value="south">المنطقة الجنوبية</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label style="color: #92400e;">اختر لون الإنذار:</label>
-                        <select id="climateColorSelect">
-                            <option value="yellow">أصفر (انتبـاه)</option>
-                            <option value="orange">برتقالي (استعداد عالي)</option>
-                            <option value="red">أحمر (تحذير خطر)</option>
-                            <option value="green">أخضر (آمن / مستقر)</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label style="color: #92400e;">نوع الحالة المناخية:</label>
-                        <input type="text" id="climateTypeInput" placeholder="مثال: أمطار متوسطة، رياح نشطة، عواصف رعدية..." value="أمطار خفيفة إلى متوسطة وعواصف رعدية" />
-                    </div>
-
-                    <button style="background: #d97706; color: white;" onclick="saveClimateMapSettings()">تحديث خريطة المدن ونشر الحالة</button>
-                </div>
-
-                <!-- قسم إدارة ومتابعة المستخدمين المسجلين -->
-                <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; border: 1px solid #9ca3af; margin-top: 15px;">
-                    <label style="color: #374151; font-weight: bold;">👥 سجل المستخدمين المسجلين وأجهزتهم:</label>
-                    <button style="background: #4b5563; color: white; margin-bottom: 8px;" onclick="loadRegisteredUsersList()">تحميل وعرض بيانات المسجلين</button>
-                    <div id="usersListContainer" style="max-height: 150px; overflow-y: auto;">
-                        <p style="font-size: 11px; color: #6b7280;">اضغط الزر أعلاه لعرض قائمة المستخدمين، أرقامهم، إيميلاتهم، ونوع هواتفهم.</p>
-                    </div>
-                </div>
-
-                <!-- إرسال بريد Gmail وتنبيهات عامة -->
-                <div style="background: #eff6ff; padding: 10px; border-radius: 6px; border: 1px solid #93c5fd; margin-top: 15px;">
-                    <label style="color: #1e40af; font-weight: bold;">✉️ مراسلة المستخدمين عبر Gmail ومحتوى مخصص:</label>
-                    
-                    <div class="input-group">
-                        <label style="color: #1e40af;">البريد الإلكتروني للمستلم:</label>
-                        <input type="email" id="targetEmailInput" placeholder="user@example.com" />
-                    </div>
-
-                    <div class="input-group">
-                        <label style="color: #1e40af;">خيارات جاهزة للرسائل:</label>
-                        <select id="presetMessageSelect" onchange="applyPresetMessage()">
-                            <option value="">-- اختر رسالة جاهزة أو اكتب مخصصاً --</option>
-                            <option value="تحذير جوي عاجل: يرجى أخذ الحيطة والحذر والابتعاد عن مجاري السيول والأودية.">تحذير جوي عاجل</option>
-                            <option value="تنبيه حالة الطقس: تشير الأرصاد إلى تقلبات جوية هطول أمطار ورياح نشطة.">تنبيه حالة الطقس وتقلبات جوية</option>
-                            <option value="إشعار هام من إدارة نظام الإنذار المبكر: يرجى متابعة التعليمات الرسمية.">إشعار هام عام</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label style="color: #1e40af;">محتوى الرسالة (مخصص):</label>
-                        <textarea id="adminCustomEmailText" placeholder="اكتب محتوى الرسالة هنا..."></textarea>
-                    </div>
-
-                    <div class="input-group">
-                        <label style="color: #1e40af;">إرفاق صورة (اختياري):</label>
-                        <input type="file" id="adminImageFile" accept="image/*" onchange="previewAdminImage(event)" />
-                        <img id="adminImgPreview" style="width: 100%; max-height: 100px; object-fit: cover; margin-top: 6px; border-radius: 6px; display: none;" alt="معاينة">
-                    </div>
-
-                    <button style="background: #2563eb; color: white;" onclick="sendCustomGmailMessage()">تحويل وإرسال عبر Gmail</button>
-                </div>
-
-                <div class="input-group" style="margin-top: 15px;">
-                    <label id="lblTitleInput" style="color: #b45309;">عنوان الإنذار العام الشامل:</label>
-                    <input type="text" id="adminTitleInput" value="الرسائل التحذيرية الوطنية" />
+                <div class="input-group">
+                    <label id="lblTitleInput" style="color: #b45309;">عنوان الإنذار الرئيسي:</label>
+                    <input type="text" id="adminTitleInput" placeholder="مثال: تنبيه طوارئ عام..." />
                 </div>
 
                 <div class="input-group">
-                    <label id="lblTextInput" style="color: #b45309;">نص الإنذار العام التفصيلي:</label>
-                    <textarea id="adminAlertInput">تحذير عام:
-تتعرض المنطقة لتقلبات جوية. يرجى توخي الحذر واتباع تعليمات الدفاع المدني.</textarea>
+                    <label id="lblTextInput" style="color: #b45309;">نص الإنذار التفصيلي:</label>
+                    <textarea id="adminAlertInput" placeholder="اكتب تفاصيل الإنذار هنا..."></textarea>
                 </div>
 
-                <button style="background: #eab308; color: #0f172a;" onclick="adminPublishAlert()">نشر الإنذار العام الفوري للجميع</button>
+                <div class="input-group">
+                    <label id="lblImgInput" style="color: #b45309;">إرفاق صورة من المعرض:</label>
+                    <input type="file" id="adminImageFile" accept="image/*" onchange="previewAdminImage(event)" />
+                    <img id="adminImgPreview" style="width: 100%; max-height: 120px; object-fit: cover; margin-top: 8px; border-radius: 6px; display: none;" alt="معاينة الصورة">
+                </div>
+
+                <button style="background: #eab308; color: #0f172a;" onclick="adminPublishAlert()">نشر الإنذار الفوري للجميع</button>
                 <button style="background: #64748b; color: white;" onclick="adminClearAlert()">حذف وإنهاء الإنذار الحالي</button>
 
                 <hr style="margin: 15px 0; border: 0; border-top: 1px solid #fcd34d;">
                 
-                <label style="color: #b45309; font-weight: bold;">التحكم بلون الشاشة العام:</label>
-                <div style="display: flex; gap: 8px; margin-top: 6px;">
+                <label style="color: #b45309; font-weight: bold;">التحكم بلون الشاشة لجميع المستخدمين:</label>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
                     <button style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;" onclick="adminSetColor('white')">أبيض</button>
                     <button style="background: #16a34a; color: white;" onclick="adminSetColor('green')">أخضر</button>
                     <button style="background: #dc2626; color: white;" onclick="adminSetColor('red')">أحمر</button>
@@ -574,7 +416,7 @@
     </div>
 
     <script>
-        let currentUser = { name: "", email: "", phone: "", device: "" };
+        let currentUser = { name: "", email: "", phone: "" };
         let isAlarmRunning = false;
         let base64ImageString = "";
         let globalAudioCtx = null;
@@ -590,34 +432,23 @@
             }
         }
 
-        function detectDeviceType() {
-            const ua = navigator.userAgent;
-            if (/android/i.test(ua)) return "Android Phone";
-            if (/iphone|ipad|ipod/i.test(ua)) return "iPhone / iOS";
-            if (/windows/i.test(ua)) return "Windows PC";
-            if (/mac/i.test(ua)) return "Mac";
-            return "Mobile / Other Device";
-        }
-
         function checkAutoLogin() {
             const savedName = localStorage.getItem("alaret_name");
             const savedEmail = localStorage.getItem("alaret_email");
             const savedPhone = localStorage.getItem("alaret_phone");
-            const savedDevice = localStorage.getItem("alaret_device") || detectDeviceType();
 
             if (savedName && savedEmail && savedPhone) {
-                currentUser = { name: savedName, email: savedEmail, phone: savedPhone, device: savedDevice };
+                currentUser = { name: savedName, email: savedEmail, phone: savedPhone };
                 document.getElementById("loginSection").classList.add("hidden");
                 document.getElementById("dashboardSection").classList.remove("hidden");
-                document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${savedName} (${savedDevice})`;
+                document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${savedName}`;
             }
         }
 
-        async function handleLogin() {
+        function handleLogin() {
             const name = document.getElementById("userName").value.trim();
             const email = document.getElementById("userEmail").value.trim();
             const phone = document.getElementById("userPhone").value.trim();
-            const device = detectDeviceType();
 
             if (!name || !email || !phone) {
                 alert("الرجاء تعبئة جميع الحقول للمتابعة!");
@@ -627,35 +458,18 @@
             localStorage.setItem("alaret_name", name);
             localStorage.setItem("alaret_email", email);
             localStorage.setItem("alaret_phone", phone);
-            localStorage.setItem("alaret_device", device);
 
-            currentUser = { name, email, phone, device };
-
-            try {
-                if(window.db) {
-                    const userDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
-                    await window.setDoc(window.doc(window.db, "users", userDocId), {
-                        name: name,
-                        email: email,
-                        phone: phone,
-                        device: device,
-                        timestamp: Date.now()
-                    });
-                }
-            } catch(e) {
-                console.log("Error saving user to DB", e);
-            }
+            currentUser = { name, email, phone };
 
             document.getElementById("loginSection").classList.add("hidden");
             document.getElementById("dashboardSection").classList.remove("hidden");
-            document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${name} (${device})`;
+            document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${name}`;
         }
 
         function logoutUser() {
             localStorage.removeItem("alaret_name");
             localStorage.removeItem("alaret_email");
             localStorage.removeItem("alaret_phone");
-            localStorage.removeItem("alaret_device");
             location.reload();
         }
 
@@ -695,136 +509,14 @@
             }
 
             const targetPhone = "966500919401";
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
-                        sendWhatsAppMessage(targetPhone, mapsLink);
-                    },
-                    (error) => {
-                        console.warn("Geolocation error", error);
-                        sendWhatsAppMessage(targetPhone, "لم يتم السماح بتحديد الموقع الجغرافي أو تعذر الوصول إليه.");
-                    },
-                    { timeout: 10000, enableHighAccuracy: true }
-                );
-            } else {
-                sendWhatsAppMessage(targetPhone, "المتصفح لا يدعم خدمة تحديد الموقع الجغرافي.");
-            }
-        }
-
-        function sendWhatsAppMessage(targetPhone, locationInfo) {
-            let locationText = locationInfo.startsWith("http") 
-                ? `📍 *الموقع الدقيق (خرائط جوجل):*\n${locationInfo}` 
-                : `📍 *حالة الموقع:* ${locationInfo}`;
-
-            const message = `🚨 *تنبيه طارئ وعاجل من الانذار المبكر ⚠️* 🚨\n\n` +
+            const message = `🚨 *تنبيه طارئ وعاجل من نظام الانذار المبكر ⚠️* 🚨\n\n` +
                             `👤 *اسم المستخدم:* ${currentUser.name}\n` +
                             `📧 *البريد الإلكتروني:* ${currentUser.email}\n` +
                             `📱 *رقم الجوال:* ${currentUser.phone}\n` +
-                            `📱 *نوع الهاتف:* ${currentUser.device}\n` +
-                            `${locationText}\n\n` +
-                            `🔗 *رابط الصفحة:* ${window.location.href}\n\n` +
+                            `🔗 *رابط الموقع:* ${window.location.href}\n\n` +
                             `أطلب التدخل الفوري والمساعدة العاجلة!`;
 
             window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, '_blank');
-        }
-
-        function updateClimateMapUI(data) {
-            const statusDisplay = document.getElementById("climateStatusDisplay");
-            const regionNames = {
-                "madinah": "المدينة المنورة",
-                "makkah": "مكة المكرمة",
-                "riyadh": "الرياض",
-                "sharqiyah": "المنطقة الشرقية",
-                "north": "الشمالية / تبوك",
-                "south": "المنطقة الجنوبية"
-            };
-
-            const regionKey = data.region || "madinah";
-            const colorCode = data.color || "yellow";
-            const climateType = data.type || "أمطار وخفض درجات الحرارة";
-
-            statusDisplay.innerHTML = `📍 <b>المنطقة النشطة:</b> ${regionNames[regionKey]} <br> ⚠️ <b>الحالة المناخية:</b> ${climateType} (تصنيف الإنذار: <span style="text-transform:uppercase; font-weight:bold;">${colorCode}</span>)`;
-
-            const allRegions = ['map_madinah', 'map_makkah', 'map_riyadh', 'map_sharqiyah', 'map_north', 'map_south'];
-            allRegions.forEach(id => {
-                const el = document.getElementById(id);
-                if(el) {
-                    el.setAttribute("fill", "#e2e8f0");
-                }
-            });
-
-            const targetElementId = "map_" + regionKey;
-            const targetElement = document.getElementById(targetElementId);
-            if(targetElement) {
-                let hexColor = "#facc15";
-                if (colorCode === "orange") hexColor = "#fb923c";
-                else if (colorCode === "red") hexColor = "#ef4444";
-                else if (colorCode === "green") hexColor = "#22c55e";
-
-                targetElement.setAttribute("fill", hexColor);
-            }
-        }
-
-        async function saveClimateMapSettings() {
-            const region = document.getElementById("climateRegionSelect").value;
-            const color = document.getElementById("climateColorSelect").value;
-            const type = document.getElementById("climateTypeInput").value.trim();
-
-            try {
-                const docRef = window.doc(window.db, "settings", "climateMapState");
-                await window.setDoc(docRef, {
-                    region: region,
-                    color: color,
-                    type: type,
-                    timestamp: Date.now()
-                }, { merge: true });
-
-                alert("تم تحديث ونشر خريطة المدن المناخية بنجاح لجميع المستخدمين!");
-            } catch(e) {
-                console.error(e);
-                alert("حدث خطأ أثناء حفظ الإعدادات المناخية.");
-            }
-        }
-
-        async function loadRegisteredUsersList() {
-            const container = document.getElementById("usersListContainer");
-            container.innerHTML = "<p style='font-size:12px; color:#1d4ed8;'>جاري جلب البيانات من السيرفر...</p>";
-
-            try {
-                const querySnapshot = await window.getDocs(window.collection(window.db, "users"));
-                if (querySnapshot.empty) {
-                    container.innerHTML = "<p style='font-size:12px; color:#6b7280;'>لا يوجد مستخدمون مسجلون حتى الآن.</p>";
-                    return;
-                }
-
-                let htmlContent = "";
-                querySnapshot.forEach((docSnap) => {
-                    const u = docSnap.data();
-                    htmlContent += `
-                        <div class="user-row-card">
-                            <b>الاسم:</b> ${u.name} <br>
-                            <b>الإيميل:</b> <a href="mailto:${u.email}" style="color: #2563eb;">${u.email}</a> <br>
-                            <b>الجوال:</b> ${u.phone} <br>
-                            <b>نوع الهاتف:</b> <span style="color: #0d9488; font-weight:bold;">${u.device || 'غير معروف'}</span>
-                        </div>
-                    `;
-                });
-                container.innerHTML = htmlContent;
-            } catch(e) {
-                console.error(e);
-                container.innerHTML = "<p style='font-size:12px; color:#dc2626;'>تعذر جلب بيانات المستخدمين.</p>";
-            }
-        }
-
-        function applyPresetMessage() {
-            const preset = document.getElementById("presetMessageSelect").value;
-            if(preset) {
-                document.getElementById("adminCustomEmailText").value = preset;
-            }
         }
 
         function previewAdminImage(event) {
@@ -841,38 +533,21 @@
             }
         }
 
-        function sendCustomGmailMessage() {
-            const recipientEmail = document.getElementById("targetEmailInput").value.trim();
-            const messageBody = document.getElementById("adminCustomEmailText").value.trim();
-
-            if (!recipientEmail) {
-                alert("الرجاء إدخال أو تحديد البريد الإلكتروني للمستلم أولاً!");
-                return;
-            }
-
-            const subject = encodeURIComponent("تنبيه عاجل من الانذار المبكر ⚠️");
-            let bodyText = messageBody;
-            if(base64ImageString) {
-                bodyText += "\n\n[تم إرفاق صورة مع هذا البلاغ في لوحة العمليات]";
-            }
-
-            const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(recipientEmail)}&su=${subject}&body=${encodeURIComponent(bodyText)}`;
-            window.open(gmailUrl, '_blank');
-        }
-
         function updateAdminLangLabels() {
             const lang = document.getElementById("adminLangSelect").value;
             const html = document.getElementById("htmlRoot");
             if (lang === 'en') {
                 html.setAttribute("dir", "ltr");
                 html.setAttribute("lang", "en");
-                document.getElementById("lblTitleInput").innerText = "General Emergency Title:";
-                document.getElementById("lblTextInput").innerText = "General Emergency Detailed Text:";
+                document.getElementById("lblTitleInput").innerText = "Emergency Title:";
+                document.getElementById("lblTextInput").innerText = "Emergency Detailed Text:";
+                document.getElementById("lblImgInput").innerText = "Attach Image from Gallery:";
             } else {
                 html.setAttribute("dir", "rtl");
                 html.setAttribute("lang", "ar");
-                document.getElementById("lblTitleInput").innerText = "عنوان الإنذار العام الشامل:";
-                document.getElementById("lblTextInput").innerText = "نص الإنذار العام التفصيلي:";
+                document.getElementById("lblTitleInput").innerText = "عنوان الإنذار الرئيسي:";
+                document.getElementById("lblTextInput").innerText = "نص الإنذار التفصيلي:";
+                document.getElementById("lblImgInput").innerText = "إرفاق صورة من المعرض:";
             }
         }
 
@@ -1086,14 +761,17 @@
             const titleEl = document.getElementById("modalAlertTitle");
             const textEl = document.getElementById("modalAlertText");
             const imgEl = document.getElementById("modalAlertImg");
+            const imgWrapper = document.getElementById("modalImgWrapper");
 
             titleEl.innerText = alertData.title;
             textEl.innerText = alertData.text;
 
             if (alertData.image && alertData.image.length > 10) {
                 imgEl.src = alertData.image;
+                imgWrapper.classList.remove("hidden");
                 imgEl.style.display = "block";
             } else {
+                imgWrapper.classList.add("hidden");
                 imgEl.style.display = "none";
             }
 
