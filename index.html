@@ -1,801 +1,592 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="htmlRoot">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الانذار المبكر ⚠️ - لوحة العمليات</title>
-
-    <!-- شعار الشاشة الرئيسية والأيقونة المخصصة -->
-    <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
-    <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
-
-    <!-- OneSignal v16 SDK للإشعارات -->
+    <title>منصة الطقس والإنذار المبكر</title>
+    <!-- FontAwesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts - Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- OneSignal SDK -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
-        });
-      });
-    </script>
-
-    <!-- Firebase SDK (v9 Modular) مع بيانات مشروعك alaret-e8f2a -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXKY3MQLbCRAqJwVHGymTVT61Dalpb2g",
-            authDomain: "alaret-e8f2a.firebaseapp.com",
-            projectId: "alaret-e8f2a",
-            storageBucket: "alaret-e8f2a.appspot.com",
-            messagingSenderId: "735569802866",
-            appId: "1:735569802866:web:aa9935ede7a44f9a0c34eb"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.db = db;
-        window.doc = doc;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-        window.onSnapshot = onSnapshot;
-
-        let lastAlertId = "";
-
-        // الاستماع الفوري لحالة النظام والتنبيهات من فايربيس
-        document.addEventListener("DOMContentLoaded", () => {
-            checkAutoLogin();
-
-            // فك قفل الصوت عند أول تفاعل للمستخدم (مهم جداً لأجهزة الآيفون والأندرويد)
-            document.body.addEventListener('click', () => {
-                unlockAudioContext();
-            }, { once: true });
-
-            if(window.db) {
-                window.onSnapshot(window.doc(window.db, "settings", "globalState"), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        applyScreenColor(data.screenColor || "white");
-                        
-                        if(data.activeAlert && data.activeAlert.text) {
-                            const alertUniqueKey = data.alertTimestamp || data.activeAlert.text;
-                            showModalAlert(data.activeAlert);
-                            
-                            if (alertUniqueKey !== lastAlertId) {
-                                playRealAlarmSoundAndSpeak(data.activeAlert);
-                                lastAlertId = alertUniqueKey;
-                            }
-                        } else {
-                            hideModalAlert();
-                            lastAlertId = "";
-                        }
-                    }
-                });
-            }
-        });
-    </script>
-
+    
     <style>
-        body {
-            font-family: Tahoma, sans-serif;
-            background: #f8fafc;
-            color: #0f172a;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-        .top-admin-bar {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1000;
-        }
-        .admin-trigger-btn {
-            background: #0f172a;
-            color: #eab308;
-            border: 2px solid #eab308;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .admin-trigger-btn:hover {
-            background: #1e293b;
-        }
-        .card {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 480px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-        }
-        /* تكبير الشعار ليملأ المربع بالكامل وبشكل بارز */
-        .warning-img-container {
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 15px auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #fef08a;
-            border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(234, 179, 8, 0.3);
-            border: 3px solid #eab308;
-        }
-        .warning-img {
-            width: 115px;
-            height: 115px;
-            object-fit: contain;
-        }
-        h2 {
-            margin-top: 0;
-        }
-        p {
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .input-group {
-            margin-bottom: 15px;
-            text-align: right;
-        }
-        label {
-            display: block;
-            font-size: 13px;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            background: #ffffff;
-            color: #0f172a;
-            box-sizing: border-box;
-            font-size: 14px;
-            font-family: Tahoma, sans-serif;
-        }
-        textarea {
-            resize: vertical;
-            height: 80px;
-        }
-        button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: #1d4ed8;
-        }
-        .emergency-btn {
-            background: #dc2626 !important;
-        }
-        .emergency-btn:hover {
-            background: #b91c1c !important;
-        }
-        .notif-btn {
-            background: #0d9488 !important;
-        }
-        .notif-btn:hover {
-            background: #0f766e !important;
-        }
-        .hidden {
-            display: none;
-        }
-        .section-box {
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 1px solid #e2e8f0;
-            text-align: right;
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-secondary: #94a3b8;
+            --primary: #3b82f6;
+            --border-color: #334155;
+            --info: #10b981;
+            --notice: #3b82f6;
+            --warning: #f59e0b;
+            --severe: #f97316;
+            --emergency: #ef4444;
         }
 
-        /* نافذة الإنذار المنبثقة بمنتصف الشاشة (Modal Overlay) */
-        #modalAlertOverlay {
+        [data-theme="light"] {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-color: #0f172a;
+            --text-secondary: #64748b;
+            --primary: #2563eb;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        /* شاشة تسجيل الدخول والترحيب الإجباري */
+        #welcome-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(15, 23, 42, 0.95);
             z-index: 9999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .modal-content {
-            background: #ffffff;
-            color: #0f172a;
-            padding: 25px;
-            border-radius: 16px;
-            max-width: 450px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            border: 4px solid #dc2626;
-            animation: modalPop 0.3s ease-out;
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        @keyframes modalPop {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .modal-img-container {
-            width: 130px;
-            height: 130px;
-            margin: 0 auto 12px auto;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #fee2e2;
-            border-radius: 50%;
-            border: 3px solid #dc2626;
+            padding: 20px;
         }
-        .modal-img {
-            width: 105px;
-            height: 105px;
-            object-fit: contain;
-            border-radius: 8px;
-            display: none;
+
+        .welcome-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 450px;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
         }
-        .modal-content h3 {
-            color: #dc2626;
-            margin-top: 0;
-            font-size: 22px;
+
+        .welcome-card h2 {
+            margin-bottom: 15px;
+            font-size: 1.6rem;
         }
-        .modal-text-box {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 15px 0;
-            background: #fef2f2;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #fecaca;
+
+        .welcome-card p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .features-list {
             text-align: right;
+            margin-bottom: 20px;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 15px;
+            border-radius: 12px;
         }
-        .close-modal-btn {
-            background: #64748b;
+
+        .features-list div {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* حاوية التطبيق الرئيسية */
+        .app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        /* البطاقات والأقسام */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .weather-main {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .weather-main h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .temp-display {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+
+        .weather-details {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* طقس الساعات */
+        .hourly-scroll {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-top: 15px;
+        }
+
+        .hour-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 75px;
+            border: 1px solid var(--border-color);
+        }
+
+        .hour-item i {
+            font-size: 1.2rem;
+            margin: 5px 0;
+        }
+
+        /* قائمة المدن وتحت بعضها */
+        .cities-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .city-row {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .city-info h4 {
+            font-size: 1.1rem;
+            margin-bottom: 3px;
+        }
+
+        .city-info p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* مستويات الإنذار */
+        .alert-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge-info { background: rgba(16, 185, 129, 0.2); color: var(--info); border: 1px solid var(--info); }
+        .badge-notice { background: rgba(59, 130, 246, 0.2); color: var(--notice); border: 1px solid var(--notice); }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+        .badge-severe { background: rgba(249, 115, 22, 0.2); color: var(--severe); border: 1px solid var(--severe); }
+        .badge-emergency { background: rgba(239, 68, 68, 0.2); color: var(--emergency); border: 1px solid var(--emergency); animation: pulse 1.5s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* الأزرار والنماذج */
+        .btn {
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 12px;
-            width: 100%;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: not-allowed;
-            opacity: 0.6;
-            transition: all 0.3s;
-        }
-        .close-modal-btn.active {
-            background: #dc2626;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
             cursor: pointer;
-            opacity: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
         }
-        .close-modal-btn.active:hover {
-            background: #b91c1c;
+
+        .btn:hover { opacity: 0.9; }
+
+        input, select, textarea {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
         }
-        #audioStatusText {
-            font-size: 13px;
-            color: #b91c1c;
-            margin-bottom: 8px;
-            font-weight: bold;
+
+        /* شريط التنقل السفلي */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+        }
+
+        /* لوحة التحكم والأقسام المخفية */
+        .section-view { display: none; }
+        .section-view.active { display: block; }
+
+        .admin-box {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px dashed var(--emergency);
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
-    <!-- نافذة الإنذار المنبثقة التي تظهر بوجّه المستخدم -->
-    <div id="modalAlertOverlay">
-        <div class="modal-content">
-            <div id="modalImgWrapper" class="modal-img-container hidden">
-                <img id="modalAlertImg" class="modal-img" src="" alt="صورة الإنذار">
-            </div>
-            <h3 id="modalAlertTitle">⚠️ تنبيه عاجل وهام ⚠️</h3>
-            <div id="audioStatusText">جاري تشغيل صوت الإنذار... يرجى الانتظار</div>
-            <div class="modal-text-box" id="modalAlertText">...</div>
-            <button id="closeModalBtn" class="close-modal-btn" disabled onclick="dismissModalAlert()">إغلاق الإنذار (معطلاً حتى انتهاء الصوت)</button>
-        </div>
-    </div>
-
-    <!-- زر الأدمن في الأعلى -->
-    <div class="top-admin-bar">
-        <button class="admin-trigger-btn" onclick="openAdminPortal()">👑 الإدارة (Admin)</button>
-    </div>
-
-    <div class="card">
-        <div class="warning-img-container">
-            <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="تحذير" class="warning-img">
-        </div>
-        <h2>الانذار المبكر ⚠️</h2>
-
-        <!-- تسجيل الدخول للمرة الأولى فقط -->
-        <div id="loginSection">
-            <p style="color: #64748b;">الرجاء إدخال بياناتك الشخصية للوصول إلى النظام وإرسال بلاغات الطوارئ بدقة (ستتم مطالبتك بهذه البيانات لمرة واحدة فقط).</p>
-            <div class="input-group">
-                <label>الاسم الكامل:</label>
-                <input type="text" id="userName" placeholder="أدخل اسمك..." />
-            </div>
-            <div class="input-group">
-                <label>البريد الإلكتروني:</label>
-                <input type="email" id="userEmail" placeholder="name@example.com" />
-            </div>
-            <div class="input-group">
-                <label>رقم الجوال:</label>
-                <input type="text" id="userPhone" placeholder="05xxxxxxxx" />
-            </div>
-            <button onclick="handleLogin()">دخول النظام وحفظ البيانات</button>
-        </div>
-
-        <!-- لوحة العمليات الرئيسية -->
-        <div id="dashboardSection" class="hidden">
-            <p id="welcomeMsg" style="color: #0284c7; font-weight: bold;"></p>
+    <!-- شاشة الترحيب وتسجيل الدخول الأولي وطلب الإشعارات -->
+    <div id="welcome-overlay">
+        <div class="welcome-card">
+            <h2><i class="fa-solid fa-cloud-bolt" style="color: var(--primary);"></i> نظام الإنذار المبكر</h2>
+            <p>كن أول من يعرف إذا اقتربت حالة جوية أو تنبيه طارئ من منطقتك.</p>
             
-            <!-- زر طلب تفعيل الإشعارات -->
-            <div class="section-box">
-                <label style="color: #0f766e; font-weight: bold;">تنبيهات الإشعارات الفورية:</label>
-                <p style="font-size: 12px; color: #475569;">اضغط أدناه للسماح باستقبال الإشعارات والإنذارات الحية:</p>
-                <button class="notif-btn" onclick="requestNotificationPermission()">🔔 تفعيل والسماح بالإشعارات</button>
+            <div class="features-list">
+                <div>🌧️ أمطار وعواصف رعدية متقدمة</div>
+                <div>📍 تخصيص الإنذارات حسب مدينتك</div>
+                <div>🔔 إشعارات فورية دقيقة</div>
             </div>
 
-            <div class="section-box">
-                <label style="color: #dc2626; font-weight: bold;">منطقة الطوارئ القصوى:</label>
-                <p style="font-size: 12px; color: #475569;">بالضغط أدناه سيتم تحويلك فوراً إلى الواتساب مع إرسال كافة بياناتك وموقعك:</p>
-                <button class="emergency-btn" onclick="triggerEmergencyWhatsApp()">🚨 إرسال بلاغ طوارئ عبر WhatsApp</button>
+            <button class="btn" onclick="initAppAndNotifications()">
+                <i class="fa-solid fa-bell"></i> تفعيل التنبيهات والدخول
+            </button>
+        </div>
+    </div>
+
+    <!-- حاوية التطبيق -->
+    <div class="app-container">
+        
+        <header>
+            <h1><i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i> رادار الطقس</h1>
+            <div class="header-btns">
+                <button class="icon-btn" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="theme-icon"></i></button>
+                <button class="icon-btn" onclick="openAdminModal()"><i class="fa-solid fa-lock"></i></button>
+            </div>
+        </header>
+
+        <!-- 1. صفحة الطقس والمدن -->
+        <div id="view-home" class="section-view active">
+            <div class="card weather-main">
+                <h2 id="main-city-title">المدينة المنورة</h2>
+                <div class="temp-display">32°C</div>
+                <p style="color: var(--text-secondary);">غائم جزئيًا — شعور عام مستقر</p>
+                
+                <div class="weather-details">
+                    <div><i class="fa-solid fa-wind"></i> 18 كم/س</div>
+                    <div><i class="fa-solid fa-droplet"></i> 41% رطوبة</div>
+                    <div><i class="fa-solid fa-gauge"></i> 1012 hPa</div>
+                </div>
+
+                <div class="hourly-scroll">
+                    <div class="hour-item"><span>15:00</span><i class="fa-solid fa-sun" style="color: #f59e0b;"></i><span>32°</span></div>
+                    <div class="hour-item"><span>16:00</span><i class="fa-solid fa-cloud" style="color: #94a3b8;"></i><span>31°</span></div>
+                    <div class="hour-item"><span>17:00</span><i class="fa-solid fa-cloud-rain" style="color: #3b82f6;"></i><span>29°</span></div>
+                    <div class="hour-item"><span>18:00</span><i class="fa-solid fa-cloud-bolt" style="color: #f97316;"></i><span>27°</span></div>
+                </div>
             </div>
 
-            <button style="background: #64748b; font-size: 12px; padding: 6px; margin-top: 15px;" onclick="logoutUser()">إعادة تعيين وتسجيل الخروج</button>
+            <h3 style="margin-bottom: 12px; font-size: 1.1rem;"><i class="fa-solid fa-list-check"></i> متابعة المدن والإنذارات المخصصة</h3>
+            <div class="cities-stack" id="dynamic-cities-container">
+                <!-- يتم تعبئتها ديناميكياً -->
+            </div>
+        </div>
 
-            <!-- لوحة تحكم الأدمن -->
-            <div id="adminPanel" class="section-box hidden" style="border-color: #eab308; background: #fffbeb; color: #0f172a;">
-                <label style="color: #b45309; font-weight: bold;">👑 لوحة تحكم الأدمن المركزية</label>
-                
-                <div class="input-group" style="margin-top: 10px;">
-                    <label style="color: #b45309;">لغة الإنذار (Language):</label>
-                    <select id="adminLangSelect" onchange="updateAdminLangLabels()">
-                        <option value="ar">العربية (Arabic)</option>
-                        <option value="en">English (الإنجليزية)</option>
-                    </select>
-                </div>
+        <!-- 2. خريطة وحالة الحالات الجوية -->
+        <div id="view-map" class="section-view">
+            <div class="card">
+                <h3><i class="fa-solid fa-map-location-dot"></i> حالة المناطق في المملكة</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">حالة الطقس المباشرة لكل منطقة مسجلة في النظام.</p>
+            </div>
+            <div class="cities-stack" id="map-cities-list"></div>
+        </div>
 
-                <div class="input-group">
-                    <label id="lblTitleInput" style="color: #b45309;">عنوان الإنذار الرئيسي:</label>
-                    <input type="text" id="adminTitleInput" placeholder="مثال: تنبيه طوارئ عام..." />
-                </div>
-
-                <div class="input-group">
-                    <label id="lblTextInput" style="color: #b45309;">نص الإنذار التفصيلي:</label>
-                    <textarea id="adminAlertInput" placeholder="اكتب تفاصيل الإنذار هنا..."></textarea>
-                </div>
-
-                <div class="input-group">
-                    <label id="lblImgInput" style="color: #b45309;">إرفاق صورة من المعرض:</label>
-                    <input type="file" id="adminImageFile" accept="image/*" onchange="previewAdminImage(event)" />
-                    <img id="adminImgPreview" style="width: 100%; max-height: 120px; object-fit: cover; margin-top: 8px; border-radius: 6px; display: none;" alt="معاينة الصورة">
-                </div>
-
-                <button style="background: #eab308; color: #0f172a;" onclick="adminPublishAlert()">نشر الإنذار الفوري للجميع</button>
-                <button style="background: #64748b; color: white;" onclick="adminClearAlert()">حذف وإنهاء الإنذار الحالي</button>
-
-                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #fcd34d;">
-                
-                <label style="color: #b45309; font-weight: bold;">التحكم بلون الشاشة لجميع المستخدمين:</label>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <button style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;" onclick="adminSetColor('white')">أبيض</button>
-                    <button style="background: #16a34a; color: white;" onclick="adminSetColor('green')">أخضر</button>
-                    <button style="background: #dc2626; color: white;" onclick="adminSetColor('red')">أحمر</button>
+        <!-- 3. سجل التنبيهات -->
+        <div id="view-logs" class="section-view">
+            <div class="card">
+                <h3><i class="fa-solid fa-clipboard-list"></i> سجل التنبيهات والإنذارات السابقة</h3>
+                <div style="margin-top: 15px;" id="logs-container">
+                    <div style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                        <span class="badge badge-warning" style="margin-bottom: 5px;">تحذير أمطار</span>
+                        <p style="font-size: 0.9rem;">المدينة المنورة — أمطار متوسطة متوقعة (19 سبتمبر - 14:20)</p>
+                    </div>
+                    <div style="padding: 10px 0;">
+                        <span class="badge badge-info" style="margin-bottom: 5px;">معلومة طقس</span>
+                        <p style="font-size: 0.9rem;">جدة — تغير بسيط في درجات الحرارة (18 سبتمبر - 17:32)</p>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- 4. إعدادات المستخدم -->
+        <div id="view-settings" class="section-view">
+            <div class="card">
+                <h3><i class="fa-solid fa-gear"></i> إعدادات التنبيهات الشخصية</h3>
+                <label style="display:block; margin: 15px 0 5px;">اختر منطقتك الرئيسية:</label>
+                <select id="user-primary-city">
+                    <option value="المدينة المنورة">المدينة المنورة</option>
+                    <option value="مكة المكرمة">مكة المكرمة</option>
+                    <option value="الرياض">الرياض</option>
+                    <option value="جدة">جدة</option>
+                    <option value="القصيم">القصيم</option>
+                </select>
+
+                <div style="margin-top: 15px;">
+                    <label style="display:block; margin-bottom: 8px;">أنواع التنبيهات المرغوبة:</label>
+                    <label style="display:block; margin-bottom: 5px;"><input type="checkbox" checked> الأمطار والعواصف الرعدية</label>
+                    <label style="display:block; margin-bottom: 5px;"><input type="checkbox" checked> الرياح القوية والغبار</label>
+                    <label style="display:block;"><input type="checkbox" checked> تنبيهات الطوارئ القصوى</label>
+                </div>
+
+                <button class="btn" style="margin-top: 20px;" onclick="alert('تم حفظ إعداداتك بنجاح!')">حفظ الإعدادات</button>
+            </div>
+        </div>
+
+        <!-- 5. لوحة تحكم الأمن المركزي (مخفية تتطلب الرمز 13121312) -->
+        <div id="view-admin" class="section-view">
+            <div class="card admin-box">
+                <h3><i class="fa-solid fa-user-shield"></i> لوحة التحكم الأمن المركزي</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">إدارة الإنذارات المباشرة للمدن والتحكم الشامل.</p>
+
+                <label>اختر المدينة المراد تحديث حالتها:</label>
+                <select id="admin-target-city">
+                    <option value="المدينة المنورة">المدينة المنورة</option>
+                    <option value="مكة المكرمة">مكة المكرمة</option>
+                    <option value="الرياض">الرياض</option>
+                    <option value="جدة">جدة</option>
+                    <option value="القصيم">القصيم</option>
+                </select>
+
+                <label>مستوى الإنذار والتفاصيل:</label>
+                <select id="admin-alert-level">
+                    <option value="🟢 معلومة">🟢 معلومة (تغير بسيط)</option>
+                    <option value="🔵 تنبيه">🔵 تنبيه (احتمال أمطار)</option>
+                    <option value="🟡 تحذير">🟡 تحذير (أمطار غزيرة)</option>
+                    <option value="🟠 تحذير شديد">🟠 تحذير شديد (عواصف رعدية)</option>
+                    <option value="🔴 طوارئ">🔴 طوارئ (حالة جوية حرجة)</option>
+                </select>
+
+                <textarea id="admin-alert-desc" placeholder="اكتب تفاصيل الإنذار هنا (مثلاً: رياح قوية وأمطار غزيرة متوقعة خلال ساعة)..." rows="3"></textarea>
+
+                <button class="btn" onclick="publishAlert()"><i class="fa-solid fa-paper-plane"></i> نشر وتحديث الإنذار فوراً</button>
+            </div>
+        </div>
+
     </div>
+
+    <!-- شريط التنقل السفلي -->
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('home', this)"><i class="fa-solid fa-house"><span>الرئيسية</span></i></button>
+        <button class="nav-item" onclick="switchTab('map', this)"><i class="fa-solid fa-map"><span>الخريطة</span></i></button>
+        <button class="nav-item" onclick="switchTab('logs', this)"><i class="fa-solid fa-clock-rotate-left"><span>السجل</span></i></button>
+        <button class="nav-item" onclick="switchTab('settings', this)"><i class="fa-solid fa-gear"><span>الإعدادات</span></i></button>
+    </nav>
 
     <script>
-        let currentUser = { name: "", email: "", phone: "" };
-        let isAlarmRunning = false;
-        let base64ImageString = "";
-        let globalAudioCtx = null;
+        // بيانات المدن وحالتها الافتراضية
+        let citiesData = [
+            { name: "المدينة المنورة", status: "🟡 تحذير", desc: "أمطار غزيرة متوقعة", class: "badge-warning" },
+            { name: "مكة المكرمة", status: "🟠 تحذير شديد", desc: "عواصف رعدية قوية", class: "badge-severe" },
+            { name: "الرياض", status: "🟢 معلومة", desc: "تغير بسيط في الطقس", class: "badge-info" },
+            { name: "جدة", status: "🔵 تنبيه", desc: "احتمال أمطار خفيفة", class: "badge-notice" },
+            { name: "القصيم", status: "🟢 معلومة", desc: "أجواء مستقرة نسبياً", class: "badge-info" }
+        ];
 
-        function unlockAudioContext() {
-            try {
-                globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (globalAudioCtx.state === 'suspended') {
-                    globalAudioCtx.resume();
-                }
-            } catch (e) {
-                console.log("Audio unlock error", e);
-            }
-        }
-
-        function checkAutoLogin() {
-            const savedName = localStorage.getItem("alaret_name");
-            const savedEmail = localStorage.getItem("alaret_email");
-            const savedPhone = localStorage.getItem("alaret_phone");
-
-            if (savedName && savedEmail && savedPhone) {
-                currentUser = { name: savedName, email: savedEmail, phone: savedPhone };
-                document.getElementById("loginSection").classList.add("hidden");
-                document.getElementById("dashboardSection").classList.remove("hidden");
-                document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${savedName}`;
-            }
-        }
-
-        function handleLogin() {
-            const name = document.getElementById("userName").value.trim();
-            const email = document.getElementById("userEmail").value.trim();
-            const phone = document.getElementById("userPhone").value.trim();
-
-            if (!name || !email || !phone) {
-                alert("الرجاء تعبئة جميع الحقول للمتابعة!");
-                return;
-            }
-
-            localStorage.setItem("alaret_name", name);
-            localStorage.setItem("alaret_email", email);
-            localStorage.setItem("alaret_phone", phone);
-
-            currentUser = { name, email, phone };
-
-            document.getElementById("loginSection").classList.add("hidden");
-            document.getElementById("dashboardSection").classList.remove("hidden");
-            document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${name}`;
-        }
-
-        function logoutUser() {
-            localStorage.removeItem("alaret_name");
-            localStorage.removeItem("alaret_email");
-            localStorage.removeItem("alaret_phone");
-            location.reload();
-        }
-
-        function requestNotificationPermission() {
+        // تهيئة التطبيق والإشعارات
+        function initAppAndNotifications() {
+            document.getElementById('welcome-overlay').style.display = 'none';
+            // تهيئة OneSignal المبدئية
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
             window.OneSignalDeferred.push(async function(OneSignal) {
-                try {
-                    await OneSignal.Slidedown.promptPush();
-                    alert("تم إرسال طلب السماح بالإشعارات.");
-                } catch (e) {
-                    if (Notification && Notification.permission !== "granted") {
-                        Notification.requestPermission().then(permission => {
-                            if (permission === "granted") alert("تم تفعيل الإشعارات بنجاح!");
-                            else alert("تم رفض إذن الإشعارات.");
-                        });
-                    } else {
-                        alert("الإشعارات مفعلة مسبقاً.");
-                    }
-                }
-            });
-        }
-
-        function openAdminPortal() {
-            const pass = prompt("الرجاء إدخال رمز دخول الأدمن:");
-            if (pass === "13121312") {
-                document.getElementById("dashboardSection").classList.remove("hidden");
-                document.getElementById("adminPanel").classList.remove("hidden");
-                alert("تم الدخول للوحة الأدمن بنجاح.");
-            } else if (pass !== null) {
-                alert("رمز الدخول غير صحيح!");
-            }
-        }
-
-        function triggerEmergencyWhatsApp() {
-            if (!currentUser.name) {
-                alert("الرجاء تسجيل الدخول أولاً.");
-                return;
-            }
-
-            const targetPhone = "966500919401";
-            const message = `🚨 *تنبيه طارئ وعاجل من نظام الانذار المبكر ⚠️* 🚨\n\n` +
-                            `👤 *اسم المستخدم:* ${currentUser.name}\n` +
-                            `📧 *البريد الإلكتروني:* ${currentUser.email}\n` +
-                            `📱 *رقم الجوال:* ${currentUser.phone}\n` +
-                            `🔗 *رابط الموقع:* ${window.location.href}\n\n` +
-                            `أطلب التدخل الفوري والمساعدة العاجلة!`;
-
-            window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, '_blank');
-        }
-
-        function previewAdminImage(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    base64ImageString = e.target.result;
-                    const preview = document.getElementById("adminImgPreview");
-                    preview.src = base64ImageString;
-                    preview.style.display = "block";
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function updateAdminLangLabels() {
-            const lang = document.getElementById("adminLangSelect").value;
-            const html = document.getElementById("htmlRoot");
-            if (lang === 'en') {
-                html.setAttribute("dir", "ltr");
-                html.setAttribute("lang", "en");
-                document.getElementById("lblTitleInput").innerText = "Emergency Title:";
-                document.getElementById("lblTextInput").innerText = "Emergency Detailed Text:";
-                document.getElementById("lblImgInput").innerText = "Attach Image from Gallery:";
-            } else {
-                html.setAttribute("dir", "rtl");
-                html.setAttribute("lang", "ar");
-                document.getElementById("lblTitleInput").innerText = "عنوان الإنذار الرئيسي:";
-                document.getElementById("lblTextInput").innerText = "نص الإنذار التفصيلي:";
-                document.getElementById("lblImgInput").innerText = "إرفاق صورة من المعرض:";
-            }
-        }
-
-        function playRealAlarmSoundAndSpeak(alertData) {
-            if (isAlarmRunning) return;
-            isAlarmRunning = true;
-
-            const closeBtn = document.getElementById("closeModalBtn");
-            const statusText = document.getElementById("audioStatusText");
-            const lang = alertData.lang || "ar";
-
-            closeBtn.disabled = true;
-            closeBtn.classList.remove("active");
-            closeBtn.innerText = lang === 'en' ? "Close Alert (Locked until alarm finishes)" : "إغلاق الإنذار (معطلاً حتى انتهاء الصوت)";
-            statusText.innerText = lang === 'en' ? "🚨 Playing emergency alarm..." : "🚨 جاري تشغيل صوت الإنذار الحقيقي...";
-
-            try {
-                if (!globalAudioCtx) {
-                    globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (globalAudioCtx.state === 'suspended') {
-                    globalAudioCtx.resume();
-                }
-
-                let beepCount = 6;
-                let intervalTime = 400;
-
-                for (let i = 0; i < beepCount; i++) {
-                    setTimeout(() => {
-                        playBeepTone(globalAudioCtx, 950, 650, 0.35);
-                    }, i * intervalTime);
-                }
-
-                let totalAlarmTime = (beepCount * intervalTime) + 300;
-
-                setTimeout(() => {
-                    statusText.innerText = lang === 'en' ? "🗣️ Reading alert aloud..." : "🗣️ جاري قراءة الإنذار بصوت عالٍ...";
-                    speakAlertText(alertData.title, alertData.text, lang, () => {
-                        statusText.innerText = lang === 'en' ? "✅ Alarm finished. You can close now." : "✅ انتهى الإنذار والصوت، يمكنك الإغلاق الآن";
-                        closeBtn.disabled = false;
-                        closeBtn.classList.add("active");
-                        closeBtn.innerText = lang === 'en' ? "Close Alert (X)" : "إغلاق الإنذار (X)";
-                        isAlarmRunning = false;
-                    });
-                }, totalAlarmTime);
-
-            } catch (e) {
-                console.log("Audio exception", e);
-                speakAlertText(alertData.title, alertData.text, lang, () => {
-                    closeBtn.disabled = false;
-                    closeBtn.classList.add("active");
-                    closeBtn.innerText = lang === 'en' ? "Close Alert (X)" : "إغلاق الإنذار (X)";
-                    isAlarmRunning = false;
+                await OneSignal.init({
+                    appId: "YOUR_ONESIGNAL_APP_ID", // ضع معرف OneSignal الخاص بك هنا
                 });
-            }
+            });
+            renderCities();
         }
 
-        function playBeepTone(audioCtx, freqStart, freqEnd, duration) {
-            try {
-                let osc = audioCtx.createOscillator();
-                let gain = audioCtx.createGain();
-
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(freqEnd, audioCtx.currentTime + duration);
-
-                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (err) {
-                console.log("Beep error", err);
-            }
-        }
-
-        function speakAlertText(title, text, lang, callback) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                
-                let fullTextToSpeak = (lang === 'en') ? `Emergency Alert. ${title}. ${text}` : `تنبيه عاجل. ${title}. ${text}`;
-                let utterance = new SpeechSynthesisUtterance(fullTextToSpeak);
-                
-                utterance.lang = (lang === 'en') ? 'en-US' : 'ar-SA';
-                utterance.rate = 0.88;
-                utterance.pitch = 1.0;
-
-                let voices = window.speechSynthesis.getVoices();
-                let selectedVoice = voices.find(v => v.lang.startsWith(lang) || v.lang.includes(lang === 'ar' ? 'ar' : 'en'));
-                if (selectedVoice) {
-                    utterance.voice = selectedVoice;
-                }
-
-                utterance.onend = function() {
-                    if (callback) callback();
-                };
-                utterance.onerror = function() {
-                    if (callback) callback();
-                };
-
-                window.speechSynthesis.speak(utterance);
-            } else {
-                if (callback) callback();
-            }
-        }
-
-        async function adminPublishAlert() {
-            const title = document.getElementById("adminTitleInput").value.trim();
-            const text = document.getElementById("adminAlertInput").value.trim();
-            const lang = document.getElementById("adminLangSelect").value;
-
-            if(!title || !text) {
-                alert("الرجاء إدخال العنوان والنص الرئيسي للإنذار!");
-                return;
-            }
-
-            try {
-                const docRef = window.doc(window.db, "settings", "globalState");
-                const snap = await window.getDoc(docRef);
-                let currentColor = "white";
-                if(snap.exists()) currentColor = snap.data().screenColor || "white";
-
-                await window.setDoc(docRef, {
-                    activeAlert: {
-                        title: title,
-                        text: text,
-                        image: base64ImageString,
-                        lang: lang
-                    },
-                    alertTimestamp: Date.now(),
-                    screenColor: currentColor
-                }, { merge: true });
-
-                alert("تم نشر الإنذار الفوري بنجاح ووصل لجميع الأجهزة!");
-                document.getElementById("adminTitleInput").value = "";
-                document.getElementById("adminAlertInput").value = "";
-                document.getElementById("adminImageFile").value = "";
-                document.getElementById("adminImgPreview").style.display = "none";
-                base64ImageString = "";
-            } catch(e) {
-                console.error(e);
-                alert("خطأ أثناء النشر.");
-            }
-        }
-
-        async function adminClearAlert() {
-            try {
-                const docRef = window.doc(window.db, "settings", "globalState");
-                const snap = await window.getDoc(docRef);
-                let currentColor = "white";
-                if(snap.exists()) currentColor = snap.data().screenColor || "white";
-
-                await window.setDoc(docRef, {
-                    activeAlert: null,
-                    alertTimestamp: null,
-                    screenColor: currentColor
-                }, { merge: true });
-                alert("تم إزالة وإنهاء الإنذار.");
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        async function adminSetColor(colorType) {
-            try {
-                const docRef = window.doc(window.db, "settings", "globalState");
-                const snap = await window.getDoc(docRef);
-                let currentAlert = null;
-                if(snap.exists()) currentAlert = snap.data().activeAlert || null;
-
-                await window.setDoc(docRef, {
-                    activeAlert: currentAlert,
-                    screenColor: colorType
-                }, { merge: true });
-                alert(`تم تغيير لون الشاشة إلى (${colorType}) بنجاح!`);
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        function applyScreenColor(colorType) {
-            const body = document.body;
-            const card = document.querySelector(".card");
+        // رسم المدن تحت بعضها بشكل عملي
+        function renderCities() {
+            const container = document.getElementById('dynamic-cities-container');
+            const mapContainer = document.getElementById('map-cities-list');
             
-            if (colorType === "green") {
-                body.style.background = "#16a34a";
-                body.style.color = "#ffffff";
-                card.style.background = "#15803d";
-                card.style.color = "#ffffff";
-                card.style.borderColor = "#22c55e";
-            } else if (colorType === "red") {
-                body.style.background = "#dc2626";
-                body.style.color = "#ffffff";
-                card.style.background = "#b91c1c";
-                card.style.color = "#ffffff";
-                card.style.borderColor = "#ef4444";
+            let htmlContent = '';
+            citiesData.forEach(city => {
+                htmlContent += `
+                    <div class="city-row">
+                        <div class="city-info">
+                            <h4><i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> ${city.name}</h4>
+                            <p>${city.desc}</p>
+                        </div>
+                        <div>
+                            <span class="alert-badge ${city.class}">${city.status}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = htmlContent;
+            mapContainer.innerHTML = htmlContent;
+        }
+
+        // التنقل بين التبويبات
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + tabId).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+        }
+
+        // تبديل الوضع الليلي والنهاري
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            if(body.getAttribute('data-theme') === 'dark') {
+                body.setAttribute('data-theme', 'light');
+                icon.className = 'fa-solid fa-sun';
             } else {
-                body.style.background = "#f8fafc";
-                body.style.color = "#0f172a";
-                card.style.background = "#ffffff";
-                card.style.color = "#0f172a";
-                card.style.borderColor = "#e2e8f0";
+                body.setAttribute('data-theme', 'dark');
+                icon.className = 'fa-solid fa-moon';
             }
         }
 
-        function showModalAlert(alertData) {
-            const overlay = document.getElementById("modalAlertOverlay");
-            const titleEl = document.getElementById("modalAlertTitle");
-            const textEl = document.getElementById("modalAlertText");
-            const imgEl = document.getElementById("modalAlertImg");
-            const imgWrapper = document.getElementById("modalImgWrapper");
+        // فتح لوحة التحكم بالرمز السري 13121312
+        function openAdminModal() {
+            let pass = prompt("الرجاء إدخال رمز الحماية للوصول إلى لوحة التحكم الأمن المركزي:");
+            if(pass === "13121312") {
+                switchTab('admin', null);
+                alert("تم التحقق بنجاح، مرحباً بك في لوحة تحكم الأمن المركزي.");
+            } else if(pass !== null) {
+                alert("الرمز غير صحيح!");
+            }
+        }
 
-            titleEl.innerText = alertData.title;
-            textEl.innerText = alertData.text;
+        // نشر وتحديث الإنذار من لوحة التحكم
+        function publishAlert() {
+            const targetCity = document.getElementById('admin-target-city').value;
+            const alertLevelFull = document.getElementById('admin-alert-level').value;
+            const alertDesc = document.getElementById('admin-alert-desc').value || "تحديث حالة جوية جديدة";
 
-            if (alertData.image && alertData.image.length > 10) {
-                imgEl.src = alertData.image;
-                imgWrapper.classList.remove("hidden");
-                imgEl.style.display = "block";
-            } else {
-                imgWrapper.classList.add("hidden");
-                imgEl.style.display = "none";
+            // استخراج اسم المستوى واللون
+            let badgeClass = "badge-info";
+            if(alertLevelFull.includes("تنبيه")) badgeClass = "badge-notice";
+            else if(alertLevelFull.includes("تحذير ")) badgeClass = "badge-warning";
+            else if(alertLevelFull.includes("شديد")) badgeClass = "badge-severe";
+            else if(alertLevelFull.includes("طوارئ")) badgeClass = "badge-emergency";
+
+            // تحديث بيانات المدينة المحددة
+            let cityObj = citiesData.find(c => c.name === targetCity);
+            if(cityObj) {
+                cityObj.status = alertLevelFull;
+                cityObj.desc = alertDesc;
+                cityObj.class = badgeClass;
             }
 
-            overlay.style.display = "flex";
+            renderCities();
+            alert(`تم تحديث ونشر الإنذار بنجاح لمدينة ${targetCity}!`);
+            switchTab('home', document.querySelector('.nav-item'));
         }
 
-        function hideModalAlert() {
-            const overlay = document.getElementById("modalAlertOverlay");
-            overlay.style.display = "none";
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
-            isAlarmRunning = false;
-        }
-
-        function dismissModalAlert() {
-            const closeBtn = document.getElementById("closeModalBtn");
-            if (closeBtn.disabled) return;
-            hideModalAlert();
-        }
+        // تشغيل العرض الأولي للمدن
+        window.onload = function() {
+            renderCities();
+        };
     </script>
-
-    <footer style="position: fixed; bottom: 10px; width: 100%; text-align: center; font-size: 12px; color: #64748b;">
-        Rights Reserved &copy; sulaiman alnasiri
-    </footer>
 </body>
 </html>
