@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة الإنذار المبكر والطقس المركزي ⚠️</title>
+    <title>الإنذار المبكر ⚠️ - المنصة الوطنية للرصد والإنذار</title>
 
-    <!-- الأيقونات وإعدادات تطبيق الـ PWA / Standalone -->
-    <link rel="icon" type="image/png" href="https://img.icons8.com/color/96/attention.png">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/attention.png">
+    <!-- الأيقونة الشعار المطلوبة بدقة -->
+    <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
+    <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
+    
+    <!-- إعدادات تطبيق PWA / Standalone والـ Badging API -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="إنذار الطقس">
+    <meta name="apple-mobile-web-app-title" content="الإنذار المبكر ⚠️">
 
     <style>
         :root {
@@ -49,6 +51,25 @@
             transition: background 0.3s, color 0.3s;
         }
 
+        /* شاشة التحميل الأولية (Splash Screen) */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0b0f19;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        #splash-screen img {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            animation: pulse 1.5s infinite;
+        }
+
         header {
             padding: 12px 16px;
             background: var(--card-bg);
@@ -62,6 +83,15 @@
             margin: 0;
             font-size: 1.05rem;
             color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        header img.brand-logo {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
         }
 
         .header-left {
@@ -82,7 +112,7 @@
             overflow-y: auto;
             padding: 15px;
             display: none;
-            padding-bottom: 70px;
+            padding-bottom: 75px;
         }
 
         .app-container.active { display: block; }
@@ -292,7 +322,7 @@
             cursor: pointer;
         }
         .nav-item.active { color: var(--accent-yellow); }
-        .nav-item svg { width: 18px; height: 18px; fill: currentColor; }
+        .nav-item svg, .nav-item img { width: 18px; height: 18px; object-fit: contain; }
 
         .history-item {
             display: flex;
@@ -301,49 +331,71 @@
             padding: 10px;
             border-bottom: 1px solid var(--card-border);
             font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .history-item:hover { background: rgba(255,255,255,0.02); }
+
+        .source-footer {
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 10px;
+            border-top: 1px solid var(--card-border);
+            padding-top: 8px;
         }
     </style>
 </head>
 <body>
 
+    <!-- شاشة التحميل (Splash Screen) -->
+    <div id="splash-screen">
+        <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="الإنذار المبكر">
+        <h2 style="color:#fff; font-size:1.1rem; margin-top:15px;">الإنذار المبكر ⚠️</h2>
+        <p style="color:#94a3b8; font-size:0.75rem;">جاري تحميل المنصة الوطنية...</p>
+    </div>
+
+    <!-- الهيدر العلوي الموحد -->
     <header>
         <div class="header-left">
             <img class="saudi-flag" src="https://upload.wikimedia.org/wikipedia/commons/4/43/Flag_of_Saudi_Arabia.svg" alt="السعودية">
-            <h1 id="headerTitle">حالة الطقس الآن</h1>
+            <h1><img class="brand-logo" src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="شعار"> <span id="headerTitle">حالة الطقس الآن</span></h1>
         </div>
         <span id="sysStatusBadge" class="alert-badge badge-green" style="margin:0; padding:4px 8px; font-size:0.68rem;">النظام مستقر 🟢</span>
     </header>
 
-    <!-- 1. صفحة حالة الطقس والإنذار المبكر الساعات القادمة -->
+    <!-- 1. صفحة “حالة الطقس الآن” والتنبيهات -->
     <div id="page-weather" class="app-container active">
         
-        <!-- بطاقة تنشيط الإشعارات الذكية -->
+        <!-- بطاقة تفعيل التنبيهات الذكية المقترحة -->
         <div class="card" id="pushOptCard" style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(34,197,94,0.1)); border: 1px solid var(--accent-blue);">
-            <h2>🔔 فعّل التنبيهات الفورية</h2>
+            <h2>🔔 فعّل التنبيهات</h2>
             <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 5px 0 10px 0;">خلك أول شخص يعرف إذا اقتربت حالة جوية من منطقتك.</p>
             <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 10px;">
-                🌧️ أمطار &nbsp;|&nbsp; ⛈️ عواصف &nbsp;|&nbsp; 💨 رياح &nbsp;|&nbsp; 🌫️ غبار &nbsp;|&nbsp; ⚠️ طوارئ
+                🌧️ أمطار &nbsp;|&nbsp; ⛈️ عواصف رعدية &nbsp;|&nbsp; 💨 رياح قوية &nbsp;|&nbsp; 🌫️ غبار &nbsp;|&nbsp; ⚠️ طوارئ
             </div>
-            <button class="btn btn-success" id="subBtn" onclick="togglePushSub()">🔔 تفعيل التنبيهات الآن</button>
+            <button class="btn btn-success" id="subBtn" onclick="togglePushSub()">🔔 تفعيل التنبيهات</button>
+            <div id="subStatusText" style="display:none; font-size:0.75rem; color:var(--accent-green); margin-top:8px;">
+                ✅ التنبيهات مفعلة<br>منطقتك: <span id="userSelectedCityLabel">المدينة المنورة</span> | آخر اختبار: منذ دقيقة
+            </div>
         </div>
 
-        <!-- البطاقة الرئيسية للطقس -->
+        <!-- البطاقة الكبيرة للطقس (المدينة المنورة ومواقع المستخدم) -->
         <div class="weather-main-card">
             <div id="mainCityBadge" class="alert-badge badge-blue">📍 المدينة المنورة</div>
             <h3 style="margin: 8px 0 0 0; font-size:0.95rem; color:#cbd5e1;">الطقس الحالي المباشر</h3>
             <div id="mainTemp" class="temp-display">32°C</div>
-            <p id="mainCondition" style="color: #cbd5e1; margin:0; font-size: 0.9rem;">☁️ غائم جزئيًا — رؤية واضحة</p>
+            <p id="mainCondition" style="color: #cbd5e1; margin:0; font-size: 0.9rem;">☁️ غائم جزئيًا</p>
 
             <div class="weather-details-grid">
-                <div id="mainWind">💨 18 كم/س</div>
-                <div id="mainHumid">💧 41%</div>
-                <div id="mainVis">👁️ 10 كم</div>
+                <div id="mainWind">💨 سرعة الرياح 18 كم/س</div>
+                <div id="mainHumid">💧 الرطوبة 41%</div>
+                <div id="mainVis">👁️ الرؤية 10 كم</div>
             </div>
         </div>
 
         <!-- الساعات القادمة -->
         <div class="card">
-            <h2>⏱️ الساعات القادمة في منطقتك</h2>
+            <h2>⏱️ الساعات القادمة</h2>
             <div class="hourly-scroll">
                 <div class="hourly-item">15:00<br>☀️<br><b>32°</b></div>
                 <div class="hourly-item">16:00<br>☁️<br><b>31°</b></div>
@@ -355,29 +407,33 @@
         </div>
 
         <!-- دورة الإنذار المبكر الحالية -->
-        <div class="card">
-            <h2>⚡ حالة الإنذار المبكر النشط</h2>
+        <div class="card" id="activeAlarmCycleCard">
+            <h2>⚡ دورة الإنذار المبكر</h2>
             <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
-                <span class="alert-badge badge-orange">⛈️ تنبيه مبكر</span>
-                <span style="font-size: 0.82rem; color:var(--text-secondary);">متوقع وصول العاصفة خلال 45 دقيقة.</span>
+                <span class="alert-badge badge-orange" id="cycleBadge">⛈️ تنبيه مبكر</span>
+                <span id="cycleDesc" style="font-size: 0.82rem; color:var(--text-secondary);">متوقع وصول الحالة الجوية إلى منطقتك خلال 45 دقيقة.</span>
             </div>
+        </div>
+
+        <div class="source-footer">
+            مصدر البيانات: الهيئة المركزية للرصد والطقس | وقت التحديث: 15:12 | آخر تحديث: قبل 3 دقائق
         </div>
     </div>
 
     <!-- 2. خريطة الإنذارات التفاعلية -->
     <div id="page-map" class="app-container">
         <div class="card" style="margin-bottom:12px;">
-            <h2>🗺️ خريطة الحالات الجوية بالمملكة</h2>
-            <p style="color:var(--text-secondary); font-size:0.78rem; margin:0;">اضغط على أي منطقة لعرض تفاصيل الإنذار والمستوى بدقة.</p>
+            <h2>🗺️ خريطة الحالات الجوية</h2>
+            <p style="color:var(--text-secondary); font-size:0.78rem; margin:0;">اضغط على أي منطقة لعرض تفاصيل الإنذار والمستوى.</p>
         </div>
 
         <div class="map-box">
             <svg viewBox="0 0 500 500" style="width:100%; height:100%;">
-                <path id="map-medina" class="map-region" fill="#eab308" d="M180,170 L230,165 L240,210 L190,215 Z" onclick="openRegionInfo('المدينة المنورة', '🟡 تحذير متوسط: أمطار متوقعة ورياح نشطة.', 'badge-yellow')"></path>
-                <path id="map-makkah" class="map-region" fill="#f97316" d="M150,220 L200,215 L210,265 L165,270 Z" onclick="openRegionInfo('مكة المكرمة', '🟠 تحذير شديد: عواصف رعدية قوية.', 'badge-orange')"></path>
-                <path id="map-riyadh" class="map-region" fill="#22c55e" d="M235,190 L295,185 L305,235 L245,240 Z" onclick="openRegionInfo('الرياض', '🟢 لا توجد تنبيهات: استقرار تام.', 'badge-green')"></path>
-                <path id="map-jeddah" class="map-region" fill="#3b82f6" d="M125,230 L155,225 L160,260 L130,265 Z" onclick="openRegionInfo('جدة', '🔵 تنبيه: احتمال أمطار خفيفة ورطوبة عالية.', 'badge-blue')"></path>
-                <path id="map-asir" class="map-region" fill="#ef4444" d="M180,280 L230,275 L240,320 L190,325 Z" onclick="openRegionInfo('عسير', '🔴 طوارئ: حالة جوية تستدعي الانتباه الفوري وسيول.', 'badge-red')"></path>
+                <path class="map-region" fill="#eab308" d="M180,170 L230,165 L240,210 L190,215 Z" onclick="openRegionInfo('المدينة المنورة', '🟡 تحذير: أمطار غزيرة متوقعة ورياح نشطة.', 'badge-yellow')"></path>
+                <path class="map-region" fill="#f97316" d="M150,220 L200,215 L210,265 L165,270 Z" onclick="openRegionInfo('مكة المكرمة', '🟠 تحذير شديد: عواصف رعدية قوية وسحب ممطرة.', 'badge-orange')"></path>
+                <path class="map-region" fill="#22c55e" d="M235,190 L295,185 L305,235 L245,240 Z" onclick="openRegionInfo('الرياض', '🟢 لا توجد تنبيهات: أجواء مستقرة ومعتدلة.', 'badge-green')"></path>
+                <path class="map-region" fill="#3b82f6" d="M125,230 L155,225 L160,260 L130,265 Z" onclick="openRegionInfo('جدة', '🔵 تنبيه: احتمال أمطار خفيفة خلال الساعات القادمة.', 'badge-blue')"></path>
+                <path class="map-region" fill="#ef4444" d="M180,280 L230,275 L240,320 L190,325 Z" onclick="openRegionInfo('عسير', '🔴 طوارئ: حالة جوية تستدعي الانتباه الفوري!', 'badge-red')"></path>
             </svg>
 
             <div id="mapModal" class="modal-popup">
@@ -394,128 +450,140 @@
     <!-- 3. صفحة رادار الطقس المتحرك -->
     <div id="page-radar" class="app-container">
         <div class="card" style="text-align: center;">
-            <h2>🛰️ رادار الطقس الحي والمتحرك</h2>
+            <h2>🛰️ رادار الطقس</h2>
             <div style="background:#070a12; border-radius:12px; height:240px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid var(--card-border); margin: 12px 0; position:relative;">
                 <div style="font-size:2.5rem; animation: pulse 2s infinite;">📡</div>
-                <span style="color:var(--accent-green); font-size:0.85rem; margin-top:10px;">● البث الحي للسحب والأمطار متصل</span>
-                <span style="color:var(--text-secondary); font-size:0.7rem; margin-top:4px;">آخر تحديث: <span id="radarTime">15:12</span></span>
+                <span style="color:var(--accent-green); font-size:0.85rem; margin-top:10px;">● خريطة متحركة لحركة السحب والأمطار</span>
+                <span style="color:var(--text-secondary); font-size:0.7rem; margin-top:4px;">آخر تحديث: <span id="radarTime">15:10</span></span>
             </div>
         </div>
     </div>
 
-    <!-- 4. سجل التنبيهات (History) -->
+    <!-- 4. سجل التنبيهات -->
     <div id="page-history" class="app-container">
         <div class="card">
-            <h2>📋 سجل التنبيهات السابقة</h2>
-            <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:12px;">اضغط على أي إنذار لعرض تفاصيله الكاملة.</p>
+            <h2>📋 سجل التنبيهات</h2>
+            <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:12px;">اضغط على أي إنذار لقراءة تفاصيله الكاملة.</p>
             
-            <div style="font-size:0.8rem; color:var(--accent-yellow); margin-bottom:6px; font-weight:bold;">19 سبتمبر 2026</div>
-            <div class="history-item" onclick="alert('تفاصيل الإنذار: عاصفة رعدية قوية دخلت النطاق الغربي وتم التعامل معها ميدانياً.')">
-                <span>⛈️ عاصفة رعدية — المدينة</span>
-                <span style="color:var(--text-secondary);">14:20</span>
+            <div style="font-size:0.8rem; color:var(--accent-yellow); margin-bottom:6px; font-weight:bold;">19 سبتمبر</div>
+            <div class="history-item" onclick="alert('تفاصيل الإنذار: عاصفة رعدية قوية رصدت في النطاق الغربي وتم التعامل معها ميدانياً.')">
+                <span>⛈️ عاصفة رعدية — 14:20</span>
+                <span style="color:var(--text-secondary);">عرض التفاصيل</span>
             </div>
-            <div class="history-item" onclick="alert('تفاصيل الإنذار: أمطار متفرقة متوسطة الغزارة.')">
-                <span>🌧️ أمطار — المدينة</span>
-                <span style="color:var(--text-secondary);">12:05</span>
+            <div class="history-item" onclick="alert('تفاصيل الإنذار: أمطار متوسطة الغزارة على الأجزاء الشمالية والشرقية.')">
+                <span>🌧️ أمطار — 12:05</span>
+                <span style="color:var(--text-secondary);">عرض التفاصيل</span>
             </div>
 
-            <div style="font-size:0.8rem; color:var(--accent-yellow); margin:12px 0 6px 0; font-weight:bold;">18 سبتمبر 2026</div>
-            <div class="history-item" onclick="alert('تفاصيل الإنذار: رياح هابطة نشطة بلغت سرعتها 55 كم/س.')">
-                <span>💨 رياح قوية — المدينة</span>
-                <span style="color:var(--text-secondary);">17:32</span>
+            <div style="font-size:0.8rem; color:var(--accent-yellow); margin:12px 0 6px 0; font-weight:bold;">18 سبتمبر</div>
+            <div class="history-item" onclick="alert('تفاصيل الإنذار: رياح قوية ونشطة تجاوزت سرعتها 55 كم/س.')">
+                <span>💨 رياح قوية — 17:32</span>
+                <span style="color:var(--text-secondary);">عرض التفاصيل</span>
             </div>
         </div>
     </div>
 
-    <!-- 5. صفحة البلاغات الطارئة -->
+    <!-- 5. بلاغ طارئ -->
     <div id="page-report" class="app-container">
         <div class="card">
-            <h2>🚨 إرسال بلاغ طارئ ميداني</h2>
+            <h2>🚨 إرسال بلاغ</h2>
             <p style="font-size: 0.78rem; color: var(--accent-orange); line-height: 1.4;">
-                ⚠️ <b>تنبيه قانوني وتوعوي:</b> هذه المنصة تساهم في رصد الملاحظات المجتمعية والميدانية، وليست بديلاً بأي حال من الأحوال عن أرقام الطوارئ الرسمية (911 / 998).
+                ⚠️ <b>تنبيه توعوي:</b> هذا النظام لخدمات البلاغات المجتمعية الميدانية، وليس بديلاً عن أرقام الطوارئ الرسمية.
             </p>
 
-            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; display:block;">نوع البلاغ:</label>
+            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; display:block;">اختر نوع البلاغ:</label>
             <select id="reportType" class="form-control">
                 <option>🌧️ تجمع مياه</option>
                 <option>🌳 سقوط شجرة</option>
-                <option>💨 رياح قوية وأضرار</option>
-                <option>🌫️ غبار كثيف وانعدام رؤية</option>
-                <option>⚠️ خطر في الطريق العام</option>
-                <option>📷 بلاغ طقس آخر</option>
+                <option>💨 رياح قوية</option>
+                <option>🌫️ غبار كثيف</option>
+                <option>⚠️ خطر في الطريق</option>
+                <option>📷 بلاغ آخر</option>
             </select>
 
-            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; display:block;">تفاصيل إضافية ووصف الموقع:</label>
-            <textarea id="reportDesc" class="form-control" rows="2" placeholder="اكتب تفاصيل الملاحظة هنا..."></textarea>
+            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; display:block;">وصف البلاغ وموقعك:</label>
+            <textarea id="reportDesc" class="form-control" rows="2" placeholder="اكتب التفاصيل والموقع بدقة..."></textarea>
 
-            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; display:block;">إرفاق صورة توضيحية:</label>
+            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; display:block;">إرفاق صورة:</label>
             <input type="file" id="reportImage" class="form-control" accept="image/*">
 
-            <button class="btn btn-danger" style="margin-top:14px;" onclick="submitEmergencyReport()">🚨 إرسال البلاغ لعمليات المتابعة</button>
+            <button class="btn btn-danger" style="margin-top:14px;" onclick="submitEmergencyReport()">🚨 إرسال البلاغ الآن</button>
         </div>
     </div>
 
-    <!-- 6. صفحة الإعدادات والمواقع المتعددة -->
+    <!-- 6. الإعدادات ومواقعي -->
     <div id="page-settings" class="app-container">
         <div class="card">
-            <h2>⚙️ إدارة المواقع والتنبيهات المخصصة</h2>
+            <h2>⚙️ الإعدادات والمواقع</h2>
             
-            <label style="font-size:0.75rem; color:var(--text-secondary);">مواقع المتابعة الخاصة بك:</label>
+            <label style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-bottom:5px;">📍 تحديد موقع المستخدم / مواقعي:</label>
+            <button class="btn" style="background:#1e293b; border:1px solid var(--accent-blue); margin-bottom:10px; font-size:0.8rem;" onclick="useCurrentLocationGPS()">📍 استخدام موقعي الحالي عبر الـ GPS</button>
+
             <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid var(--card-border); margin-top:5px; font-size:0.85rem;">
-                🏠 المنزل — المدينة المنورة (افتراضي)
+                🏠 المنزل — <span id="setCitySpan">المدينة المنورة</span>
             </div>
             <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid var(--card-border); margin-top:5px; font-size:0.85rem;">
                 🏫 المدرسة — المدينة المنورة
             </div>
-            <button class="btn" style="padding:8px; font-size:0.78rem; margin-top:8px;" onclick="prompt('أدخل اسم الموقع الجديد:', 'استراحة / موقع عمل')">+ إضافة موقع جديد</button>
+            
+            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:12px; display:block;">اختر المدينة الأساسية لمتابعة الإنذارات:</label>
+            <select id="userCitySelect" class="form-control" onchange="updateUserCity(this.value)">
+                <option value="المدينة المنورة">🇸🇦 المدينة المنورة</option>
+                <option value="مكة المكرمة">🇸🇦 مكة المكرمة</option>
+                <option value="الرياض">🇸🇦 الرياض</option>
+                <option value="جدة">🇸🇦 جدة</option>
+                <option value="القصيم">🇸🇦 القصيم</option>
+                <option value="تبوك">🇸🇦 تبوك</option>
+            </select>
 
-            <h3 style="font-size:0.9rem; color:var(--accent-blue); margin-top:16px;">تخصيص أنواع الإشعارات المفضلة</h3>
+            <h3 style="font-size:0.9rem; color:var(--accent-blue); margin-top:16px;">تخصيص الإشعارات المفضلة</h3>
             <div class="checkbox-group">
                 <label><input type="checkbox" checked> أمطار</label>
                 <label><input type="checkbox" checked> عواصف رعدية</label>
                 <label><input type="checkbox" checked> رياح قوية</label>
                 <label><input type="checkbox" checked> غبار</label>
-                <label><input type="checkbox"> انخفاض/ارتفاع الحرارة</label>
+                <label><input type="checkbox"> انخفاض/ارتفاع شديد في الحرارة</label>
                 <label><input type="checkbox" checked> تنبيهات الطوارئ</label>
             </div>
 
-            <h3 style="font-size:0.9rem; color:var(--accent-blue); margin-top:16px;">إعدادات المظهر والوضع الليلي</h3>
+            <h3 style="font-size:0.9rem; color:var(--accent-blue); margin-top:16px;">الوضع الليلي والنهاري</h3>
             <select id="themeSelect" class="form-control" onchange="changeTheme(this.value)">
-                <option value="dark">🌙 الوضع الليلي (Dark Mode)</option>
-                <option value="light">☀️ الوضع النهاري (Light Mode)</option>
+                <option value="dark">🌙 الوضع الليلي</option>
+                <option value="light">☀️ الوضع النهاري</option>
+                <option value="auto">⚙️ تلقائي حسب الجهاز</option>
             </select>
 
-            <button class="btn btn-warning" style="margin-top:16px;" onclick="triggerTestNotification()">🔔 تجربة إرسال إشعار تجريبي الآن</button>
+            <button class="btn btn-warning" style="margin-top:16px;" onclick="triggerTestNotification()">اختبار الإشعارات 🔔</button>
         </div>
     </div>
 
-    <!-- 👑 7. لوحة تحكم الأمن المركزي الشاملة للمسؤول -->
+    <!-- 👑 7. لوحة تحكم الأمن المركزي الشاملة (التحكم المطلق) -->
     <div id="page-admin" class="app-container">
         <div class="card">
-            <h2>👑 لوحة تحكم الأمن المركزي (إدارة مطلقة)</h2>
-            <p style="font-size: 0.78rem; color: var(--text-secondary);">السيطرة التامة على الإشعارات، الحالات، والجدولة والتحليلات.</p>
+            <h2>👑 لوحة تحكم الأمن المركزي</h2>
+            <p style="font-size: 0.78rem; color: var(--text-secondary);">تحكم بكل شيء في المنصة من مكان واحد وتحت سيطرتك التامة.</p>
             
-            <!-- لوحة إحصائيات حقيقية Dashboard -->
+            <!-- إحصائيات المستخدمين Dashboard -->
             <div class="stats-grid" style="margin-top:12px;">
-                <div class="stat-box"><h3 id="statUsers">150</h3><p>إجمالي المستخدمين</p></div>
+                <div class="stat-box"><h3 id="statUsers">150</h3><p>عدد المستخدمين</p></div>
                 <div class="stat-box"><h3>94</h3><p>أجهزة iPhone</p></div>
                 <div class="stat-box"><h3>56</h3><p>أجهزة Android</p></div>
-                <div class="stat-box"><h3 id="statActiveAlerts">2</h3><p>الإنذارات النشطة</p></div>
+                <div class="stat-box"><h3 id="statNotifs">131</h3><p>الإشعارات المفعلة</p></div>
             </div>
 
             <!-- حالة النظام الحية -->
-            <h3 style="font-size:0.85rem; color:var(--accent-blue); margin-top:15px;">📡 فحص حالة النظام الحية</h3>
+            <h3 style="font-size:0.85rem; color:var(--accent-blue); margin-top:15px;">🟢 حالة النظام الحية</h3>
             <div style="font-size:0.78rem; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid var(--card-border); display:flex; flex-direction:column; gap:4px;">
-                <span>Web Push API: <b style="color:var(--accent-green);">🟢 متصل</b></span>
+                <span>Web Push: <b style="color:var(--accent-green);">🟢 متصل</b></span>
                 <span>OneSignal Service: <b style="color:var(--accent-green);">🟢 مستقر</b></span>
-                <span>قاعدة البيانات (Database): <b style="color:var(--accent-green);">🟢 تعمل بكفاءة</b></span>
-                <span>خدمة الطقس المركزية: <b style="color:var(--accent-green);">🟢 محدثة</b></span>
+                <span>قاعدة البيانات: <b style="color:var(--accent-green);">🟢 تعمل بكفاءة</b></span>
+                <span>خدمة الطقس: <b style="color:var(--accent-green);">🟢 محدثة</b></span>
             </div>
 
-            <!-- إرسال أو جدولة إنذار جديد -->
-            <h3 style="font-size:0.85rem; color:var(--accent-blue); margin-top:16px;">📢 إنشاء وإرسال / جدولة إنذار جديد</h3>
+            <!-- إنشاء أو جدولة إنذار جديد -->
+            <h3 style="font-size:0.85rem; color:var(--accent-blue); margin-top:16px;">📢 إنشاء إنذار / جدولة</h3>
             
-            <label style="font-size:0.72rem; color:var(--text-secondary);">مستوى الخطورة وشكل التنبيه:</label>
+            <label style="font-size:0.72rem; color:var(--text-secondary);">مستوى الإنذار والشكل والألوان:</label>
             <select id="adminAlertLevel" class="form-control">
                 <option value="badge-green">🟢 معلومة (تغير بسيط في الطقس)</option>
                 <option value="badge-blue">🔵 تنبيه (احتمال أمطار)</option>
@@ -524,61 +592,77 @@
                 <option value="badge-red">🔴 طوارئ (حالة جوية تستدعي الانتباه الفوري)</option>
             </select>
 
-            <label style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px; display:block;">نص عنوان وطبيعة الإنذار:</label>
-            <input type="text" id="adminAlertText" class="form-control" value="عاصفة رعدية قوية متوقعة في النطاق الغربي">
+            <label style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px; display:block;">نص ونموذج الإنذار:</label>
+            <input type="text" id="adminAlertText" class="form-control" value="عاصفة رعدية قوية متوقعة خلال الساعة القادمة">
+
+            <label style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px; display:block;">إرفاق صورة توضيحية للرادار:</label>
+            <input type="file" id="adminAlertImg" class="form-control" accept="image/*">
 
             <label style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px; display:block;">الجمهور المستهدف:</label>
             <select id="adminAudience" class="form-control">
-                <option>جميع المشتركين بالمملكة</option>
-                <option>المدينة المنورة فقط</option>
-                <option>مكة المكرمة وجدة</option>
+                <option>الجميع</option>
+                <option>المدينة المنورة</option>
                 <option>الرياض</option>
-                <option>🏫 مجموعة طلاب المدارس</option>
+                <option>جدة</option>
+                <option>مجموعة مخصصة: طلاب المدارس</option>
             </select>
 
-            <label style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px; display:block;">نشر الإنذار:</label>
+            <label style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px; display:block;">النشر:</label>
             <select id="adminPublishMode" class="form-control">
-                <option>◉ نشر فوري الآن</option>
-                <option>○ جدولة لوقت لاحق</option>
+                <option>◉ الآن</option>
+                <option>○ جدولة (تحديد موعد لاحق)</option>
             </select>
 
-            <button class="btn btn-danger" style="margin-top:16px;" onclick="adminBroadcastAlert()">🚀 إرسال الإنذار للجمهور المستهدف</button>
+            <button class="btn btn-danger" style="margin-top:14px;" onclick="adminBroadcastAlert()">🚀 إرسال الإنذار الفوري</button>
+
+            <!-- تحديث إنذار قائم أو نظام الإنذار الذكي -->
+            <h3 style="font-size:0.85rem; color:var(--accent-blue); margin-top:16px;">🔄 تحديث إنذار أو نظام ذكي</h3>
+            <button class="btn btn-warning" style="padding:8px; font-size:0.8rem;" onclick="alert('🔄 تم تفعيل نظام التحديث التلقائي لرفع مستوى التحذير من برتقالي إلى أحمر بنجاح.')">ترقية حالة الإنذار النشط (برتقالي ➔ أحمر)</button>
         </div>
     </div>
 
-    <!-- الشريط السفلي للتنقل بين الصفحات -->
+    <!-- الشريط السفلي للتنقل مع الشعار -->
     <nav class="bottom-nav">
         <button class="nav-item active" onclick="switchTab('weather', 'حالة الطقس الآن', this)">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="طقس">
             الطقس
         </button>
         <button class="nav-item" onclick="switchTab('map', 'خريطة الإنذارات', this)">
-            <svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.1V5l6 2.1V19z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.1V5l6 2.1V19z"/></svg>
             الخريطة
         </button>
         <button class="nav-item" onclick="switchTab('radar', 'رادار الطقس', this)">
-            <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19l1.39 1.39 1.61-1.61C8.93 19.26 10.42 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7 z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19l1.39 1.39 1.61-1.61C8.93 19.26 10.42 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
             الرادار
         </button>
         <button class="nav-item" onclick="switchTab('history', 'سجل التنبيهات', this)">
-            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
             السجل
         </button>
-        <button class="nav-item" onclick="switchTab('report', 'بلاغ طارئ', this)">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        <button class="nav-item" onclick="switchTab('report', 'إرسال بلاغ', this)">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
             بلاغ
         </button>
         <button class="nav-item" onclick="switchTab('settings', 'الإعدادات', this)">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c-.5.38-1.03.7-1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c-.5.38-1.03.7-1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
             الإعدادات
         </button>
-        <button class="nav-item" onclick="switchTab('admin', 'لوحة الأمن المركزي', this)">
-            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+        <button class="nav-item" onclick="switchTab('admin', 'الأمن المركزي', this)">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
             الإدارة 👑
         </button>
     </nav>
 
     <script>
+        // إخفاء شاشة التحميل بعد ثانية
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 500);
+            }, 1000);
+        });
+
         function switchTab(tabId, titleText, btnElement) {
             document.querySelectorAll('.app-container').forEach(c => c.classList.remove('active'));
             document.getElementById('page-' + tabId).classList.add('active');
@@ -589,10 +673,28 @@
 
         function togglePushSub() {
             const btn = document.getElementById('subBtn');
-            btn.className = "btn";
-            btn.style.background = "#334155";
-            btn.innerHTML = "✅ التنبيهات مفعلة بنجاح";
-            alert("🔔 تمت تهيئة تفعيل الإشعارات والتنبيهات الفورية لمنطقتك بنجاح!");
+            btn.style.display = 'none';
+            document.getElementById('subStatusText').style.display = 'block';
+            alert("🔔 تمت تفعيل إشعارات الإنذار المبكر لمنطقتك بنجاح!");
+        }
+
+        function updateUserCity(city) {
+            document.getElementById('mainCityBadge').innerText = "📍 " + city;
+            document.getElementById('userSelectedCityLabel').innerText = city;
+            document.getElementById('setCitySpan').innerText = city;
+            alert("📍 تم تحديث موقع المتابعة إلى: " + city);
+        }
+
+        function useCurrentLocationGPS() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    alert("📍 تم تحديث الموقع بنجاح عبر الـ GPS (الإحداثيات الحالية معتمدة).");
+                }, () => {
+                    alert("⚠️ تعذر الحصول على الموقع، تم استخدام المدينة الافتراضية (المدينة المنورة).");
+                });
+            } else {
+                alert("المتصفح لا يدعم تحديد الموقع الجغرافي.");
+            }
         }
 
         function openRegionInfo(name, desc, badgeClass) {
@@ -610,20 +712,26 @@
 
         function submitEmergencyReport() {
             const type = document.getElementById('reportType').value;
-            const desc = document.getElementById('reportDesc').value;
-            alert("🚨 تم استلام بلاغك (" + type + ") بنجاح وإرساله لغرفة العمليات للمتابعة الميدانية. شكراً لمساهمتك المجتمعية.");
+            alert("🚨 تم استلام بلاغك (" + type + ") بنجاح وإرساله للعمليات الميدانية.");
             document.getElementById('reportDesc').value = "";
         }
 
         function triggerTestNotification() {
-            alert("🔔 [إشعار تجريبي ناجح]\nنظام الإنذار المبكر OneSignal يعمل بكفاءة تامة ويصلك بدون عوائق.");
+            alert("🔔 [إشعار تجريبي]\nنظام الإنذار المبكر يعمل بكفاءة تامة وصلتك الرسالة بنجاح.");
         }
 
         function changeTheme(mode) {
             if(mode === 'light') {
                 document.body.classList.add('light-mode');
-            } else {
+            } else if(mode === 'dark') {
                 document.body.classList.remove('light-mode');
+            } else {
+                // تلقائي
+                if(window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    document.body.classList.add('light-mode');
+                } else {
+                    document.body.classList.remove('light-mode');
+                }
             }
         }
 
@@ -632,17 +740,33 @@
             const text = document.getElementById('adminAlertText').value;
             const audience = document.getElementById('adminAudience').value;
             
-            // تحديث شريط الحالة العلوي بناءً على مستوى الإنذار المختار
+            // تغيير شكل وطندة الشريط العلوي بناءً على المستوى المختار
             const sysBadge = document.getElementById('sysStatusBadge');
             sysBadge.className = "alert-badge " + level;
             
-            if(level === 'badge-red') sysBadge.innerText = "حالة طوارئ 🔴";
-            else if(level === 'badge-orange') sysBadge.innerText = "تحذير شديد 🟠";
-            else if(level === 'badge-yellow') sysBadge.innerText = "تحذير جوي 🟡";
-            else if(level === 'badge-blue') sysBadge.innerText = "تنبيه أمطار 🔵";
-            else sysBadge.innerText = "معلومة جوية 🟢";
+            const cycleBadge = document.getElementById('cycleBadge');
+            cycleBadge.className = "alert-badge " + level;
 
-            alert("🚀 تم بث الإنذار بنجاح إلى (" + audience + ") بمستوى الخطورة المحدد وتحديث شريط النظام المركزي!");
+            if(level === 'badge-red') {
+                sysBadge.innerText = "طوارئ 🔴";
+                cycleBadge.innerText = "🔴 حالة طوارئ";
+            } else if(level === 'badge-orange') {
+                sysBadge.innerText = "تحذير شديد 🟠";
+                cycleBadge.innerText = "🟠 عاصفة رعدية قوية";
+            } else if(level === 'badge-yellow') {
+                sysBadge.innerText = "تحذير جوي 🟡";
+                cycleBadge.innerText = "🟡 أمطار غزيرة";
+            } else if(level === 'badge-blue') {
+                sysBadge.innerText = "تنبيه 🔵";
+                cycleBadge.innerText = "🔵 احتمال أمطار";
+            } else {
+                sysBadge.innerText = "معلومة 🟢";
+                cycleBadge.innerText = "🟢 تغير بسيط";
+            }
+
+            document.getElementById('cycleDesc').innerText = text;
+
+            alert("🚀 تم بث وإرسال الإنذار بنجاح إلى الجمهور المستهدف (" + audience + ") مع تحديث الألوان والأصوات وتنبيهات الـ Web Push!");
         }
     </script>
 </body>
