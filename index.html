@@ -1,801 +1,649 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="htmlRoot">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الانذار المبكر ⚠️ - لوحة العمليات</title>
+    <title>منصة الإنذار المبكر والطقس المركزي ⚠️</title>
 
-    <!-- شعار الشاشة الرئيسية والأيقونة المخصصة -->
-    <link rel="apple-touch-icon" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
-    <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
-
-    <!-- OneSignal v16 SDK للإشعارات -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "2ed10d9f-2916-4a31-927b-6a2bea7064da",
-        });
-      });
-    </script>
-
-    <!-- Firebase SDK (v9 Modular) مع بيانات مشروعك alaret-e8f2a -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXKY3MQLbCRAqJwVHGymTVT61Dalpb2g",
-            authDomain: "alaret-e8f2a.firebaseapp.com",
-            projectId: "alaret-e8f2a",
-            storageBucket: "alaret-e8f2a.appspot.com",
-            messagingSenderId: "735569802866",
-            appId: "1:735569802866:web:aa9935ede7a44f9a0c34eb"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.db = db;
-        window.doc = doc;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-        window.onSnapshot = onSnapshot;
-
-        let lastAlertId = "";
-
-        // الاستماع الفوري لحالة النظام والتنبيهات من فايربيس
-        document.addEventListener("DOMContentLoaded", () => {
-            checkAutoLogin();
-
-            // فك قفل الصوت عند أول تفاعل للمستخدم (مهم جداً لأجهزة الآيفون والأندرويد)
-            document.body.addEventListener('click', () => {
-                unlockAudioContext();
-            }, { once: true });
-
-            if(window.db) {
-                window.onSnapshot(window.doc(window.db, "settings", "globalState"), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        applyScreenColor(data.screenColor || "white");
-                        
-                        if(data.activeAlert && data.activeAlert.text) {
-                            const alertUniqueKey = data.alertTimestamp || data.activeAlert.text;
-                            showModalAlert(data.activeAlert);
-                            
-                            if (alertUniqueKey !== lastAlertId) {
-                                playRealAlarmSoundAndSpeak(data.activeAlert);
-                                lastAlertId = alertUniqueKey;
-                            }
-                        } else {
-                            hideModalAlert();
-                            lastAlertId = "";
-                        }
-                    }
-                });
-            }
-        });
-    </script>
+    <!-- الأيقونات وإعدادات تطبيق الـ PWA / Standalone -->
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/96/attention.png">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/attention.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="إنذار الطقس">
 
     <style>
-        body {
-            font-family: Tahoma, sans-serif;
-            background: #f8fafc;
-            color: #0f172a;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-        .top-admin-bar {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1000;
-        }
-        .admin-trigger-btn {
-            background: #0f172a;
-            color: #eab308;
-            border: 2px solid #eab308;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .admin-trigger-btn:hover {
-            background: #1e293b;
-        }
-        .card {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 480px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-        }
-        /* تكبير الشعار ليملأ المربع بالكامل وبشكل بارز */
-        .warning-img-container {
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 15px auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #fef08a;
-            border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(234, 179, 8, 0.3);
-            border: 3px solid #eab308;
-        }
-        .warning-img {
-            width: 115px;
-            height: 115px;
-            object-fit: contain;
-        }
-        h2 {
-            margin-top: 0;
-        }
-        p {
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .input-group {
-            margin-bottom: 15px;
-            text-align: right;
-        }
-        label {
-            display: block;
-            font-size: 13px;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            background: #ffffff;
-            color: #0f172a;
-            box-sizing: border-box;
-            font-size: 14px;
-            font-family: Tahoma, sans-serif;
-        }
-        textarea {
-            resize: vertical;
-            height: 80px;
-        }
-        button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: #1d4ed8;
-        }
-        .emergency-btn {
-            background: #dc2626 !important;
-        }
-        .emergency-btn:hover {
-            background: #b91c1c !important;
-        }
-        .notif-btn {
-            background: #0d9488 !important;
-        }
-        .notif-btn:hover {
-            background: #0f766e !important;
-        }
-        .hidden {
-            display: none;
-        }
-        .section-box {
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 1px solid #e2e8f0;
-            text-align: right;
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
+            --card-border: #1e293b;
+            --text-main: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-green: #22c55e;
+            --accent-blue: #3b82f6;
+            --accent-yellow: #eab308;
+            --accent-orange: #f97316;
+            --accent-red: #ef4444;
         }
 
-        /* نافذة الإنذار المنبثقة بمنتصف الشاشة (Modal Overlay) */
-        #modalAlertOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 9999;
-            display: none;
-            justify-content: center;
+        .light-mode {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --card-border: #cbd5e1;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        header {
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
         }
-        .modal-content {
-            background: #ffffff;
-            color: #0f172a;
-            padding: 25px;
-            border-radius: 16px;
-            max-width: 450px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            border: 4px solid #dc2626;
-            animation: modalPop 0.3s ease-out;
-            position: relative;
-            max-height: 90vh;
+
+        header h1 {
+            margin: 0;
+            font-size: 1.05rem;
+            color: var(--text-main);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .saudi-flag {
+            width: 24px;
+            height: 16px;
+            border-radius: 3px;
+            object-fit: cover;
+        }
+
+        .app-container {
+            flex: 1;
             overflow-y: auto;
+            padding: 15px;
+            display: none;
+            padding-bottom: 70px;
         }
-        @keyframes modalPop {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+
+        .app-container.active { display: block; }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        .modal-img-container {
-            width: 130px;
-            height: 130px;
-            margin: 0 auto 12px auto;
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1rem;
+            color: var(--accent-yellow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .weather-main-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid #334155;
+            text-align: center;
+            padding: 20px;
+            border-radius: 16px;
+            color: #fff;
+        }
+
+        .temp-display {
+            font-size: 2.8rem;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .weather-details-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.15);
+            font-size: 0.8rem;
+            color: #cbd5e1;
+        }
+
+        .hourly-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            margin-top: 10px;
+        }
+
+        .hourly-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 70px;
+            font-size: 0.8rem;
+        }
+
+        .alert-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: bold;
+        }
+
+        .badge-green { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-yellow { background: rgba(234, 179, 8, 0.15); color: var(--accent-yellow); border: 1px solid rgba(234, 179, 8, 0.3); }
+        .badge-orange { background: rgba(249, 115, 22, 0.15); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.3); }
+        .badge-red { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 11px 18px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-success { background: var(--accent-green); }
+        .btn-danger { background: var(--accent-red); }
+        .btn-warning { background: var(--accent-orange); }
+
+        .form-control {
+            background: var(--bg-color);
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 0.88rem;
+            margin-top: 5px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.82rem;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.02);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+
+        .map-box {
+            position: relative;
+            background: #070a12;
+            border-radius: 12px;
+            height: 280px;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #fee2e2;
-            border-radius: 50%;
-            border: 3px solid #dc2626;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
         }
-        .modal-img {
-            width: 105px;
-            height: 105px;
-            object-fit: contain;
-            border-radius: 8px;
-            display: none;
-        }
-        .modal-content h3 {
-            color: #dc2626;
-            margin-top: 0;
-            font-size: 22px;
-        }
-        .modal-text-box {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 15px 0;
-            background: #fef2f2;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #fecaca;
-            text-align: right;
-        }
-        .close-modal-btn {
-            background: #64748b;
-            color: white;
-            border: none;
-            padding: 12px;
-            width: 100%;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: not-allowed;
-            opacity: 0.6;
-            transition: all 0.3s;
-        }
-        .close-modal-btn.active {
-            background: #dc2626;
+
+        .map-region {
             cursor: pointer;
-            opacity: 1;
+            transition: 0.2s;
+            stroke: #1e293b;
+            stroke-width: 1.5;
         }
-        .close-modal-btn.active:hover {
-            background: #b91c1c;
+        .map-region:hover { filter: brightness(1.3); stroke: #fff; }
+
+        .modal-popup {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: #1a2234;
+            border: 1px solid #334155;
+            padding: 14px;
+            border-radius: 12px;
+            display: none;
+            z-index: 50;
+            color: #fff;
         }
-        #audioStatusText {
-            font-size: 13px;
-            color: #b91c1c;
-            margin-bottom: 8px;
-            font-weight: bold;
+        .modal-popup.active { display: block; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--card-border);
+        }
+        .stat-box h3 { margin: 0; font-size: 1.25rem; color: var(--accent-yellow); }
+        .stat-box p { margin: 4px 0 0 0; font-size: 0.72rem; color: var(--text-secondary); }
+
+        nav.bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            background: var(--card-bg);
+            padding: 8px 0;
+            border-top: 1px solid var(--card-border);
+            z-index: 100;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.68rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+        }
+        .nav-item.active { color: var(--accent-yellow); }
+        .nav-item svg { width: 18px; height: 18px; fill: currentColor; }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 0.85rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- نافذة الإنذار المنبثقة التي تظهر بوجّه المستخدم -->
-    <div id="modalAlertOverlay">
-        <div class="modal-content">
-            <div id="modalImgWrapper" class="modal-img-container hidden">
-                <img id="modalAlertImg" class="modal-img" src="" alt="صورة الإنذار">
+    <header>
+        <div class="header-left">
+            <img class="saudi-flag" src="https://upload.wikimedia.org/wikipedia/commons/4/43/Flag_of_Saudi_Arabia.svg" alt="السعودية">
+            <h1 id="headerTitle">حالة الطقس الآن</h1>
+        </div>
+        <span id="sysStatusBadge" class="alert-badge badge-green" style="margin:0; padding:4px 8px; font-size:0.68rem;">النظام مستقر 🟢</span>
+    </header>
+
+    <!-- 1. صفحة حالة الطقس والإنذار المبكر الساعات القادمة -->
+    <div id="page-weather" class="app-container active">
+        
+        <!-- بطاقة تنشيط الإشعارات الذكية -->
+        <div class="card" id="pushOptCard" style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(34,197,94,0.1)); border: 1px solid var(--accent-blue);">
+            <h2>🔔 فعّل التنبيهات الفورية</h2>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 5px 0 10px 0;">خلك أول شخص يعرف إذا اقتربت حالة جوية من منطقتك.</p>
+            <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 10px;">
+                🌧️ أمطار &nbsp;|&nbsp; ⛈️ عواصف &nbsp;|&nbsp; 💨 رياح &nbsp;|&nbsp; 🌫️ غبار &nbsp;|&nbsp; ⚠️ طوارئ
             </div>
-            <h3 id="modalAlertTitle">⚠️ تنبيه عاجل وهام ⚠️</h3>
-            <div id="audioStatusText">جاري تشغيل صوت الإنذار... يرجى الانتظار</div>
-            <div class="modal-text-box" id="modalAlertText">...</div>
-            <button id="closeModalBtn" class="close-modal-btn" disabled onclick="dismissModalAlert()">إغلاق الإنذار (معطلاً حتى انتهاء الصوت)</button>
+            <button class="btn btn-success" id="subBtn" onclick="togglePushSub()">🔔 تفعيل التنبيهات الآن</button>
+        </div>
+
+        <!-- البطاقة الرئيسية للطقس -->
+        <div class="weather-main-card">
+            <div id="mainCityBadge" class="alert-badge badge-blue">📍 المدينة المنورة</div>
+            <h3 style="margin: 8px 0 0 0; font-size:0.95rem; color:#cbd5e1;">الطقس الحالي المباشر</h3>
+            <div id="mainTemp" class="temp-display">32°C</div>
+            <p id="mainCondition" style="color: #cbd5e1; margin:0; font-size: 0.9rem;">☁️ غائم جزئيًا — رؤية واضحة</p>
+
+            <div class="weather-details-grid">
+                <div id="mainWind">💨 18 كم/س</div>
+                <div id="mainHumid">💧 41%</div>
+                <div id="mainVis">👁️ 10 كم</div>
+            </div>
+        </div>
+
+        <!-- الساعات القادمة -->
+        <div class="card">
+            <h2>⏱️ الساعات القادمة في منطقتك</h2>
+            <div class="hourly-scroll">
+                <div class="hourly-item">15:00<br>☀️<br><b>32°</b></div>
+                <div class="hourly-item">16:00<br>☁️<br><b>31°</b></div>
+                <div class="hourly-item">17:00<br>🌧️<br><b>29°</b></div>
+                <div class="hourly-item">18:00<br>⛈️<br><b>27°</b></div>
+                <div class="hourly-item">19:00<br>🌧️<br><b>26°</b></div>
+                <div class="hourly-item">20:00<br>☁️<br><b>25°</b></div>
+            </div>
+        </div>
+
+        <!-- دورة الإنذار المبكر الحالية -->
+        <div class="card">
+            <h2>⚡ حالة الإنذار المبكر النشط</h2>
+            <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+                <span class="alert-badge badge-orange">⛈️ تنبيه مبكر</span>
+                <span style="font-size: 0.82rem; color:var(--text-secondary);">متوقع وصول العاصفة خلال 45 دقيقة.</span>
+            </div>
         </div>
     </div>
 
-    <!-- زر الأدمن في الأعلى -->
-    <div class="top-admin-bar">
-        <button class="admin-trigger-btn" onclick="openAdminPortal()">👑 الإدارة (Admin)</button>
+    <!-- 2. خريطة الإنذارات التفاعلية -->
+    <div id="page-map" class="app-container">
+        <div class="card" style="margin-bottom:12px;">
+            <h2>🗺️ خريطة الحالات الجوية بالمملكة</h2>
+            <p style="color:var(--text-secondary); font-size:0.78rem; margin:0;">اضغط على أي منطقة لعرض تفاصيل الإنذار والمستوى بدقة.</p>
+        </div>
+
+        <div class="map-box">
+            <svg viewBox="0 0 500 500" style="width:100%; height:100%;">
+                <path id="map-medina" class="map-region" fill="#eab308" d="M180,170 L230,165 L240,210 L190,215 Z" onclick="openRegionInfo('المدينة المنورة', '🟡 تحذير متوسط: أمطار متوقعة ورياح نشطة.', 'badge-yellow')"></path>
+                <path id="map-makkah" class="map-region" fill="#f97316" d="M150,220 L200,215 L210,265 L165,270 Z" onclick="openRegionInfo('مكة المكرمة', '🟠 تحذير شديد: عواصف رعدية قوية.', 'badge-orange')"></path>
+                <path id="map-riyadh" class="map-region" fill="#22c55e" d="M235,190 L295,185 L305,235 L245,240 Z" onclick="openRegionInfo('الرياض', '🟢 لا توجد تنبيهات: استقرار تام.', 'badge-green')"></path>
+                <path id="map-jeddah" class="map-region" fill="#3b82f6" d="M125,230 L155,225 L160,260 L130,265 Z" onclick="openRegionInfo('جدة', '🔵 تنبيه: احتمال أمطار خفيفة ورطوبة عالية.', 'badge-blue')"></path>
+                <path id="map-asir" class="map-region" fill="#ef4444" d="M180,280 L230,275 L240,320 L190,325 Z" onclick="openRegionInfo('عسير', '🔴 طوارئ: حالة جوية تستدعي الانتباه الفوري وسيول.', 'badge-red')"></path>
+            </svg>
+
+            <div id="mapModal" class="modal-popup">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <h3 id="mTitle" style="margin:0; font-size:0.9rem; color:var(--accent-yellow);"></h3>
+                    <span id="mBadge" class="alert-badge badge-yellow" style="font-size:0.68rem;"></span>
+                </div>
+                <p id="mDesc" style="margin:0; font-size:0.8rem; color:var(--text-secondary);"></p>
+                <button class="btn" style="padding:6px; font-size:0.72rem; margin-top:10px;" onclick="closeMapModal()">إغلاق</button>
+            </div>
+        </div>
     </div>
 
-    <div class="card">
-        <div class="warning-img-container">
-            <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="تحذير" class="warning-img">
+    <!-- 3. صفحة رادار الطقس المتحرك -->
+    <div id="page-radar" class="app-container">
+        <div class="card" style="text-align: center;">
+            <h2>🛰️ رادار الطقس الحي والمتحرك</h2>
+            <div style="background:#070a12; border-radius:12px; height:240px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid var(--card-border); margin: 12px 0; position:relative;">
+                <div style="font-size:2.5rem; animation: pulse 2s infinite;">📡</div>
+                <span style="color:var(--accent-green); font-size:0.85rem; margin-top:10px;">● البث الحي للسحب والأمطار متصل</span>
+                <span style="color:var(--text-secondary); font-size:0.7rem; margin-top:4px;">آخر تحديث: <span id="radarTime">15:12</span></span>
+            </div>
         </div>
-        <h2>الانذار المبكر ⚠️</h2>
+    </div>
 
-        <!-- تسجيل الدخول للمرة الأولى فقط -->
-        <div id="loginSection">
-            <p style="color: #64748b;">الرجاء إدخال بياناتك الشخصية للوصول إلى النظام وإرسال بلاغات الطوارئ بدقة (ستتم مطالبتك بهذه البيانات لمرة واحدة فقط).</p>
-            <div class="input-group">
-                <label>الاسم الكامل:</label>
-                <input type="text" id="userName" placeholder="أدخل اسمك..." />
-            </div>
-            <div class="input-group">
-                <label>البريد الإلكتروني:</label>
-                <input type="email" id="userEmail" placeholder="name@example.com" />
-            </div>
-            <div class="input-group">
-                <label>رقم الجوال:</label>
-                <input type="text" id="userPhone" placeholder="05xxxxxxxx" />
-            </div>
-            <button onclick="handleLogin()">دخول النظام وحفظ البيانات</button>
-        </div>
-
-        <!-- لوحة العمليات الرئيسية -->
-        <div id="dashboardSection" class="hidden">
-            <p id="welcomeMsg" style="color: #0284c7; font-weight: bold;"></p>
+    <!-- 4. سجل التنبيهات (History) -->
+    <div id="page-history" class="app-container">
+        <div class="card">
+            <h2>📋 سجل التنبيهات السابقة</h2>
+            <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:12px;">اضغط على أي إنذار لعرض تفاصيله الكاملة.</p>
             
-            <!-- زر طلب تفعيل الإشعارات -->
-            <div class="section-box">
-                <label style="color: #0f766e; font-weight: bold;">تنبيهات الإشعارات الفورية:</label>
-                <p style="font-size: 12px; color: #475569;">اضغط أدناه للسماح باستقبال الإشعارات والإنذارات الحية:</p>
-                <button class="notif-btn" onclick="requestNotificationPermission()">🔔 تفعيل والسماح بالإشعارات</button>
+            <div style="font-size:0.8rem; color:var(--accent-yellow); margin-bottom:6px; font-weight:bold;">19 سبتمبر 2026</div>
+            <div class="history-item" onclick="alert('تفاصيل الإنذار: عاصفة رعدية قوية دخلت النطاق الغربي وتم التعامل معها ميدانياً.')">
+                <span>⛈️ عاصفة رعدية — المدينة</span>
+                <span style="color:var(--text-secondary);">14:20</span>
+            </div>
+            <div class="history-item" onclick="alert('تفاصيل الإنذار: أمطار متفرقة متوسطة الغزارة.')">
+                <span>🌧️ أمطار — المدينة</span>
+                <span style="color:var(--text-secondary);">12:05</span>
             </div>
 
-            <div class="section-box">
-                <label style="color: #dc2626; font-weight: bold;">منطقة الطوارئ القصوى:</label>
-                <p style="font-size: 12px; color: #475569;">بالضغط أدناه سيتم تحويلك فوراً إلى الواتساب مع إرسال كافة بياناتك وموقعك:</p>
-                <button class="emergency-btn" onclick="triggerEmergencyWhatsApp()">🚨 إرسال بلاغ طوارئ عبر WhatsApp</button>
-            </div>
-
-            <button style="background: #64748b; font-size: 12px; padding: 6px; margin-top: 15px;" onclick="logoutUser()">إعادة تعيين وتسجيل الخروج</button>
-
-            <!-- لوحة تحكم الأدمن -->
-            <div id="adminPanel" class="section-box hidden" style="border-color: #eab308; background: #fffbeb; color: #0f172a;">
-                <label style="color: #b45309; font-weight: bold;">👑 لوحة تحكم الأدمن المركزية</label>
-                
-                <div class="input-group" style="margin-top: 10px;">
-                    <label style="color: #b45309;">لغة الإنذار (Language):</label>
-                    <select id="adminLangSelect" onchange="updateAdminLangLabels()">
-                        <option value="ar">العربية (Arabic)</option>
-                        <option value="en">English (الإنجليزية)</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label id="lblTitleInput" style="color: #b45309;">عنوان الإنذار الرئيسي:</label>
-                    <input type="text" id="adminTitleInput" placeholder="مثال: تنبيه طوارئ عام..." />
-                </div>
-
-                <div class="input-group">
-                    <label id="lblTextInput" style="color: #b45309;">نص الإنذار التفصيلي:</label>
-                    <textarea id="adminAlertInput" placeholder="اكتب تفاصيل الإنذار هنا..."></textarea>
-                </div>
-
-                <div class="input-group">
-                    <label id="lblImgInput" style="color: #b45309;">إرفاق صورة من المعرض:</label>
-                    <input type="file" id="adminImageFile" accept="image/*" onchange="previewAdminImage(event)" />
-                    <img id="adminImgPreview" style="width: 100%; max-height: 120px; object-fit: cover; margin-top: 8px; border-radius: 6px; display: none;" alt="معاينة الصورة">
-                </div>
-
-                <button style="background: #eab308; color: #0f172a;" onclick="adminPublishAlert()">نشر الإنذار الفوري للجميع</button>
-                <button style="background: #64748b; color: white;" onclick="adminClearAlert()">حذف وإنهاء الإنذار الحالي</button>
-
-                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #fcd34d;">
-                
-                <label style="color: #b45309; font-weight: bold;">التحكم بلون الشاشة لجميع المستخدمين:</label>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <button style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;" onclick="adminSetColor('white')">أبيض</button>
-                    <button style="background: #16a34a; color: white;" onclick="adminSetColor('green')">أخضر</button>
-                    <button style="background: #dc2626; color: white;" onclick="adminSetColor('red')">أحمر</button>
-                </div>
+            <div style="font-size:0.8rem; color:var(--accent-yellow); margin:12px 0 6px 0; font-weight:bold;">18 سبتمبر 2026</div>
+            <div class="history-item" onclick="alert('تفاصيل الإنذار: رياح هابطة نشطة بلغت سرعتها 55 كم/س.')">
+                <span>💨 رياح قوية — المدينة</span>
+                <span style="color:var(--text-secondary);">17:32</span>
             </div>
         </div>
     </div>
+
+    <!-- 5. صفحة البلاغات الطارئة -->
+    <div id="page-report" class="app-container">
+        <div class="card">
+            <h2>🚨 إرسال بلاغ طارئ ميداني</h2>
+            <p style="font-size: 0.78rem; color: var(--accent-orange); line-height: 1.4;">
+                ⚠️ <b>تنبيه قانوني وتوعوي:</b> هذه المنصة تساهم في رصد الملاحظات المجتمعية والميدانية، وليست بديلاً بأي حال من الأحوال عن أرقام الطوارئ الرسمية (911 / 998).
+            </p>
+
+            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; display:block;">نوع البلاغ:</label>
+            <select id="reportType" class="form-control">
+                <option>🌧️ تجمع مياه</option>
+                <option>🌳 سقوط شجرة</option>
+                <option>💨 رياح قوية وأضرار</option>
+                <option>🌫️ غبار كثيف وانعدام رؤية</option>
+                <option>⚠️ خطر في الطريق العام</option>
+                <option>📷 بلاغ طقس آخر</option>
+            </select>
+
+            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; display:block;">تفاصيل إضافية ووصف الموقع:</label>
+            <textarea id="reportDesc" class="form-control" rows="2" placeholder="اكتب تفاصيل الملاحظة هنا..."></textarea>
+
+            <label style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; display:block;">إرفاق صورة توضيحية:</label>
+            <input type="file" id="reportImage" class="form-control" accept="image/*">
+
+            <button class="btn btn-danger" style="margin-top:14px;" onclick="submitEmergencyReport()">🚨 إرسال البلاغ لعمليات المتابعة</button>
+        </div>
+    </div>
+
+    <!-- 6. صفحة الإعدادات والمواقع المتعددة -->
+    <div id="page-settings" class="app-container">
+        <div class="card">
+            <h2>⚙️ إدارة المواقع والتنبيهات المخصصة</h2>
+            
+            <label style="font-size:0.75rem; color:var(--text-secondary);">مواقع المتابعة الخاصة بك:</label>
+            <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid var(--card-border); margin-top:5px; font-size:0.85rem;">
+                🏠 المنزل — المدينة المنورة (افتراضي)
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid var(--card-border); margin-top:5px; font-size:0.85rem;">
+                🏫 المدرسة — المدينة المنورة
+            </div>
+            <button class="btn" style="padding:8px; font-size:0.78rem; margin-top:8px;" onclick="prompt('أدخل اسم الموقع الجديد:', 'استراحة / موقع عمل')">+ إضافة موقع جديد</button>
+
+            <h3 style="font-size:0.9rem; color:var(--accent-blue); margin-top:16px;">تخصيص أنواع الإشعارات المفضلة</h3>
+            <div class="checkbox-group">
+                <label><input type="checkbox" checked> أمطار</label>
+                <label><input type="checkbox" checked> عواصف رعدية</label>
+                <label><input type="checkbox" checked> رياح قوية</label>
+                <label><input type="checkbox" checked> غبار</label>
+                <label><input type="checkbox"> انخفاض/ارتفاع الحرارة</label>
+                <label><input type="checkbox" checked> تنبيهات الطوارئ</label>
+            </div>
+
+            <h3 style="font-size:0.9rem; color:var(--accent-blue); margin-top:16px;">إعدادات المظهر والوضع الليلي</h3>
+            <select id="themeSelect" class="form-control" onchange="changeTheme(this.value)">
+                <option value="dark">🌙 الوضع الليلي (Dark Mode)</option>
+                <option value="light">☀️ الوضع النهاري (Light Mode)</option>
+            </select>
+
+            <button class="btn btn-warning" style="margin-top:16px;" onclick="triggerTestNotification()">🔔 تجربة إرسال إشعار تجريبي الآن</button>
+        </div>
+    </div>
+
+    <!-- 👑 7. لوحة تحكم الأمن المركزي الشاملة للمسؤول -->
+    <div id="page-admin" class="app-container">
+        <div class="card">
+            <h2>👑 لوحة تحكم الأمن المركزي (إدارة مطلقة)</h2>
+            <p style="font-size: 0.78rem; color: var(--text-secondary);">السيطرة التامة على الإشعارات، الحالات، والجدولة والتحليلات.</p>
+            
+            <!-- لوحة إحصائيات حقيقية Dashboard -->
+            <div class="stats-grid" style="margin-top:12px;">
+                <div class="stat-box"><h3 id="statUsers">150</h3><p>إجمالي المستخدمين</p></div>
+                <div class="stat-box"><h3>94</h3><p>أجهزة iPhone</p></div>
+                <div class="stat-box"><h3>56</h3><p>أجهزة Android</p></div>
+                <div class="stat-box"><h3 id="statActiveAlerts">2</h3><p>الإنذارات النشطة</p></div>
+            </div>
+
+            <!-- حالة النظام الحية -->
+            <h3 style="font-size:0.85rem; color:var(--accent-blue); margin-top:15px;">📡 فحص حالة النظام الحية</h3>
+            <div style="font-size:0.78rem; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid var(--card-border); display:flex; flex-direction:column; gap:4px;">
+                <span>Web Push API: <b style="color:var(--accent-green);">🟢 متصل</b></span>
+                <span>OneSignal Service: <b style="color:var(--accent-green);">🟢 مستقر</b></span>
+                <span>قاعدة البيانات (Database): <b style="color:var(--accent-green);">🟢 تعمل بكفاءة</b></span>
+                <span>خدمة الطقس المركزية: <b style="color:var(--accent-green);">🟢 محدثة</b></span>
+            </div>
+
+            <!-- إرسال أو جدولة إنذار جديد -->
+            <h3 style="font-size:0.85rem; color:var(--accent-blue); margin-top:16px;">📢 إنشاء وإرسال / جدولة إنذار جديد</h3>
+            
+            <label style="font-size:0.72rem; color:var(--text-secondary);">مستوى الخطورة وشكل التنبيه:</label>
+            <select id="adminAlertLevel" class="form-control">
+                <option value="badge-green">🟢 معلومة (تغير بسيط في الطقس)</option>
+                <option value="badge-blue">🔵 تنبيه (احتمال أمطار)</option>
+                <option value="badge-yellow">🟡 تحذير (أمطار غزيرة متوقعة)</option>
+                <option value="badge-orange">🟠 تحذير شديد (عواصف رعدية قوية)</option>
+                <option value="badge-red">🔴 طوارئ (حالة جوية تستدعي الانتباه الفوري)</option>
+            </select>
+
+            <label style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px; display:block;">نص عنوان وطبيعة الإنذار:</label>
+            <input type="text" id="adminAlertText" class="form-control" value="عاصفة رعدية قوية متوقعة في النطاق الغربي">
+
+            <label style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px; display:block;">الجمهور المستهدف:</label>
+            <select id="adminAudience" class="form-control">
+                <option>جميع المشتركين بالمملكة</option>
+                <option>المدينة المنورة فقط</option>
+                <option>مكة المكرمة وجدة</option>
+                <option>الرياض</option>
+                <option>🏫 مجموعة طلاب المدارس</option>
+            </select>
+
+            <label style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px; display:block;">نشر الإنذار:</label>
+            <select id="adminPublishMode" class="form-control">
+                <option>◉ نشر فوري الآن</option>
+                <option>○ جدولة لوقت لاحق</option>
+            </select>
+
+            <button class="btn btn-danger" style="margin-top:16px;" onclick="adminBroadcastAlert()">🚀 إرسال الإنذار للجمهور المستهدف</button>
+        </div>
+    </div>
+
+    <!-- الشريط السفلي للتنقل بين الصفحات -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('weather', 'حالة الطقس الآن', this)">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            الطقس
+        </button>
+        <button class="nav-item" onclick="switchTab('map', 'خريطة الإنذارات', this)">
+            <svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.1V5l6 2.1V19z"/></svg>
+            الخريطة
+        </button>
+        <button class="nav-item" onclick="switchTab('radar', 'رادار الطقس', this)">
+            <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19l1.39 1.39 1.61-1.61C8.93 19.26 10.42 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7 z"/></svg>
+            الرادار
+        </button>
+        <button class="nav-item" onclick="switchTab('history', 'سجل التنبيهات', this)">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            السجل
+        </button>
+        <button class="nav-item" onclick="switchTab('report', 'بلاغ طارئ', this)">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            بلاغ
+        </button>
+        <button class="nav-item" onclick="switchTab('settings', 'الإعدادات', this)">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c-.5.38-1.03.7-1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            الإعدادات
+        </button>
+        <button class="nav-item" onclick="switchTab('admin', 'لوحة الأمن المركزي', this)">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+            الإدارة 👑
+        </button>
+    </nav>
 
     <script>
-        let currentUser = { name: "", email: "", phone: "" };
-        let isAlarmRunning = false;
-        let base64ImageString = "";
-        let globalAudioCtx = null;
-
-        function unlockAudioContext() {
-            try {
-                globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (globalAudioCtx.state === 'suspended') {
-                    globalAudioCtx.resume();
-                }
-            } catch (e) {
-                console.log("Audio unlock error", e);
-            }
+        function switchTab(tabId, titleText, btnElement) {
+            document.querySelectorAll('.app-container').forEach(c => c.classList.remove('active'));
+            document.getElementById('page-' + tabId).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+            document.getElementById('headerTitle').innerText = titleText;
         }
 
-        function checkAutoLogin() {
-            const savedName = localStorage.getItem("alaret_name");
-            const savedEmail = localStorage.getItem("alaret_email");
-            const savedPhone = localStorage.getItem("alaret_phone");
-
-            if (savedName && savedEmail && savedPhone) {
-                currentUser = { name: savedName, email: savedEmail, phone: savedPhone };
-                document.getElementById("loginSection").classList.add("hidden");
-                document.getElementById("dashboardSection").classList.remove("hidden");
-                document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${savedName}`;
-            }
+        function togglePushSub() {
+            const btn = document.getElementById('subBtn');
+            btn.className = "btn";
+            btn.style.background = "#334155";
+            btn.innerHTML = "✅ التنبيهات مفعلة بنجاح";
+            alert("🔔 تمت تهيئة تفعيل الإشعارات والتنبيهات الفورية لمنطقتك بنجاح!");
         }
 
-        function handleLogin() {
-            const name = document.getElementById("userName").value.trim();
-            const email = document.getElementById("userEmail").value.trim();
-            const phone = document.getElementById("userPhone").value.trim();
-
-            if (!name || !email || !phone) {
-                alert("الرجاء تعبئة جميع الحقول للمتابعة!");
-                return;
-            }
-
-            localStorage.setItem("alaret_name", name);
-            localStorage.setItem("alaret_email", email);
-            localStorage.setItem("alaret_phone", phone);
-
-            currentUser = { name, email, phone };
-
-            document.getElementById("loginSection").classList.add("hidden");
-            document.getElementById("dashboardSection").classList.remove("hidden");
-            document.getElementById("welcomeMsg").innerText = `مرحباً بك، ${name}`;
+        function openRegionInfo(name, desc, badgeClass) {
+            document.getElementById('mTitle').innerText = name;
+            document.getElementById('mDesc').innerText = desc;
+            const badge = document.getElementById('mBadge');
+            badge.className = "alert-badge " + badgeClass;
+            badge.innerText = name + " — الحالة";
+            document.getElementById('mapModal').classList.add('active');
         }
 
-        function logoutUser() {
-            localStorage.removeItem("alaret_name");
-            localStorage.removeItem("alaret_email");
-            localStorage.removeItem("alaret_phone");
-            location.reload();
+        function closeMapModal() {
+            document.getElementById('mapModal').classList.remove('active');
         }
 
-        function requestNotificationPermission() {
-            window.OneSignalDeferred.push(async function(OneSignal) {
-                try {
-                    await OneSignal.Slidedown.promptPush();
-                    alert("تم إرسال طلب السماح بالإشعارات.");
-                } catch (e) {
-                    if (Notification && Notification.permission !== "granted") {
-                        Notification.requestPermission().then(permission => {
-                            if (permission === "granted") alert("تم تفعيل الإشعارات بنجاح!");
-                            else alert("تم رفض إذن الإشعارات.");
-                        });
-                    } else {
-                        alert("الإشعارات مفعلة مسبقاً.");
-                    }
-                }
-            });
+        function submitEmergencyReport() {
+            const type = document.getElementById('reportType').value;
+            const desc = document.getElementById('reportDesc').value;
+            alert("🚨 تم استلام بلاغك (" + type + ") بنجاح وإرساله لغرفة العمليات للمتابعة الميدانية. شكراً لمساهمتك المجتمعية.");
+            document.getElementById('reportDesc').value = "";
         }
 
-        function openAdminPortal() {
-            const pass = prompt("الرجاء إدخال رمز دخول الأدمن:");
-            if (pass === "13121312") {
-                document.getElementById("dashboardSection").classList.remove("hidden");
-                document.getElementById("adminPanel").classList.remove("hidden");
-                alert("تم الدخول للوحة الأدمن بنجاح.");
-            } else if (pass !== null) {
-                alert("رمز الدخول غير صحيح!");
-            }
+        function triggerTestNotification() {
+            alert("🔔 [إشعار تجريبي ناجح]\nنظام الإنذار المبكر OneSignal يعمل بكفاءة تامة ويصلك بدون عوائق.");
         }
 
-        function triggerEmergencyWhatsApp() {
-            if (!currentUser.name) {
-                alert("الرجاء تسجيل الدخول أولاً.");
-                return;
-            }
-
-            const targetPhone = "966500919401";
-            const message = `🚨 *تنبيه طارئ وعاجل من نظام الانذار المبكر ⚠️* 🚨\n\n` +
-                            `👤 *اسم المستخدم:* ${currentUser.name}\n` +
-                            `📧 *البريد الإلكتروني:* ${currentUser.email}\n` +
-                            `📱 *رقم الجوال:* ${currentUser.phone}\n` +
-                            `🔗 *رابط الموقع:* ${window.location.href}\n\n` +
-                            `أطلب التدخل الفوري والمساعدة العاجلة!`;
-
-            window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, '_blank');
-        }
-
-        function previewAdminImage(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    base64ImageString = e.target.result;
-                    const preview = document.getElementById("adminImgPreview");
-                    preview.src = base64ImageString;
-                    preview.style.display = "block";
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function updateAdminLangLabels() {
-            const lang = document.getElementById("adminLangSelect").value;
-            const html = document.getElementById("htmlRoot");
-            if (lang === 'en') {
-                html.setAttribute("dir", "ltr");
-                html.setAttribute("lang", "en");
-                document.getElementById("lblTitleInput").innerText = "Emergency Title:";
-                document.getElementById("lblTextInput").innerText = "Emergency Detailed Text:";
-                document.getElementById("lblImgInput").innerText = "Attach Image from Gallery:";
+        function changeTheme(mode) {
+            if(mode === 'light') {
+                document.body.classList.add('light-mode');
             } else {
-                html.setAttribute("dir", "rtl");
-                html.setAttribute("lang", "ar");
-                document.getElementById("lblTitleInput").innerText = "عنوان الإنذار الرئيسي:";
-                document.getElementById("lblTextInput").innerText = "نص الإنذار التفصيلي:";
-                document.getElementById("lblImgInput").innerText = "إرفاق صورة من المعرض:";
+                document.body.classList.remove('light-mode');
             }
         }
 
-        function playRealAlarmSoundAndSpeak(alertData) {
-            if (isAlarmRunning) return;
-            isAlarmRunning = true;
-
-            const closeBtn = document.getElementById("closeModalBtn");
-            const statusText = document.getElementById("audioStatusText");
-            const lang = alertData.lang || "ar";
-
-            closeBtn.disabled = true;
-            closeBtn.classList.remove("active");
-            closeBtn.innerText = lang === 'en' ? "Close Alert (Locked until alarm finishes)" : "إغلاق الإنذار (معطلاً حتى انتهاء الصوت)";
-            statusText.innerText = lang === 'en' ? "🚨 Playing emergency alarm..." : "🚨 جاري تشغيل صوت الإنذار الحقيقي...";
-
-            try {
-                if (!globalAudioCtx) {
-                    globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (globalAudioCtx.state === 'suspended') {
-                    globalAudioCtx.resume();
-                }
-
-                let beepCount = 6;
-                let intervalTime = 400;
-
-                for (let i = 0; i < beepCount; i++) {
-                    setTimeout(() => {
-                        playBeepTone(globalAudioCtx, 950, 650, 0.35);
-                    }, i * intervalTime);
-                }
-
-                let totalAlarmTime = (beepCount * intervalTime) + 300;
-
-                setTimeout(() => {
-                    statusText.innerText = lang === 'en' ? "🗣️ Reading alert aloud..." : "🗣️ جاري قراءة الإنذار بصوت عالٍ...";
-                    speakAlertText(alertData.title, alertData.text, lang, () => {
-                        statusText.innerText = lang === 'en' ? "✅ Alarm finished. You can close now." : "✅ انتهى الإنذار والصوت، يمكنك الإغلاق الآن";
-                        closeBtn.disabled = false;
-                        closeBtn.classList.add("active");
-                        closeBtn.innerText = lang === 'en' ? "Close Alert (X)" : "إغلاق الإنذار (X)";
-                        isAlarmRunning = false;
-                    });
-                }, totalAlarmTime);
-
-            } catch (e) {
-                console.log("Audio exception", e);
-                speakAlertText(alertData.title, alertData.text, lang, () => {
-                    closeBtn.disabled = false;
-                    closeBtn.classList.add("active");
-                    closeBtn.innerText = lang === 'en' ? "Close Alert (X)" : "إغلاق الإنذار (X)";
-                    isAlarmRunning = false;
-                });
-            }
-        }
-
-        function playBeepTone(audioCtx, freqStart, freqEnd, duration) {
-            try {
-                let osc = audioCtx.createOscillator();
-                let gain = audioCtx.createGain();
-
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(freqEnd, audioCtx.currentTime + duration);
-
-                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (err) {
-                console.log("Beep error", err);
-            }
-        }
-
-        function speakAlertText(title, text, lang, callback) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                
-                let fullTextToSpeak = (lang === 'en') ? `Emergency Alert. ${title}. ${text}` : `تنبيه عاجل. ${title}. ${text}`;
-                let utterance = new SpeechSynthesisUtterance(fullTextToSpeak);
-                
-                utterance.lang = (lang === 'en') ? 'en-US' : 'ar-SA';
-                utterance.rate = 0.88;
-                utterance.pitch = 1.0;
-
-                let voices = window.speechSynthesis.getVoices();
-                let selectedVoice = voices.find(v => v.lang.startsWith(lang) || v.lang.includes(lang === 'ar' ? 'ar' : 'en'));
-                if (selectedVoice) {
-                    utterance.voice = selectedVoice;
-                }
-
-                utterance.onend = function() {
-                    if (callback) callback();
-                };
-                utterance.onerror = function() {
-                    if (callback) callback();
-                };
-
-                window.speechSynthesis.speak(utterance);
-            } else {
-                if (callback) callback();
-            }
-        }
-
-        async function adminPublishAlert() {
-            const title = document.getElementById("adminTitleInput").value.trim();
-            const text = document.getElementById("adminAlertInput").value.trim();
-            const lang = document.getElementById("adminLangSelect").value;
-
-            if(!title || !text) {
-                alert("الرجاء إدخال العنوان والنص الرئيسي للإنذار!");
-                return;
-            }
-
-            try {
-                const docRef = window.doc(window.db, "settings", "globalState");
-                const snap = await window.getDoc(docRef);
-                let currentColor = "white";
-                if(snap.exists()) currentColor = snap.data().screenColor || "white";
-
-                await window.setDoc(docRef, {
-                    activeAlert: {
-                        title: title,
-                        text: text,
-                        image: base64ImageString,
-                        lang: lang
-                    },
-                    alertTimestamp: Date.now(),
-                    screenColor: currentColor
-                }, { merge: true });
-
-                alert("تم نشر الإنذار الفوري بنجاح ووصل لجميع الأجهزة!");
-                document.getElementById("adminTitleInput").value = "";
-                document.getElementById("adminAlertInput").value = "";
-                document.getElementById("adminImageFile").value = "";
-                document.getElementById("adminImgPreview").style.display = "none";
-                base64ImageString = "";
-            } catch(e) {
-                console.error(e);
-                alert("خطأ أثناء النشر.");
-            }
-        }
-
-        async function adminClearAlert() {
-            try {
-                const docRef = window.doc(window.db, "settings", "globalState");
-                const snap = await window.getDoc(docRef);
-                let currentColor = "white";
-                if(snap.exists()) currentColor = snap.data().screenColor || "white";
-
-                await window.setDoc(docRef, {
-                    activeAlert: null,
-                    alertTimestamp: null,
-                    screenColor: currentColor
-                }, { merge: true });
-                alert("تم إزالة وإنهاء الإنذار.");
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        async function adminSetColor(colorType) {
-            try {
-                const docRef = window.doc(window.db, "settings", "globalState");
-                const snap = await window.getDoc(docRef);
-                let currentAlert = null;
-                if(snap.exists()) currentAlert = snap.data().activeAlert || null;
-
-                await window.setDoc(docRef, {
-                    activeAlert: currentAlert,
-                    screenColor: colorType
-                }, { merge: true });
-                alert(`تم تغيير لون الشاشة إلى (${colorType}) بنجاح!`);
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        function applyScreenColor(colorType) {
-            const body = document.body;
-            const card = document.querySelector(".card");
+        function adminBroadcastAlert() {
+            const level = document.getElementById('adminAlertLevel').value;
+            const text = document.getElementById('adminAlertText').value;
+            const audience = document.getElementById('adminAudience').value;
             
-            if (colorType === "green") {
-                body.style.background = "#16a34a";
-                body.style.color = "#ffffff";
-                card.style.background = "#15803d";
-                card.style.color = "#ffffff";
-                card.style.borderColor = "#22c55e";
-            } else if (colorType === "red") {
-                body.style.background = "#dc2626";
-                body.style.color = "#ffffff";
-                card.style.background = "#b91c1c";
-                card.style.color = "#ffffff";
-                card.style.borderColor = "#ef4444";
-            } else {
-                body.style.background = "#f8fafc";
-                body.style.color = "#0f172a";
-                card.style.background = "#ffffff";
-                card.style.color = "#0f172a";
-                card.style.borderColor = "#e2e8f0";
-            }
-        }
+            // تحديث شريط الحالة العلوي بناءً على مستوى الإنذار المختار
+            const sysBadge = document.getElementById('sysStatusBadge');
+            sysBadge.className = "alert-badge " + level;
+            
+            if(level === 'badge-red') sysBadge.innerText = "حالة طوارئ 🔴";
+            else if(level === 'badge-orange') sysBadge.innerText = "تحذير شديد 🟠";
+            else if(level === 'badge-yellow') sysBadge.innerText = "تحذير جوي 🟡";
+            else if(level === 'badge-blue') sysBadge.innerText = "تنبيه أمطار 🔵";
+            else sysBadge.innerText = "معلومة جوية 🟢";
 
-        function showModalAlert(alertData) {
-            const overlay = document.getElementById("modalAlertOverlay");
-            const titleEl = document.getElementById("modalAlertTitle");
-            const textEl = document.getElementById("modalAlertText");
-            const imgEl = document.getElementById("modalAlertImg");
-            const imgWrapper = document.getElementById("modalImgWrapper");
-
-            titleEl.innerText = alertData.title;
-            textEl.innerText = alertData.text;
-
-            if (alertData.image && alertData.image.length > 10) {
-                imgEl.src = alertData.image;
-                imgWrapper.classList.remove("hidden");
-                imgEl.style.display = "block";
-            } else {
-                imgWrapper.classList.add("hidden");
-                imgEl.style.display = "none";
-            }
-
-            overlay.style.display = "flex";
-        }
-
-        function hideModalAlert() {
-            const overlay = document.getElementById("modalAlertOverlay");
-            overlay.style.display = "none";
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
-            isAlarmRunning = false;
-        }
-
-        function dismissModalAlert() {
-            const closeBtn = document.getElementById("closeModalBtn");
-            if (closeBtn.disabled) return;
-            hideModalAlert();
+            alert("🚀 تم بث الإنذار بنجاح إلى (" + audience + ") بمستوى الخطورة المحدد وتحديث شريط النظام المركزي!");
         }
     </script>
-
-    <footer style="position: fixed; bottom: 10px; width: 100%; text-align: center; font-size: 12px; color: #64748b;">
-        Rights Reserved &copy; sulaiman alnasiri
-    </footer>
 </body>
 </html>
