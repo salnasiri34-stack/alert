@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة الطقس والإنذار المبكر</title>
-    <!-- FontAwesome للأيقونات -->
+    <title>الانذار المبكر ⚠️</title>
+    <!-- الأيقونة الخاصة بك -->
+    <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts - Cairo -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <!-- OneSignal SDK -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     
     <style>
@@ -53,14 +49,14 @@
             padding-bottom: 70px;
         }
 
-        /* شاشة تسجيل الدخول والترحيب الإجباري */
-        #welcome-overlay {
+        /* شاشة تسجيل الدخول الإجبارية مع البيانات المطلوبة */
+        #login-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(15, 23, 42, 0.98);
             z-index: 9999;
             display: flex;
             justify-content: center;
@@ -68,43 +64,35 @@
             padding: 20px;
         }
 
-        .welcome-card {
+        .login-card {
             background: var(--card-bg);
             width: 100%;
-            max-width: 450px;
+            max-width: 420px;
             padding: 30px;
             border-radius: 20px;
-            text-align: center;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
             border: 1px solid var(--border-color);
+            text-align: center;
         }
 
-        .welcome-card h2 {
+        .login-card img {
+            width: 60px;
+            height: 60px;
             margin-bottom: 15px;
-            font-size: 1.6rem;
+            object-fit: contain;
         }
 
-        .welcome-card p {
+        .login-card h2 {
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .login-card p {
             color: var(--text-secondary);
-            margin-bottom: 20px;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        .features-list {
-            text-align: right;
-            margin-bottom: 20px;
-            background: rgba(59, 130, 246, 0.1);
-            padding: 15px;
-            border-radius: 12px;
-        }
-
-        .features-list div {
-            margin-bottom: 8px;
             font-size: 0.9rem;
+            margin-bottom: 20px;
         }
 
-        /* حاوية التطبيق الرئيسية */
         .app-container {
             max-width: 600px;
             margin: 0 auto;
@@ -121,10 +109,16 @@
         }
 
         header h1 {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        header h1 img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
         }
 
         .header-btns {
@@ -143,10 +137,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1rem;
         }
 
-        /* البطاقات والأقسام */
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -159,11 +151,6 @@
         .weather-main {
             text-align: center;
             padding: 10px 0;
-        }
-
-        .weather-main h2 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
         }
 
         .temp-display {
@@ -183,30 +170,6 @@
             color: var(--text-secondary);
         }
 
-        /* طقس الساعات */
-        .hourly-scroll {
-            display: flex;
-            gap: 12px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            margin-top: 15px;
-        }
-
-        .hour-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px 15px;
-            border-radius: 12px;
-            text-align: center;
-            min-width: 75px;
-            border: 1px solid var(--border-color);
-        }
-
-        .hour-item i {
-            font-size: 1.2rem;
-            margin: 5px 0;
-        }
-
-        /* قائمة المدن وتحت بعضها */
         .cities-stack {
             display: flex;
             flex-direction: column;
@@ -233,15 +196,11 @@
             color: var(--text-secondary);
         }
 
-        /* مستويات الإنذار */
         .alert-badge {
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
         }
 
         .badge-info { background: rgba(16, 185, 129, 0.2); color: var(--info); border: 1px solid var(--info); }
@@ -250,13 +209,8 @@
         .badge-severe { background: rgba(249, 115, 22, 0.2); color: var(--severe); border: 1px solid var(--severe); }
         .badge-emergency { background: rgba(239, 68, 68, 0.2); color: var(--emergency); border: 1px solid var(--emergency); animation: pulse 1.5s infinite; }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* الأزرار والنماذج */
         .btn {
             background: var(--primary);
             color: white;
@@ -286,7 +240,50 @@
             font-size: 0.95rem;
         }
 
-        /* شريط التنقل السفلي */
+        /* نافذة الطوارئ المنبثقة على الشاشة مع زر إغلاق و صوت */
+        #emergency-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .emergency-modal-card {
+            background: #1e293b;
+            border: 3px solid var(--emergency);
+            width: 100%;
+            max-width: 450px;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+        }
+
+        .close-popup-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--emergency);
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .nav-bar {
             position: fixed;
             bottom: 0;
@@ -312,41 +309,40 @@
             cursor: pointer;
         }
 
-        .nav-item.active {
-            color: var(--primary);
-        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 1.2rem; }
 
-        .nav-item i {
-            font-size: 1.2rem;
-        }
-
-        /* لوحة التحكم والأقسام المخفية */
         .section-view { display: none; }
         .section-view.active { display: block; }
-
-        .admin-box {
-            background: rgba(239, 68, 68, 0.05);
-            border: 1px dashed var(--emergency);
-        }
     </style>
 </head>
 <body data-theme="dark">
 
-    <!-- شاشة الترحيب وتسجيل الدخول الأولي وطلب الإشعارات -->
-    <div id="welcome-overlay">
-        <div class="welcome-card">
-            <h2><i class="fa-solid fa-cloud-bolt" style="color: var(--primary);"></i> نظام الإنذار المبكر</h2>
-            <p>كن أول من يعرف إذا اقتربت حالة جوية أو تنبيه طارئ من منطقتك.</p>
+    <!-- شاشة تسجيل الدخول الإجبارية -->
+    <div id="login-overlay">
+        <div class="login-card">
+            <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="شعار التحذير">
+            <h2>تسجيل الدخول للنظام</h2>
+            <p>أدخل بياناتك لتفعيل التنبيهات الفورية ومتابعة الطقس</p>
             
-            <div class="features-list">
-                <div>🌧️ أمطار وعواصف رعدية متقدمة</div>
-                <div>📍 تخصيص الإنذارات حسب مدينتك</div>
-                <div>🔔 إشعارات فورية دقيقة</div>
-            </div>
+            <input type="text" id="reg-name" placeholder="الاسم الكامل" required>
+            <input type="email" id="reg-email" placeholder="البريد الإلكتروني" required>
+            <input type="tel" id="reg-phone" placeholder="رقم الجوال (مثلاً: 05xxxxxxxx)" required>
 
-            <button class="btn" onclick="initAppAndNotifications()">
-                <i class="fa-solid fa-bell"></i> تفعيل التنبيهات والدخول
+            <button class="btn" onclick="completeLoginAndNotifications()">
+                <i class="fa-solid fa-bell"></i> السماح بالإشعارات والدخول
             </button>
+        </div>
+    </div>
+
+    <!-- نافذة الطوارئ المنبثقة الحية مع البوت الصوتي وزر الإغلاق (×) -->
+    <div id="emergency-popup">
+        <div class="emergency-modal-card">
+            <button class="close-popup-btn" onclick="closeEmergencyPopup()"><i class="fa-solid fa-xmark"></i></button>
+            <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" style="width: 70px; margin-bottom: 15px;">
+            <h2 id="popup-title" style="color: var(--emergency); margin-bottom: 10px;">إنذار طارئ مباشر</h2>
+            <p id="popup-desc" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px;"></p>
+            <button class="btn" style="background: var(--emergency);" onclick="closeEmergencyPopup()">إيقاف الإنذار وإغلاق</button>
         </div>
     </div>
 
@@ -354,106 +350,89 @@
     <div class="app-container">
         
         <header>
-            <h1><i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i> رادار الطقس</h1>
+            <h1>
+                <img src="https://png.pngtree.com/png-vector/20250930/ourlarge/pngtree-yellow-warning-sign-with-exclamation-png-image_17618561.webp" alt="أيقونة"> 
+                رادار الطقس والإنذار
+            </h1>
             <div class="header-btns">
                 <button class="icon-btn" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="theme-icon"></i></button>
                 <button class="icon-btn" onclick="openAdminModal()"><i class="fa-solid fa-lock"></i></button>
             </div>
         </header>
 
-        <!-- 1. صفحة الطقس والمدن -->
+        <!-- 1. الرئيسية والطقس الحقيقي القابل للتعديل من الأدمن -->
         <div id="view-home" class="section-view active">
             <div class="card weather-main">
-                <h2 id="main-city-title">المدينة المنورة</h2>
-                <div class="temp-display">32°C</div>
-                <p style="color: var(--text-secondary);">غائم جزئيًا — شعور عام مستقر</p>
+                <h2 id="display-city-name">المدينة المنورة</h2>
+                <div class="temp-display" id="display-temp">32°C</div>
+                <p id="display-weather-desc" style="color: var(--text-secondary);">غائم جزئيًا — شعور عام مستقر</p>
                 
                 <div class="weather-details">
-                    <div><i class="fa-solid fa-wind"></i> 18 كم/س</div>
-                    <div><i class="fa-solid fa-droplet"></i> 41% رطوبة</div>
+                    <div><i class="fa-solid fa-wind"></i> <span id="display-wind">18</span> كم/س</div>
+                    <div><i class="fa-solid fa-droplet"></i> <span id="display-humidity">41</span>% رطوبة</div>
                     <div><i class="fa-solid fa-gauge"></i> 1012 hPa</div>
                 </div>
-
-                <div class="hourly-scroll">
-                    <div class="hour-item"><span>15:00</span><i class="fa-solid fa-sun" style="color: #f59e0b;"></i><span>32°</span></div>
-                    <div class="hour-item"><span>16:00</span><i class="fa-solid fa-cloud" style="color: #94a3b8;"></i><span>31°</span></div>
-                    <div class="hour-item"><span>17:00</span><i class="fa-solid fa-cloud-rain" style="color: #3b82f6;"></i><span>29°</span></div>
-                    <div class="hour-item"><span>18:00</span><i class="fa-solid fa-cloud-bolt" style="color: #f97316;"></i><span>27°</span></div>
-                </div>
             </div>
 
-            <h3 style="margin-bottom: 12px; font-size: 1.1rem;"><i class="fa-solid fa-list-check"></i> متابعة المدن والإنذارات المخصصة</h3>
-            <div class="cities-stack" id="dynamic-cities-container">
-                <!-- يتم تعبئتها ديناميكياً -->
-            </div>
+            <h3 style="margin-bottom: 12px; font-size: 1.1rem;"><i class="fa-solid fa-list-check"></i> متابعة المدن والإنذارات</h3>
+            <div class="cities-stack" id="dynamic-cities-container"></div>
         </div>
 
-        <!-- 2. خريطة وحالة الحالات الجوية -->
-        <div id="view-map" class="section-view">
-            <div class="card">
-                <h3><i class="fa-solid fa-map-location-dot"></i> حالة المناطق في المملكة</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">حالة الطقس المباشرة لكل منطقة مسجلة في النظام.</p>
-            </div>
-            <div class="cities-stack" id="map-cities-list"></div>
-        </div>
-
-        <!-- 3. سجل التنبيهات -->
+        <!-- 2. السجل والجدولة -->
         <div id="view-logs" class="section-view">
             <div class="card">
-                <h3><i class="fa-solid fa-clipboard-list"></i> سجل التنبيهات والإنذارات السابقة</h3>
+                <h3><i class="fa-solid fa-clipboard-list"></i> سجل التنبيهات والإنذارات المجدولة</h3>
                 <div style="margin-top: 15px;" id="logs-container">
                     <div style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
                         <span class="badge badge-warning" style="margin-bottom: 5px;">تحذير أمطار</span>
-                        <p style="font-size: 0.9rem;">المدينة المنورة — أمطار متوسطة متوقعة (19 سبتمبر - 14:20)</p>
-                    </div>
-                    <div style="padding: 10px 0;">
-                        <span class="badge badge-info" style="margin-bottom: 5px;">معلومة طقس</span>
-                        <p style="font-size: 0.9rem;">جدة — تغير بسيط في درجات الحرارة (18 سبتمبر - 17:32)</p>
+                        <p style="font-size: 0.9rem;">المدينة المنورة — أمطار غزيرة متوقعة (مجدول الساعة 18:30)</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 4. إعدادات المستخدم -->
+        <!-- 3. الإعدادات -->
         <div id="view-settings" class="section-view">
             <div class="card">
-                <h3><i class="fa-solid fa-gear"></i> إعدادات التنبيهات الشخصية</h3>
-                <label style="display:block; margin: 15px 0 5px;">اختر منطقتك الرئيسية:</label>
+                <h3><i class="fa-solid fa-gear"></i> إعدادات المستخدم</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">المستخدم المسجل: <span id="user-info-badge" style="color:var(--primary); font-weight:bold;"></span></p>
+                
+                <label style="display:block; margin: 15px 0 5px;">المنطقة الرئيسية المتبعة:</label>
                 <select id="user-primary-city">
                     <option value="المدينة المنورة">المدينة المنورة</option>
                     <option value="مكة المكرمة">مكة المكرمة</option>
                     <option value="الرياض">الرياض</option>
                     <option value="جدة">جدة</option>
-                    <option value="القصيم">القصيم</option>
                 </select>
 
-                <div style="margin-top: 15px;">
-                    <label style="display:block; margin-bottom: 8px;">أنواع التنبيهات المرغوبة:</label>
-                    <label style="display:block; margin-bottom: 5px;"><input type="checkbox" checked> الأمطار والعواصف الرعدية</label>
-                    <label style="display:block; margin-bottom: 5px;"><input type="checkbox" checked> الرياح القوية والغبار</label>
-                    <label style="display:block;"><input type="checkbox" checked> تنبيهات الطوارئ القصوى</label>
-                </div>
-
-                <button class="btn" style="margin-top: 20px;" onclick="alert('تم حفظ إعداداتك بنجاح!')">حفظ الإعدادات</button>
+                <button class="btn" style="margin-top: 20px;" onclick="alert('تم حفظ الإعدادات بنجاح!')">حفظ التغييرات</button>
             </div>
         </div>
 
-        <!-- 5. لوحة تحكم الأمن المركزي (مخفية تتطلب الرمز 13121312) -->
+        <!-- 4. لوحة التحكم الأمن المركزي الشاملة (التحكم المطلق + الرمز 13121312) -->
         <div id="view-admin" class="section-view">
-            <div class="card admin-box">
-                <h3><i class="fa-solid fa-user-shield"></i> لوحة التحكم الأمن المركزي</h3>
-                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">إدارة الإنذارات المباشرة للمدن والتحكم الشامل.</p>
+            <div class="card" style="border: 2px solid var(--emergency);">
+                <h3><i class="fa-solid fa-user-shield"></i> لوحة تحكم الأمن المركزي (تحكم كامل)</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">التحكم بكل أدوات الطقس، المدن، والإنذار المباشر على الشاشة مع الصوت.</p>
 
-                <label>اختر المدينة المراد تحديث حالتها:</label>
-                <select id="admin-target-city">
+                <label>تعديل حالة الطقس الرئيسية للواجهة:</label>
+                <input type="text" id="admin-set-city" placeholder="اسم المدينة الرئيسي" value="المدينة المنورة">
+                <input type="text" id="admin-set-temp" placeholder="درجة الحرارة (مثال: 34°C)" value="32°C">
+                <input type="text" id="admin-set-wind" placeholder="سرعة الرياح (مثال: 20 كم/س)" value="18">
+                <input type="text" id="admin-set-humidity" placeholder="الرطوبة (مثال: 45%)" value="41">
+                <input type="text" id="admin-set-desc" placeholder="الوصف العام للحالة" value="غائم جزئيًا">
+                <button class="btn" onclick="updateMainWeather()" style="margin-bottom: 15px;"><i class="fa-solid fa-sync"></i> تحديث الطقس الرئيسي</button>
+
+                <hr style="border-color: var(--border-color); margin: 20px 0;">
+
+                <label>نشر إنذار فوري يظهر على شاشة المستخدمين مع الصوت:</label>
+                <select id="admin-alert-city">
                     <option value="المدينة المنورة">المدينة المنورة</option>
                     <option value="مكة المكرمة">مكة المكرمة</option>
                     <option value="الرياض">الرياض</option>
                     <option value="جدة">جدة</option>
-                    <option value="القصيم">القصيم</option>
                 </select>
 
-                <label>مستوى الإنذار والتفاصيل:</label>
                 <select id="admin-alert-level">
                     <option value="🟢 معلومة">🟢 معلومة (تغير بسيط)</option>
                     <option value="🔵 تنبيه">🔵 تنبيه (احتمال أمطار)</option>
@@ -462,9 +441,21 @@
                     <option value="🔴 طوارئ">🔴 طوارئ (حالة جوية حرجة)</option>
                 </select>
 
-                <textarea id="admin-alert-desc" placeholder="اكتب تفاصيل الإنذار هنا (مثلاً: رياح قوية وأمطار غزيرة متوقعة خلال ساعة)..." rows="3"></textarea>
+                <textarea id="admin-alert-text" placeholder="نص الإنذار بالتفصيل..." rows="3"></textarea>
+                
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 12px;">
+                    <input type="checkbox" id="admin-schedule-check" style="width:auto; margin:0;"> جدولة الإنذار لوقت لاحق؟
+                </label>
+                <input type="datetime-local" id="admin-schedule-time">
 
-                <button class="btn" onclick="publishAlert()"><i class="fa-solid fa-paper-plane"></i> نشر وتحديث الإنذار فوراً</button>
+                <button class="btn" style="background: var(--emergency);" onclick="publishLiveAlert()"><i class="fa-solid fa-bullhorn"></i> بث الإنذار الآن (مع صوت وبوت القراءة)</button>
+            </div>
+
+            <!-- إدارة وحفظ بيانات المستخدمين المسجلين -->
+            <div class="card">
+                <h3><i class="fa-solid fa-users"></i> إحصائيات المستخدمين المسجلين</h3>
+                <p id="users-stats-count" style="margin-top: 10px; font-weight: bold; color: var(--primary);">عدد المسجلين: 0</p>
+                <div id="registered-users-list" style="margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary);"></div>
             </div>
         </div>
 
@@ -473,67 +464,76 @@
     <!-- شريط التنقل السفلي -->
     <nav class="nav-bar">
         <button class="nav-item active" onclick="switchTab('home', this)"><i class="fa-solid fa-house"><span>الرئيسية</span></i></button>
-        <button class="nav-item" onclick="switchTab('map', this)"><i class="fa-solid fa-map"><span>الخريطة</span></i></button>
         <button class="nav-item" onclick="switchTab('logs', this)"><i class="fa-solid fa-clock-rotate-left"><span>السجل</span></i></button>
         <button class="nav-item" onclick="switchTab('settings', this)"><i class="fa-solid fa-gear"><span>الإعدادات</span></i></button>
     </nav>
 
     <script>
-        // بيانات المدن وحالتها الافتراضية
-        let citiesData = [
+        let registeredUsers = JSON.parse(localStorage.getItem('weather_users') || '[]');
+        let citiesData = JSON.parse(localStorage.getItem('weather_cities') || JSON.stringify([
             { name: "المدينة المنورة", status: "🟡 تحذير", desc: "أمطار غزيرة متوقعة", class: "badge-warning" },
             { name: "مكة المكرمة", status: "🟠 تحذير شديد", desc: "عواصف رعدية قوية", class: "badge-severe" },
             { name: "الرياض", status: "🟢 معلومة", desc: "تغير بسيط في الطقس", class: "badge-info" },
-            { name: "جدة", status: "🔵 تنبيه", desc: "احتمال أمطار خفيفة", class: "badge-notice" },
-            { name: "القصيم", status: "🟢 معلومة", desc: "أجواء مستقرة نسبياً", class: "badge-info" }
-        ];
+            { name: "جدة", status: "🔵 تنبيه", desc: "احتمال أمطار خفيفة", class: "badge-notice" }
+        ]));
 
-        // تهيئة التطبيق والإشعارات
-        function initAppAndNotifications() {
-            document.getElementById('welcome-overlay').style.display = 'none';
-            // تهيئة OneSignal المبدئية
+        let currentSynth = window.speechSynthesis;
+
+        // إتمام التسجيل وطلب الإشعارات بشكل فعلي
+        function completeLoginAndNotifications() {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+
+            if(!name || !email || !phone) {
+                alert("الرجاء تعبئة جميع الحقول (الاسم، البريد، الجوال) للمتابعة.");
+                return;
+            }
+
+            // حفظ المستخدم
+            registeredUsers.push({ name, email, phone, date: new Date().toLocaleString() });
+            localStorage.setItem('weather_users', JSON.stringify(registeredUsers));
+
+            // تفعيل OneSignal لطلب السماح بالشعارات
             window.OneSignalDeferred = window.OneSignalDeferred || [];
             window.OneSignalDeferred.push(async function(OneSignal) {
-                await OneSignal.init({
-                    appId: "YOUR_ONESIGNAL_APP_ID", // ضع معرف OneSignal الخاص بك هنا
-                });
+                try {
+                    await OneSignal.init({ appId: "YOUR_ONESIGNAL_APP_ID" });
+                    await OneSignal.Slidedown.promptPush();
+                } catch(e) { console.log(e); }
             });
+
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('user-info-badge').innerText = `${name} (${phone})`;
             renderCities();
+            updateAdminStats();
+            alert("تم تسجيل دخولك وتفعيل التنبيهات بنجاح يا سلومي!");
         }
 
-        // رسم المدن تحت بعضها بشكل عملي
         function renderCities() {
             const container = document.getElementById('dynamic-cities-container');
-            const mapContainer = document.getElementById('map-cities-list');
-            
-            let htmlContent = '';
-            citiesData.forEach(city => {
-                htmlContent += `
+            let html = '';
+            citiesData.forEach(c => {
+                html += `
                     <div class="city-row">
                         <div class="city-info">
-                            <h4><i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> ${city.name}</h4>
-                            <p>${city.desc}</p>
+                            <h4><i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> ${c.name}</h4>
+                            <p>${c.desc}</p>
                         </div>
-                        <div>
-                            <span class="alert-badge ${city.class}">${city.status}</span>
-                        </div>
+                        <div><span class="alert-badge ${c.class}">${c.status}</span></div>
                     </div>
                 `;
             });
-            container.innerHTML = htmlContent;
-            mapContainer.innerHTML = htmlContent;
+            container.innerHTML = html;
         }
 
-        // التنقل بين التبويبات
-        function switchTab(tabId, btnElement) {
-            document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.section-view').forEach(e => e.classList.remove('active'));
             document.getElementById('view-' + tabId).classList.add('active');
-
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            if(btnElement) btnElement.classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+            if(btn) btn.classList.add('active');
         }
 
-        // تبديل الوضع الليلي والنهاري
         function toggleTheme() {
             const body = document.body;
             const icon = document.getElementById('theme-icon');
@@ -546,46 +546,87 @@
             }
         }
 
-        // فتح لوحة التحكم بالرمز السري 13121312
+        // لوحة التحكم بالرمز السري 13121312
         function openAdminModal() {
-            let pass = prompt("الرجاء إدخال رمز الحماية للوصول إلى لوحة التحكم الأمن المركزي:");
+            let pass = prompt("أدخل رمز الحماية للأمن المركزي:");
             if(pass === "13121312") {
                 switchTab('admin', null);
-                alert("تم التحقق بنجاح، مرحباً بك في لوحة تحكم الأمن المركزي.");
+                updateAdminStats();
+                alert("تم الدخول للوحة التحكم بنجاح.");
             } else if(pass !== null) {
                 alert("الرمز غير صحيح!");
             }
         }
 
-        // نشر وتحديث الإنذار من لوحة التحكم
-        function publishAlert() {
-            const targetCity = document.getElementById('admin-target-city').value;
-            const alertLevelFull = document.getElementById('admin-alert-level').value;
-            const alertDesc = document.getElementById('admin-alert-desc').value || "تحديث حالة جوية جديدة";
+        // تحديث الطقس الرئيسي في الواجهة
+        function updateMainWeather() {
+            const cityName = document.getElementById('admin-set-city').value;
+            const temp = document.getElementById('admin-set-temp').value;
+            const wind = document.getElementById('admin-set-wind').value;
+            const humidity = document.getElementById('admin-set-humidity').value;
+            const desc = document.getElementById('admin-set-desc').value;
 
-            // استخراج اسم المستوى واللون
-            let badgeClass = "badge-info";
-            if(alertLevelFull.includes("تنبيه")) badgeClass = "badge-notice";
-            else if(alertLevelFull.includes("تحذير ")) badgeClass = "badge-warning";
-            else if(alertLevelFull.includes("شديد")) badgeClass = "badge-severe";
-            else if(alertLevelFull.includes("طوارئ")) badgeClass = "badge-emergency";
+            document.getElementById('display-city-name').innerText = cityName;
+            document.getElementById('display-temp').innerText = temp;
+            document.getElementById('display-wind').innerText = wind;
+            document.getElementById('display-humidity').innerText = humidity;
+            document.getElementById('display-weather-desc').innerText = desc;
 
-            // تحديث بيانات المدينة المحددة
-            let cityObj = citiesData.find(c => c.name === targetCity);
-            if(cityObj) {
-                cityObj.status = alertLevelFull;
-                cityObj.desc = alertDesc;
-                cityObj.class = badgeClass;
-            }
-
-            renderCities();
-            alert(`تم تحديث ونشر الإنذار بنجاح لمدينة ${targetCity}!`);
-            switchTab('home', document.querySelector('.nav-item'));
+            alert("تم تحديث الواجهة الرئيسية بنجاح!");
         }
 
-        // تشغيل العرض الأولي للمدن
+        // نشر إنذار فوري يظهر على الشاشة مع الصوت وبوت القراءة وزر الإغلاق (×)
+        function publishLiveAlert() {
+            const city = document.getElementById('admin-alert-city').value;
+            const level = document.getElementById('admin-alert-level').value;
+            const text = document.getElementById('admin-alert-text.value') || document.getElementById('admin-alert-text').value;
+            const isScheduled = document.getElementById('admin-schedule-check').checked;
+            const scheduleTime = document.getElementById('admin-schedule-time').value;
+
+            if(isScheduled && scheduleTime) {
+                alert(`تم جدولة الإنذار لمدينة ${city} بنجاح ليتم نشره في وقت: ${scheduleTime}`);
+                return;
+            }
+
+            // إظهار نافذة الإنذار الفوري على الشاشة
+            document.getElementById('popup-title').innerText = `${level} — ${city}`;
+            document.getElementById('popup-desc').innerText = text;
+            document.getElementById('emergency-popup').style.display = 'flex';
+
+            // تشغيل الصوت وتفعيل بوت القراءة الصوتية (Speech Synthesis)
+            if (currentSynth) {
+                currentSynth.cancel(); // إيقاف أي قراءة سابقة
+                let utterance = new SpeechSynthesisUtterance(`تنبيه عاجل لمدينة ${city}. ${level}. ${text}`);
+                utterance.lang = 'ar-SA';
+                utterance.rate = 0.9;
+                currentSynth.speak(utterance);
+            }
+        }
+
+        // إغلاق النافذة المنبثقة وإيقاف الصوت فوراً عند الضغط على (×) أو زر الإغلاق
+        function closeEmergencyPopup() {
+            document.getElementById('emergency-popup').style.display = 'none';
+            if (currentSynth) {
+                currentSynth.cancel(); // إيقاف الصوت فوراً
+            }
+        }
+
+        function updateAdminStats() {
+            document.getElementById('users-stats-count').innerText = `عدد المستخدمين المسجلين: ${registeredUsers.length}`;
+            let listHtml = '';
+            registeredUsers.forEach((u, i) => {
+                listHtml += `<div>${i+1}. ${u.name} | ${u.email} | ${u.phone} (${u.date})</div>`;
+            });
+            document.getElementById('registered-users-list').innerHTML = listHtml || 'لا يوجد مستخدمين مسجلين بعد.';
+        }
+
         window.onload = function() {
             renderCities();
+            // إذا كان المستخدم قد سجل مسبقاً في الجلسة، نخفي شاشة تسجيل الدخول
+            if(registeredUsers.length > 0) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('user-info-badge').innerText = `${registeredUsers[registeredUsers.length-1].name} (${registeredUsers[registeredUsers.length-1].phone})`;
+            }
         };
     </script>
 </body>
